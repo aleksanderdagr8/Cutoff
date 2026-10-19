@@ -31,16 +31,16 @@ export default async function ReceiptPage({ params }: Props) {
       bypass={homeDevBypassEnabled()}
     >
       <p className="text-[13px] text-secondary">
-        <Link href="/home/list" className="hover:text-ink">
-          List
+        <Link href="/home/orders" className="hover:text-ink">
+          Orders
         </Link>
         <span className="mx-2">/</span>
         Receipt
       </p>
-      <h1 className="mt-3 text-[28px] font-semibold tracking-tight text-ink">
+      <h1 className="mt-3 font-display text-[34px] font-semibold tracking-[-0.03em] text-ink md:text-[40px]">
         Receipt
       </h1>
-      <p className="mt-2 max-w-xl text-[15px] text-secondary">
+      <p className="mt-3 max-w-xl text-[16px] leading-relaxed text-secondary">
         Charge details for your household. Works even if the agent key was
         revoked.
       </p>

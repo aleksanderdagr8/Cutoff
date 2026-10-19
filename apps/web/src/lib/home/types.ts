@@ -33,3 +33,13 @@ export type HomeKeyView = {
   created_at: string;
   last_used_at: string | null;
 };
+
+export type HomeOrderView = {
+  order_id: string;
+  receipt_token: string | null;
+  brand: string;
+  description: string;
+  landed_cents: number;
+  status: string;
+  created_at: string;
+};

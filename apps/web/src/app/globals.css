@@ -14,20 +14,41 @@
 body {
   background: var(--bg);
   color: var(--ink);
-  font-family:
-    "SF Pro Text",
-    "SF Pro Display",
-    ui-sans-serif,
-    -apple-system,
-    BlinkMacSystemFont,
-    "Helvetica Neue",
-    sans-serif;
+}
+
+/* Soft depth + quiet grain — not flat gray, not purple glow */
+.home-atmosphere {
+  background:
+    radial-gradient(
+      100% 70% at 8% -8%,
+      rgba(27, 58, 75, 0.09),
+      transparent 55%
+    ),
+    radial-gradient(
+      80% 55% at 92% 4%,
+      rgba(29, 29, 31, 0.045),
+      transparent 52%
+    ),
+    linear-gradient(
+      180deg,
+      rgba(255, 255, 255, 0.55) 0%,
+      transparent 42%
+    );
+}
+
+.home-atmosphere::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  opacity: 0.35;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");
+  pointer-events: none;
 }
 
 @keyframes home-rise {
   from {
     opacity: 0;
-    transform: translateY(6px);
+    transform: translateY(8px);
   }
   to {
     opacity: 1;
@@ -44,6 +65,17 @@ body {
   }
 }
 
+@keyframes home-cta-settle {
+  from {
+    opacity: 0;
+    transform: translateY(4px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
 .home-enter {
   animation: home-rise 160ms ease-out both;
 }
@@ -54,6 +86,29 @@ body {
 
 .home-row {
   animation: home-fade 160ms ease-out both;
+}
+
+.home-cta {
+  animation: home-cta-settle 200ms ease-out both;
+  animation-delay: 80ms;
+  transition:
+    transform 160ms ease-out,
+    opacity 160ms ease-out,
+    background-color 160ms ease-out;
+}
+
+.home-cta:hover:not(:disabled) {
+  transform: translateY(-1px);
+}
+
+.home-cta:active:not(:disabled) {
+  transform: translateY(0);
+}
+
+.home-nav-active {
+  transition:
+    background-color 160ms ease-out,
+    color 160ms ease-out;
 }
 
 .ops-enter {

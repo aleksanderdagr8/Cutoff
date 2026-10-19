@@ -28,9 +28,9 @@ describe("household /home UI hygiene", () => {
     }
   });
 
-  it("mandate client shows secret once and documents no storage", () => {
+  it("keys client shows secret once and documents no storage", () => {
     const src = readFileSync(
-      join(import.meta.dirname, "components/home/mandate-keys-client.tsx"),
+      join(import.meta.dirname, "components/home/keys-client.tsx"),
       "utf8",
     );
     expect(src).toContain("shown once");
@@ -38,13 +38,32 @@ describe("household /home UI hygiene", () => {
     expect(src).toContain("setIssuedSecret");
     expect(src).toContain("Issue key");
     expect(src).toContain("Revoke");
+    expect(src).not.toMatch(/regenerat/i);
   });
 
-  it("home routes exist for sign-in, list, mandate, receipt", () => {
+  it("home shell exposes Adopted primary nav", () => {
+    const src = readFileSync(
+      join(import.meta.dirname, "components/home/shell.tsx"),
+      "utf8",
+    );
+    expect(src).toContain('href: "/home"');
+    expect(src).toContain('href: "/home/list"');
+    expect(src).toContain('href: "/home/orders"');
+    expect(src).toContain('href: "/home/mandate"');
+    expect(src).toContain('href: "/home/keys"');
+    expect(src).toContain("/home/help");
+    expect(src).toContain("home-bottom-nav");
+  });
+
+  it("home routes exist for Adopted areas", () => {
     const app = join(import.meta.dirname, "app/home");
+    expect(statSync(join(app, "page.tsx")).isFile()).toBe(true);
     expect(statSync(join(app, "sign-in/page.tsx")).isFile()).toBe(true);
     expect(statSync(join(app, "list/page.tsx")).isFile()).toBe(true);
+    expect(statSync(join(app, "orders/page.tsx")).isFile()).toBe(true);
     expect(statSync(join(app, "mandate/page.tsx")).isFile()).toBe(true);
+    expect(statSync(join(app, "keys/page.tsx")).isFile()).toBe(true);
+    expect(statSync(join(app, "help/page.tsx")).isFile()).toBe(true);
     expect(statSync(join(app, "receipts/[token]/page.tsx")).isFile()).toBe(
       true,
     );

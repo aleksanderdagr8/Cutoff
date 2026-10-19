@@ -17,14 +17,14 @@ export default async function ListPage() {
       active="list"
       bypass={homeDevBypassEnabled()}
     >
-      <h1 className="text-[28px] font-semibold tracking-tight text-ink">
+      <h1 className="font-display text-[34px] font-semibold tracking-[-0.03em] text-ink md:text-[40px]">
         List
       </h1>
-      <p className="mt-2 max-w-xl text-[15px] text-secondary">
-        Replenishment lines for your household. Skip pauses a line — nothing
-        is placed.
+      <p className="mt-3 max-w-xl text-[16px] leading-relaxed text-secondary">
+        Things your household replenishes. Skip pauses a line — nothing is
+        placed.
       </p>
-      <div className="mt-8">
+      <div className="mt-10">
         <ListClient initialLines={lines} />
       </div>
     </HomeShell>
