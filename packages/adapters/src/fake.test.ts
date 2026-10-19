@@ -5,6 +5,8 @@ import {
   FakeTaxAdapter,
   FakeAggregatorOfferAdapter,
   FakeBrandFeedOfferAdapter,
+  FakeEmailNotifyAdapter,
+  reorderDueEmailText,
   StripeSandboxPayAdapter,
 } from "./index.js";
 
@@ -38,6 +40,23 @@ describe("FakePayAdapter", () => {
     expect(pay.attempts).toHaveLength(1);
     expect(pay.attempts[0]?.amountCents).toBe(500);
     expect(pay.charges).toHaveLength(0);
+  });
+});
+
+describe("FakeEmailNotifyAdapter", () => {
+  it("records reorder.due emails and formats copy", async () => {
+    const email = new FakeEmailNotifyAdapter();
+    const input = {
+      householdId: "hh_1",
+      lineId: "ll_1",
+      displayName: "Coffee",
+      dueAt: "2026-10-24T12:00:00.000Z",
+    };
+    const result = await email.sendReorderDue(input);
+    expect(result.ok).toBe(true);
+    expect(email.sent).toHaveLength(1);
+    expect(reorderDueEmailText(input)).toMatch(/Coffee is due 2026-10-24/);
+    expect(reorderDueEmailText(input)).toMatch(/callcutoff\.com\/home\/list/);
   });
 });
 

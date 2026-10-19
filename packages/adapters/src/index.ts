@@ -30,6 +30,19 @@ export {
   MemoryOutboundWebhookQueue,
 } from "./notify.js";
 
+export type {
+  EmailNotifyAdapter,
+  EmailNotifyResult,
+  ReorderDueEmailInput,
+} from "./email.js";
+export {
+  FakeEmailNotifyAdapter,
+  reorderDueEmailText,
+} from "./email.js";
+
+export type { SecretStore } from "./secrets.js";
+export { MemorySecretStore } from "./secrets.js";
+
 export type { TaxInput, TaxResult, TaxAdapter } from "./tax.js";
 export { FakeTaxAdapter } from "./tax.js";
 
