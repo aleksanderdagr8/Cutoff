@@ -11,7 +11,19 @@ packages/domain   pure rank / mandate / hold / catalog / quote / risk / score / 
 packages/db       repositories (memory now; Supabase later)
 packages/adapters pay, fulfill, tax, offer feed (aggregator + brand), notify — fake + live
 packages/contracts zod schemas + error codes
+supabase/         versioned SQL migrations (not applied live until sandbox project exists)
 ```
+
+## Supabase schema (when the project exists)
+
+Migrations live in `supabase/migrations/` and match `packages/db` table ownership. Apply to the **dedicated Cutoff** project only (not AnswerWise):
+
+```bash
+npx supabase link --project-ref <CUTOFF_PROJECT_REF>
+npx supabase db push
+```
+
+Or paste the SQL files in order in the Supabase SQL Editor. Full steps: [docs/supabase-schema.md](./docs/supabase-schema.md).
 
 ## Human dashboards (local)
 
