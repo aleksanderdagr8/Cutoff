@@ -17,12 +17,12 @@ export default async function OpsHouseholdsPage() {
       active="households"
       bypass={opsDevBypassEnabled()}
     >
-      <h1 className="text-[28px] font-semibold tracking-tight text-ink">
+      <h1 className="font-display text-[34px] font-semibold tracking-[-0.03em] text-ink md:text-[40px]">
         Households
       </h1>
-      <p className="mt-2 max-w-xl text-[15px] text-secondary">
-        Operator index of every household. Read-only here — actions live on
-        the order sheet and mandates.
+      <p className="mt-3 max-w-xl text-[16px] leading-relaxed text-secondary">
+        Every household on Cutoff. Read-only here — actions live on the order
+        sheet and Mandates.
       </p>
       <HouseholdsClient households={households} />
     </OpsShell>

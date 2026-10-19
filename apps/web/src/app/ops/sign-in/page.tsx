@@ -13,13 +13,13 @@ export default async function OpsSignInPage() {
 
   return (
     <OpsShell session={null} active="sign-in" bypass={bypass}>
-      <p className="text-[13px] font-medium uppercase tracking-[0.08em] text-secondary">
-        Operator
+      <p className="text-[13px] font-medium uppercase tracking-[0.1em] text-secondary">
+        CUTOFF · Ops
       </p>
-      <h1 className="mt-3 text-[36px] font-semibold tracking-[-0.03em] text-ink md:text-[44px]">
+      <h1 className="mt-3 font-display text-[44px] font-semibold tracking-[-0.04em] text-ink md:text-[56px]">
         CUTOFF
       </h1>
-      <p className="mt-3 max-w-md text-[16px] leading-relaxed text-secondary">
+      <p className="mt-4 max-w-md text-[17px] leading-relaxed text-secondary">
         Watch live order flow. Act on stuck hold, kill switch, revoke, refund,
         and cancel-before-ship — each with a reason and an audit row.
       </p>

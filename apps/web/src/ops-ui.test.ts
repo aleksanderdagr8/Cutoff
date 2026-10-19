@@ -48,16 +48,36 @@ describe("operator /ops UI hygiene", () => {
     );
     expect(src).toContain("reason");
     expect(src).toContain("audit");
-    expect(src).toMatch(/cannot\s+raise a ceiling/);
+    expect(src).toMatch(/cannot\s+raise\s+a\s+ceiling/);
   });
 
-  it("shell is operator-scoped and separate from household", () => {
+  it("shell is operator-scoped, elevated, and separate from household", () => {
     const src = readFileSync(
       join(import.meta.dirname, "components/ops/shell.tsx"),
       "utf8",
     );
-    expect(src).toContain("Operator");
+    expect(src).toContain("Ops");
+    expect(src).toContain("ops-bottom-nav");
+    expect(src).toContain("ops-atmosphere");
+    expect(src).toContain("font-display");
     expect(src).toContain("/ops/live");
+    expect(src).toContain("/ops/households");
+    expect(src).toContain("/ops/mandates");
+    expect(src).toContain("/ops/fulfillers");
+    expect(src).toContain("/ops/audit");
     expect(src).not.toContain("/home/list");
+    expect(src).not.toContain("/home");
+    expect(src).not.toMatch(/>\s*Household\s*</);
+  });
+
+  it("live client polls and exposes honest empty copy", () => {
+    const src = readFileSync(
+      join(import.meta.dirname, "components/ops/live-client.tsx"),
+      "utf8",
+    );
+    expect(src).toContain("/api/ops/live");
+    expect(src).toContain("setInterval");
+    expect(src).toContain("No order events yet");
+    expect(src).toContain("Needs attention");
   });
 });
