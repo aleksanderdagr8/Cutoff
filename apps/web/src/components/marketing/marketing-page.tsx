@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { BuildersPanel } from "./builders-panel";
 import { HeroTerminal } from "./hero-terminal";
+import { ProofStrip } from "./proof-strip";
 import { WaitlistForm } from "./waitlist-form";
 
 const WHY_CARE = [
@@ -60,6 +61,9 @@ export function MarketingPage() {
             </a>
             <a href="#enforced" className="hover:text-ink">
               How it works
+            </a>
+            <a href="#proof" className="hover:text-ink">
+              Proof
             </a>
             <a href="#builders" className="hover:text-ink">
               For builders
@@ -149,6 +153,9 @@ export function MarketingPage() {
           </div>
         </section>
 
+        {/* Proof strip — Top 5 one-liners; not in the hero */}
+        <ProofStrip />
+
         {/* How it's enforced — Direction C reframing Architecture */}
         <section id="enforced" className="border-t border-hairline">
           <div className="mx-auto max-w-[1120px] px-6 py-20 md:px-8 md:py-24">
@@ -190,8 +197,19 @@ export function MarketingPage() {
             </h2>
             <p className="mt-4 max-w-lg text-[16px] leading-relaxed text-secondary">
               How household outcomes get enforced: Bearer keys, short-lived
-              quotes, and an evidence pack on every commit. Early access is
-              sandbox-honest — not a live production claim.
+              quotes, and an evidence pack on every commit — a shelf, not a
+              scrape. Early access is sandbox-honest — not a live production
+              claim.
+            </p>
+            <p className="mt-4 max-w-2xl text-[15px] leading-relaxed text-secondary">
+              Amazon{" "}
+              <em className="not-italic text-ink">alleges</em> Perplexity
+              disguised an agentic browser as a human to reach storefronts and
+              accounts. Cloudflare says merchants still can&apos;t tell a helpful
+              agent from a malicious bot when UA and IP are spoofable. Cutoff
+              skips that roulette: typed{" "}
+              <span className="font-mono text-[13px] text-ink">/v1</span> quote
+              → commit on a canonical shelf.
             </p>
             <div className="mt-12">
               <BuildersPanel />
@@ -259,6 +277,9 @@ export function MarketingPage() {
           <div className="flex flex-wrap gap-x-6 gap-y-2 text-[14px] text-secondary">
             <Link href="/home" className="hover:text-ink">
               Household
+            </Link>
+            <Link href="/docs/why-agents-fail" className="hover:text-ink">
+              Evidence
             </Link>
             <a href="#builders" className="hover:text-ink">
               For builders

@@ -17,6 +17,21 @@ const PANELS = [
 }`,
   },
   {
+    id: "scrape",
+    label: "Why scrape fails",
+    title: "Storefront access is the wrong job",
+    body: "Amazon alleges Perplexity disguised an agentic browser as a human to evade barriers and reach accounts. Cloudflare’s agentic-commerce work starts from the same fact: merchants can’t tell a helpful agent from a malicious bot when UA and IP are spoofable. Cutoff doesn’t pretend to be a shopper on someone else’s HTML — it exposes a shelf your agent can call.",
+    sample: `// scrape path
+GET storefront HTML → 403 / CAPTCHA
+UA spoof → still not a known customer
+cart DOM → phantom commits
+
+// Cutoff path
+POST /v1/quote → locked landed quote
+POST /v1/commit → honor or typed fail
+evidence pack in the same tx`,
+  },
+  {
     id: "quote",
     label: "Landed quote",
     title: "One immutable quote",
@@ -62,6 +77,8 @@ export function BuildersPanel() {
             type="button"
             role="tab"
             aria-selected={active === p.id}
+            id={`builders-tab-${p.id}`}
+            aria-controls={`builders-panel-${p.id}`}
             onClick={() => setActive(p.id)}
             className={`border-b-2 pb-3 text-[14px] transition-colors duration-[160ms] ease-out ${
               active === p.id
@@ -74,7 +91,12 @@ export function BuildersPanel() {
         ))}
       </div>
 
-      <div className="mt-8 grid gap-10 md:grid-cols-2 md:items-start" role="tabpanel">
+      <div
+        className="mt-8 grid gap-10 md:grid-cols-2 md:items-start"
+        role="tabpanel"
+        id={`builders-panel-${panel.id}`}
+        aria-labelledby={`builders-tab-${panel.id}`}
+      >
         <div className="marketing-enter">
           <h3 className="font-display text-[22px] font-semibold tracking-[-0.02em] text-ink">
             {panel.title}

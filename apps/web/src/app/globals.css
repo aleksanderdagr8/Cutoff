@@ -246,3 +246,70 @@ body {
 .marketing-cta:active:not(:disabled) {
   transform: translateY(0);
 }
+
+/* Proof strip — slow horizontal marquee; pause on hover/focus */
+.proof-marquee {
+  overflow: hidden;
+  mask-image: linear-gradient(
+    90deg,
+    transparent,
+    #000 4%,
+    #000 96%,
+    transparent
+  );
+  -webkit-mask-image: linear-gradient(
+    90deg,
+    transparent,
+    #000 4%,
+    #000 96%,
+    transparent
+  );
+}
+
+.proof-marquee:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 4px;
+  border-radius: 4px;
+}
+
+.proof-marquee-track {
+  display: flex;
+  width: max-content;
+  animation: proof-marquee-scroll 48s linear infinite;
+}
+
+.proof-marquee:hover .proof-marquee-track,
+.proof-marquee:focus-within .proof-marquee-track {
+  animation-play-state: paused;
+}
+
+.proof-marquee-group {
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.proof-marquee-item {
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+  white-space: nowrap;
+}
+
+@keyframes proof-marquee-scroll {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(-50%);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .proof-marquee-track {
+    animation: none;
+  }
+}
