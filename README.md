@@ -5,7 +5,7 @@ Buyer's agent decides when to reorder. Cutoff quotes, commits, and stands behind
 ## Layout
 
 ```
-apps/web          human app (Next.js) — /home household shell; anon key only in browser
+apps/web          human app (Next.js) — /home + /ops shells; anon key only in browser
 apps/api          Cloudflare Worker (Hono)
 packages/domain   pure rank / mandate / hold / catalog / quote / risk / score / fulfill / receipt / list
 packages/db       repositories (memory now; Supabase later)
@@ -13,19 +13,33 @@ packages/adapters pay, fulfill, tax, offer feed (aggregator + brand), notify —
 packages/contracts zod schemas + error codes
 ```
 
-## Household `/home`
+## Human dashboards (local)
 
-Sign-in · list (skip/pause) · receipt · mandate & keys. Agent secrets shown once; never browser storage.
+Both shells use **dev bypass** when Supabase public env is unset (cookie session + in-memory fakes). Live Auth is parked until secrets exist.
 
 ```bash
 pnpm install
-CUTOFF_HOME_DEV_BYPASS=1 pnpm --filter @cutoff/web dev   # http://localhost:3000/home
+pnpm --filter @cutoff/web dev
+# http://localhost:3000/home  — household (CUTOFF_HOME_DEV_BYPASS=1 default)
+# http://localhost:3000/ops   — operator  (CUTOFF_OPS_DEV_BYPASS=1 default)
+```
+
+Explicit flags (same as defaults when `NEXT_PUBLIC_SUPABASE_*` are empty):
+
+```bash
+CUTOFF_HOME_DEV_BYPASS=1 CUTOFF_OPS_DEV_BYPASS=1 pnpm --filter @cutoff/web dev
+```
+
+- **`/home`** — sign-in · list (skip/pause) · receipt · mandate & keys. Agent secrets shown once; never browser storage.
+- **`/ops`** — live flow · order sheet · households / mandates (lower ceiling only) / fulfillers / audit.
+
+CI / package checks:
+
+```bash
 pnpm run test:u0       # Unit 0 + Phase 1–6 suites (CI)
 pnpm run typecheck
 pnpm run check:boundaries
 ```
-
-`CUTOFF_HOME_DEV_BYPASS=1` (default when Supabase public env is unset) uses a cookie session + in-memory fakes. Live Supabase Auth is parked until secrets exist.
 
 ## Phase 6 (Unit 12)
 
