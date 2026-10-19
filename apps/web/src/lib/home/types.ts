@@ -14,6 +14,11 @@ export type HomeListLineView = {
   brand: string;
   description: string;
   cadence_hint_days: number | null;
+  /** Unit 22: fixed | learned (display only; P1 fixed). */
+  cadence_source: "fixed" | "learned";
+  /** Unit 22: next due for household list. */
+  next_due_at: string | null;
+  snoozed_until: string | null;
   never_substitute: boolean;
   last_quote_id: string | null;
   last_order_id: string | null;
@@ -21,6 +26,13 @@ export type HomeListLineView = {
   paused: boolean;
   mandate_id: string;
   receipt_token: string | null;
+};
+
+/** Unit 22: household nudge / agent webhook settings. */
+export type HomeNudgeSettingsView = {
+  agent_webhook_url: string | null;
+  email_enabled: boolean;
+  auto_commit_enabled: false;
 };
 
 export type HomeMandateView = {

@@ -9,16 +9,25 @@ export async function POST(request: Request) {
   }
   const body = (await request.json().catch(() => null)) as {
     list_line_id?: string;
+    mode?: "next" | "snooze" | "pause";
+    until?: string | null;
   } | null;
   if (!body?.list_line_id) {
     return NextResponse.json({ error: "invalid_body" }, { status: 400 });
   }
-  const result = await skipListLineForSession(session, body.list_line_id);
+  const mode = body.mode ?? "pause";
+  if (mode !== "next" && mode !== "snooze" && mode !== "pause") {
+    return NextResponse.json({ error: "invalid_body" }, { status: 400 });
+  }
+  const result = await skipListLineForSession(session, body.list_line_id, {
+    mode,
+    until: body.until,
+  });
   if ("error" in result) {
     return NextResponse.json(
       { error: result.error },
       { status: result.status as 401 },
     );
   }
-  return NextResponse.json({ line_id: result.line_id, paused: true as const });
+  return NextResponse.json(result);
 }
