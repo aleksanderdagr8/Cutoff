@@ -34,7 +34,26 @@ export type {
 export { MemoryReceiptRepository } from "./receipts.js";
 export type { ReceiptRow } from "./receipts.js";
 export { MemoryListRepository } from "./list.js";
-export type { ListLineRow, UpsertListLineInput } from "./list.js";
+export type {
+  CadenceSource,
+  ListLineRow,
+  ListRepository,
+  UpsertListLineInput,
+} from "./list.js";
+export {
+  MemoryHouseholdNudgeSettingsRepository,
+  MemoryReorderNudgeRepository,
+} from "./nudges.js";
+export type {
+  HouseholdNudgeSettingsRepository,
+  HouseholdNudgeSettingsRow,
+  InsertReorderNudgeInput,
+  NudgeChannel,
+  NudgeStatus,
+  ReorderNudgeRepository,
+  ReorderNudgeRow,
+  UpsertNudgeSettingsInput,
+} from "./nudges.js";
 export { MemoryHouseholdRepository } from "./households.js";
 export type {
   HouseholdRow,
@@ -116,3 +135,8 @@ export { PostgresQuoteRepository } from "./postgres/quotes.js";
 export { PostgresMandateRepository } from "./postgres/mandates.js";
 export { PostgresAgentCredentialRepository } from "./postgres/agents.js";
 export { PostgresHouseholdRepository } from "./postgres/households.js";
+export { PostgresListRepository } from "./postgres/list.js";
+export {
+  PostgresHouseholdNudgeSettingsRepository,
+  PostgresReorderNudgeRepository,
+} from "./postgres/nudges.js";

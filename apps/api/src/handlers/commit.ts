@@ -156,13 +156,20 @@ export async function commitHandler(
     receiptToken = receipt.receiptToken;
   }
 
-  // Unit 11: update matching list line last_order when present.
+  // Unit 11/14: update matching list line last_order + next_due_at.
   if (result.created && result.order.status !== "failed") {
-    const line = bindings.list
-      .listForHousehold(result.order.householdId)
-      .find((l) => l.canonicalItemId === result.order.canonicalItemId);
+    const lines = await bindings.list.listForHousehold(
+      result.order.householdId,
+    );
+    const line = lines.find(
+      (l) => l.canonicalItemId === result.order.canonicalItemId,
+    );
     if (line) {
-      bindings.list.recordOrder(line.lineId, result.order.orderId, nowUtc);
+      await bindings.list.recordOrder(
+        line.lineId,
+        result.order.orderId,
+        nowUtc,
+      );
     }
   }
 

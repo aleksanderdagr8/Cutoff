@@ -43,6 +43,8 @@ function buildBindings(): ApiBindings {
     fulfillment: repos.fulfillment,
     receipts: repos.receipts,
     list: repos.list,
+    nudgeSettings: repos.nudgeSettings,
+    reorderNudges: repos.reorderNudges,
     outboundWebhooks: new MemoryOutboundWebhookQueue(),
     webhookSecret: "whsec_dev_replace_me",
     webhookTargetUrl: "https://example.invalid/webhooks/cutoff",

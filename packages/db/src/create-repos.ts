@@ -10,11 +10,20 @@ import {
 import { MemoryFulfillmentRepository } from "./fulfillment.js";
 import { MemoryHouseholdRepository } from "./households.js";
 import { MemoryRevocationKv, type RevocationKv } from "./kv.js";
-import { MemoryListRepository } from "./list.js";
+import {
+  MemoryListRepository,
+  type ListRepository,
+} from "./list.js";
 import {
   MemoryMandateRepository,
   type MandateRepository,
 } from "./mandates.js";
+import {
+  MemoryHouseholdNudgeSettingsRepository,
+  MemoryReorderNudgeRepository,
+  type HouseholdNudgeSettingsRepository,
+  type ReorderNudgeRepository,
+} from "./nudges.js";
 import {
   MemoryOfferRepository,
   seedBrandFeedTopOffers,
@@ -26,7 +35,12 @@ import {
 } from "./orders.js";
 import { PostgresAgentCredentialRepository } from "./postgres/agents.js";
 import { PostgresHouseholdRepository } from "./postgres/households.js";
+import { PostgresListRepository } from "./postgres/list.js";
 import { PostgresMandateRepository } from "./postgres/mandates.js";
+import {
+  PostgresHouseholdNudgeSettingsRepository,
+  PostgresReorderNudgeRepository,
+} from "./postgres/nudges.js";
 import { PostgresOrderRepository } from "./postgres/orders.js";
 import { PostgresQuoteRepository } from "./postgres/quotes.js";
 import {
@@ -70,7 +84,9 @@ export type CutoffRepos = {
   risk: MemoryRiskRepository;
   fulfillment: MemoryFulfillmentRepository;
   receipts: MemoryReceiptRepository;
-  list: MemoryListRepository;
+  list: ListRepository;
+  nudgeSettings: HouseholdNudgeSettingsRepository;
+  reorderNudges: ReorderNudgeRepository;
   revocationKv: RevocationKv;
   supabase: CutoffSupabaseClient | null;
 };
@@ -119,6 +135,8 @@ export function createRepos(options: CreateReposOptions): CutoffRepos {
       fulfillment: new MemoryFulfillmentRepository(),
       receipts: new MemoryReceiptRepository(),
       list: new MemoryListRepository(),
+      nudgeSettings: new MemoryHouseholdNudgeSettingsRepository(),
+      reorderNudges: new MemoryReorderNudgeRepository(),
       revocationKv,
       supabase: null,
     };
@@ -150,7 +168,9 @@ export function createRepos(options: CreateReposOptions): CutoffRepos {
     risk: new MemoryRiskRepository(),
     fulfillment: new MemoryFulfillmentRepository(),
     receipts: new MemoryReceiptRepository(),
-    list: new MemoryListRepository(),
+    list: new PostgresListRepository(supabase),
+    nudgeSettings: new PostgresHouseholdNudgeSettingsRepository(supabase),
+    reorderNudges: new PostgresReorderNudgeRepository(supabase),
     revocationKv,
     supabase,
   };

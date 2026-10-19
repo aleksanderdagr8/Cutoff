@@ -7,17 +7,19 @@ import type {
 } from "@cutoff/adapters";
 import type {
   AgentCredentialRepository,
+  HouseholdNudgeSettingsRepository,
+  ListRepository,
   MandateRepository,
   MemoryCatalogRepository,
   MemoryFulfillmentRepository,
   MemoryHouseholdRepository,
-  MemoryListRepository,
   MemoryOfferRepository,
   MemoryReceiptRepository,
   MemoryRiskRepository,
   OrderRepository,
   PostgresHouseholdRepository,
   QuoteRepository,
+  ReorderNudgeRepository,
   RevocationKv,
 } from "@cutoff/db";
 
@@ -43,7 +45,9 @@ export type ApiBindings = {
   risk: MemoryRiskRepository;
   fulfillment: MemoryFulfillmentRepository;
   receipts: MemoryReceiptRepository;
-  list: MemoryListRepository;
+  list: ListRepository;
+  nudgeSettings: HouseholdNudgeSettingsRepository;
+  reorderNudges: ReorderNudgeRepository;
   outboundWebhooks: MemoryOutboundWebhookQueue;
   /** Shared secret for signing outbound + verifying inbound (injected). */
   webhookSecret: string;

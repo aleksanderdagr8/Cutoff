@@ -99,7 +99,7 @@ describe("Phase 7 — Unit 13 list due", () => {
       });
 
     // Due soon: ordered 28 days ago, cadence 30 → due in 2 days.
-    const dueLine = bindings.list.upsert({
+    const dueLine = await bindings.list.upsert({
       householdId: household.householdId,
       mandateId: mandate.mandateId,
       canonicalItemId: "item_coffee_12oz",
@@ -107,14 +107,14 @@ describe("Phase 7 — Unit 13 list due", () => {
       neverSubstitute: false,
       nowUtc: "2026-09-01T12:00:00.000Z",
     });
-    bindings.list.recordOrder(
+    await bindings.list.recordOrder(
       dueLine.lineId,
       "ord_seed_due",
       "2026-09-21T12:00:00.000Z",
     );
 
     // Not due yet: ordered today, cadence 90.
-    const later = bindings.list.upsert({
+    const later = await bindings.list.upsert({
       householdId: household.householdId,
       mandateId: mandate.mandateId,
       canonicalItemId: "item_towels_12",
@@ -122,26 +122,26 @@ describe("Phase 7 — Unit 13 list due", () => {
       neverSubstitute: true,
       nowUtc: "2026-10-19T12:00:00.000Z",
     });
-    bindings.list.recordOrder(
+    await bindings.list.recordOrder(
       later.lineId,
       "ord_seed_later",
       "2026-10-19T12:00:00.000Z",
     );
 
     // Paused — never due even with history.
-    const paused = bindings.list.upsert({
+    const paused = await bindings.list.upsert({
       householdId: household.householdId,
       mandateId: mandate.mandateId,
       canonicalItemId: "item_filter_1",
       cadenceHintDays: 30,
       nowUtc: "2026-09-01T12:00:00.000Z",
     });
-    bindings.list.recordOrder(
+    await bindings.list.recordOrder(
       paused.lineId,
       "ord_seed_paused",
       "2026-09-01T12:00:00.000Z",
     );
-    bindings.list.skip(paused.lineId);
+    await bindings.list.skip(paused.lineId);
 
     const dueRes = await app.fetch(
       new Request("http://localhost/v1/list/due?within_days=7", {

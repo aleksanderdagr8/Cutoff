@@ -18,8 +18,10 @@ export const MODULE_TABLES = {
   risk: ["merchant_scores"],
   /** Household console receipts (Unit 10) — token → order, not agent-keyed. */
   receipt: ["receipts"],
-  /** Household reorder list (Unit 11). */
+  /** Household reorder list (Unit 11) + schedule columns (Unit 14). */
   list: ["list_lines"],
+  /** Reorder nudge settings + durable nudge intents (Unit 14). */
+  nudge: ["household_nudge_settings", "reorder_nudges"],
   /** Unique commit lock: (household_id, idempotency_key) */
   edge: ["idempotency_keys"],
 } as const;
