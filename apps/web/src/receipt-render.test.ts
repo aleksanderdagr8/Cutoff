@@ -7,24 +7,29 @@ import { join } from "node:path";
  * No retention interstitial copy.
  */
 describe("U10 receipt console page", () => {
-  const src = readFileSync(
+  const pageSrc = readFileSync(
     join(import.meta.dirname, "app/home/receipts/[token]/page.tsx"),
+    "utf8",
+  );
+  const actionsSrc = readFileSync(
+    join(import.meta.dirname, "components/home/receipt-actions.tsx"),
     "utf8",
   );
 
   it("renders why-this-seller rank inputs and skip without retention", () => {
-    expect(src).toContain("why_this_seller");
-    expect(src).toContain("landed_cents");
-    expect(src).toContain("fulfiller_id");
-    expect(src).toContain("Skip");
-    expect(src.toLowerCase()).not.toContain("are you sure");
-    expect(src.toLowerCase()).not.toContain("stay subscribed");
-    expect(src.toLowerCase()).not.toContain("retention");
+    expect(pageSrc).toContain("why_this_seller");
+    expect(pageSrc).toContain("landed_cents");
+    expect(pageSrc).toContain("fulfiller_id");
+    expect(actionsSrc).toContain("Skip");
+    expect(pageSrc.toLowerCase()).not.toContain("are you sure");
+    expect(pageSrc.toLowerCase()).not.toContain("stay subscribed");
+    expect(pageSrc.toLowerCase()).not.toContain("retention");
+    expect(actionsSrc.toLowerCase()).not.toContain("are you sure");
   });
 
   it("does not require an agent credential in the page", () => {
-    expect(src).not.toContain("ck_live_");
-    expect(src).not.toContain("Authorization");
-    expect(src).toContain("revoked");
+    expect(pageSrc).not.toContain("ck_live_");
+    expect(pageSrc).not.toContain("Authorization");
+    expect(pageSrc).toContain("revoked");
   });
 });

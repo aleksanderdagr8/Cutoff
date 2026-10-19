@@ -71,6 +71,10 @@ export class MemoryMandateRepository {
     return row;
   }
 
+  listForHousehold(householdId: string): readonly MandateRow[] {
+    return this.rows.filter((r) => r.householdId === householdId);
+  }
+
   toSnapshot(row: MandateRow): MandateSnapshot {
     return {
       ceilingCents: row.ceilingCents,

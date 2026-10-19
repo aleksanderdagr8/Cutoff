@@ -311,6 +311,10 @@ export class MemoryOrderRepository {
     return this.orders.find((o) => o.orderId === orderId) ?? null;
   }
 
+  listForHousehold(householdId: string): readonly OrderRow[] {
+    return this.orders.filter((o) => o.householdId === householdId);
+  }
+
   getForHousehold(
     orderId: string,
     householdId: string,

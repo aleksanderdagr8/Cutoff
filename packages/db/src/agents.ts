@@ -169,6 +169,15 @@ export class MemoryAgentCredentialRepository {
     return projected;
   }
 
+  /**
+   * Household console: list keys for a household.
+   * Projection omits secretHash from the browser-facing payload mapping —
+   * callers must not return the hash to the client.
+   */
+  listForHousehold(householdId: string): readonly AgentCredentialRow[] {
+    return this.rows.filter((r) => r.householdId === householdId);
+  }
+
   /** Test helper: all stored hashes (no secrets exist in storage). */
   storedHashes(): string[] {
     return this.rows.map((r) => r.secretHash);

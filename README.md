@@ -5,7 +5,7 @@ Buyer's agent decides when to reorder. Cutoff quotes, commits, and stands behind
 ## Layout
 
 ```
-apps/web          human app (Next.js) — anon key only; /home/receipts/:token
+apps/web          human app (Next.js) — /home household shell; anon key only in browser
 apps/api          Cloudflare Worker (Hono)
 packages/domain   pure rank / mandate / hold / catalog / quote / risk / score / fulfill / receipt / list
 packages/db       repositories (memory now; Supabase later)
@@ -13,17 +13,23 @@ packages/adapters pay, fulfill, tax, offer feed (aggregator + brand), notify —
 packages/contracts zod schemas + error codes
 ```
 
-## Phase 6 (Unit 12)
+## Household `/home`
 
-Second source (brand feed) on top items; `merchant_scores` from events; evidence pack export; kill switch + merchant suspend. Fakes in CI.
+Sign-in · list (skip/pause) · receipt · mandate & keys. Agent secrets shown once; never browser storage.
 
 ```bash
 pnpm install
+CUTOFF_HOME_DEV_BYPASS=1 pnpm --filter @cutoff/web dev   # http://localhost:3000/home
 pnpm run test:u0       # Unit 0 + Phase 1–6 suites (CI)
-pnpm run test:phase6   # same as test:u0
 pnpm run typecheck
 pnpm run check:boundaries
 ```
+
+`CUTOFF_HOME_DEV_BYPASS=1` (default when Supabase public env is unset) uses a cookie session + in-memory fakes. Live Supabase Auth is parked until secrets exist.
+
+## Phase 6 (Unit 12)
+
+Second source (brand feed) on top items; `merchant_scores` from events; evidence pack export; kill switch + merchant suspend. Fakes in CI.
 
 ## Agent auth
 
