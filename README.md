@@ -37,6 +37,7 @@ CI / package checks:
 
 ```bash
 pnpm run test:u0       # Unit 0 + Phase 1–6 suites (CI)
+pnpm run smoke:local   # quote → commit ×2 → receipt against fakes (no network)
 pnpm run typecheck
 pnpm run check:boundaries
 ```
