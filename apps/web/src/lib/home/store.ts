@@ -3,6 +3,7 @@ import "server-only";
 import { FakePayAdapter } from "@cutoff/adapters";
 import {
   MemoryAgentCredentialRepository,
+  MemoryHouseholdNudgeSettingsRepository,
   MemoryHouseholdRepository,
   MemoryListRepository,
   MemoryMandateRepository,
@@ -23,6 +24,7 @@ import type {
   HomeKeyView,
   HomeListLineView,
   HomeMandateView,
+  HomeNudgeSettingsView,
   HomeOrderView,
   HomeSession,
 } from "./types";
@@ -31,6 +33,7 @@ export type {
   HomeKeyView,
   HomeListLineView,
   HomeMandateView,
+  HomeNudgeSettingsView,
   HomeOrderView,
   HomeSession,
 } from "./types";
@@ -64,6 +67,7 @@ type HomeStoreState = {
   quotes: MemoryQuoteRepository;
   orders: MemoryOrderRepository;
   receipts: MemoryReceiptRepository;
+  nudgeSettings: MemoryHouseholdNudgeSettingsRepository;
   demoMember: MemberRow;
   demoHouseholdId: string;
   demoHouseholdName: string;
@@ -84,6 +88,7 @@ function emptyState(): HomeStoreState {
     quotes: new MemoryQuoteRepository(),
     orders: new MemoryOrderRepository(pay),
     receipts: new MemoryReceiptRepository(),
+    nudgeSettings: new MemoryHouseholdNudgeSettingsRepository(),
     demoMember: {
       memberId: "",
       householdId: "",
@@ -263,6 +268,9 @@ function lineView(state: HomeStoreState, line: ListLineRow): HomeListLineView {
     brand: item?.brand ?? "",
     description: item?.description ?? line.canonicalItemId,
     cadence_hint_days: line.cadenceHintDays,
+    cadence_source: line.cadenceSource,
+    next_due_at: line.nextDueAt,
+    snoozed_until: line.snoozedUntil,
     never_substitute: line.neverSubstitute,
     last_quote_id: line.lastQuoteId,
     last_order_id: line.lastOrderId,
@@ -314,6 +322,10 @@ export async function listOrdersForSession(
 export async function skipListLineForSession(
   session: HomeSession,
   lineId: string,
+  opts: {
+    mode?: "next" | "snooze" | "pause";
+    until?: string | null;
+  } = {},
 ): Promise<HomeListLineView | { error: string; status: number }> {
   const state = await getHomeStore();
   if (!sessionAllowed(state, session)) {
@@ -321,9 +333,67 @@ export async function skipListLineForSession(
   }
   const line = state.list.getForHousehold(lineId, session.householdId);
   if (!line) return { error: "mandate_miss", status: 404 };
-  const skipped = state.list.skip(line.lineId);
-  if (!skipped) return { error: "mandate_miss", status: 404 };
-  return lineView(state, skipped);
+  const mode = opts.mode ?? "pause";
+  const result = state.list.applySkip({
+    lineId: line.lineId,
+    mode,
+    until: opts.until,
+    nowUtc: new Date().toISOString(),
+  });
+  if (!result.ok) {
+    return {
+      error: result.error === "not_found" ? "mandate_miss" : "invalid_body",
+      status: result.error === "not_found" ? 404 : 400,
+    };
+  }
+  return lineView(state, result.line);
+}
+
+export async function getNudgeSettingsForSession(
+  session: HomeSession,
+): Promise<HomeNudgeSettingsView> {
+  const state = await getHomeStore();
+  if (!sessionAllowed(state, session)) {
+    return {
+      agent_webhook_url: null,
+      email_enabled: true,
+      auto_commit_enabled: false,
+    };
+  }
+  const row = state.nudgeSettings.get(session.householdId);
+  return {
+    agent_webhook_url: row?.agentWebhookUrl ?? null,
+    email_enabled: row?.emailEnabled ?? true,
+    auto_commit_enabled: false,
+  };
+}
+
+export async function upsertNudgeSettingsForSession(
+  session: HomeSession,
+  input: {
+    agent_webhook_url?: string | null;
+    email_enabled?: boolean;
+  },
+): Promise<HomeNudgeSettingsView | { error: string; status: number }> {
+  const state = await getHomeStore();
+  if (!sessionAllowed(state, session)) {
+    return { error: "unauthenticated", status: 401 };
+  }
+  try {
+    const row = state.nudgeSettings.upsert({
+      householdId: session.householdId,
+      agentWebhookUrl: input.agent_webhook_url,
+      emailEnabled: input.email_enabled,
+      nowUtc: new Date().toISOString(),
+    });
+    return {
+      agent_webhook_url: row.agentWebhookUrl,
+      email_enabled: row.emailEnabled,
+      auto_commit_enabled: false,
+    };
+  } catch {
+    return { error: "invalid_body", status: 400 };
+  }
 }
 
 export async function getReceiptForSession(

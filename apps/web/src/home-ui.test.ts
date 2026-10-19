@@ -38,7 +38,54 @@ describe("household /home UI hygiene", () => {
     expect(src).toContain("setIssuedSecret");
     expect(src).toContain("Issue key");
     expect(src).toContain("Revoke");
+    expect(src).toContain("Connect an assistant");
+    expect(src).toContain("Connected ✓");
+    expect(src).toContain("commit");
+    expect(src).toContain("opt-in");
+    expect(src).toContain("/api/home/nudge-settings");
     expect(src).not.toMatch(/regenerat/i);
+  });
+
+  it("connect snippets cover Claude, ChatGPT, Cursor, and raw MCP", () => {
+    const src = readFileSync(
+      join(import.meta.dirname, "components/home/connect-snippets.tsx"),
+      "utf8",
+    );
+    expect(src).toContain("https://mcp.callcutoff.com/mcp");
+    expect(src).toContain("mcp-remote");
+    expect(src).toContain("mcp.json");
+    expect(src).toContain("ChatGPT");
+    expect(src).toContain("tools/list");
+    expect(src).not.toContain("localStorage");
+  });
+
+  it("list client exposes due dates and skip modes", () => {
+    const src = readFileSync(
+      join(import.meta.dirname, "components/home/list-client.tsx"),
+      "utf8",
+    );
+    expect(src).toContain("formatDueAt");
+    expect(src).toContain('"next"');
+    expect(src).toContain('"snooze"');
+    expect(src).toContain('"pause"');
+    expect(src).toContain("Snooze 1 wk");
+  });
+
+  it("keys API defaults to quote + read_list without commit", () => {
+    const src = readFileSync(
+      join(import.meta.dirname, "app/api/home/keys/route.ts"),
+      "utf8",
+    );
+    expect(src).toContain('["quote", "read_list"]');
+    expect(src).toMatch(/commit is opt-in/);
+  });
+
+  it("nudge-settings BFF exists for webhook URL", () => {
+    expect(
+      statSync(
+        join(import.meta.dirname, "app/api/home/nudge-settings/route.ts"),
+      ).isFile(),
+    ).toBe(true);
   });
 
   it("home shell exposes Adopted primary nav", () => {

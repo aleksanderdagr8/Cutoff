@@ -46,16 +46,18 @@ export default async function HelpPage() {
         <div>
           <h2 className="text-[18px] font-medium text-ink">Keys</h2>
           <p className="mt-2 text-[15px] leading-relaxed text-secondary">
-            An agent key is shown once when you issue it. Cutoff stores a hash,
-            not the secret. Revoke anytime — receipts still work.
+            Connect an assistant from Keys: pick scopes (commit is opt-in),
+            copy an MCP snippet, and watch for Connected ✓ after the first
+            call. The secret is shown once; Cutoff stores a hash. Revoke
+            anytime — receipts still work.
           </p>
         </div>
         <div>
           <h2 className="text-[18px] font-medium text-ink">Skip</h2>
           <p className="mt-2 text-[15px] leading-relaxed text-secondary">
-            Skip on the list pauses that line so nothing is placed. On a
-            receipt, Skip cancels or starts a return when that is still
-            allowed.
+            On the list: Next advances one cycle, Snooze waits a week, Pause
+            stops nudges. On a receipt, Skip cancels or starts a return when
+            that is still allowed.
           </p>
         </div>
       </section>

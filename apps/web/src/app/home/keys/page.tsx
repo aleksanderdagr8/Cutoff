@@ -4,13 +4,19 @@ import { HomeShell } from "@/components/home/shell";
 import { KeysClient } from "@/components/home/keys-client";
 import { homeDevBypassEnabled } from "@/lib/home/config";
 import { readHomeSession } from "@/lib/home/session";
-import { listKeysForSession } from "@/lib/home/store";
+import {
+  getNudgeSettingsForSession,
+  listKeysForSession,
+} from "@/lib/home/store";
 
 export default async function KeysPage() {
   const session = await readHomeSession();
   if (!session) redirect("/home/sign-in");
 
-  const keys = await listKeysForSession(session);
+  const [keys, nudgeSettings] = await Promise.all([
+    listKeysForSession(session),
+    getNudgeSettingsForSession(session),
+  ]);
 
   return (
     <HomeShell
@@ -22,8 +28,8 @@ export default async function KeysPage() {
         Keys
       </h1>
       <p className="mt-3 max-w-xl text-[16px] leading-relaxed text-secondary">
-        Issue a key once for your buyer agent. Revoke when you are done. Set
-        spending limits on{" "}
+        Connect an assistant with a one-time key. Default scopes are quote and
+        read_list — commit is opt-in. Set spending limits on{" "}
         <Link
           href="/home/mandate"
           className="text-accent underline-offset-2 hover:underline"
@@ -33,7 +39,10 @@ export default async function KeysPage() {
         .
       </p>
       <div className="mt-10">
-        <KeysClient initialKeys={keys} />
+        <KeysClient
+          initialKeys={keys}
+          initialNudgeSettings={nudgeSettings}
+        />
       </div>
     </HomeShell>
   );

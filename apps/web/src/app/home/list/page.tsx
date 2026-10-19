@@ -21,8 +21,8 @@ export default async function ListPage() {
         List
       </h1>
       <p className="mt-3 max-w-xl text-[16px] leading-relaxed text-secondary">
-        Things your household replenishes. Skip pauses a line — nothing is
-        placed.
+        Things your household replenishes. Next advances one cycle, snooze
+        waits a week, pause stops nudges until you resume.
       </p>
       <div className="mt-10">
         <ListClient initialLines={lines} />
