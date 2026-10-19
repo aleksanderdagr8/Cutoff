@@ -34,6 +34,9 @@ describe("marketing `/` hygiene", () => {
     expect(joined).toMatch(/towel/i);
     expect(joined).toContain("CUTOFF");
     expect(joined).toContain("/home");
+    expect(joined).toMatch(/work for you/i);
+    expect(joined).toMatch(/Keep the refill/i);
+    expect(joined).toMatch(/household/i);
   });
 
   it("waitlist stub accepts POST and does not mint API keys", () => {

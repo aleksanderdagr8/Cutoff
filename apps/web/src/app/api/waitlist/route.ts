@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 
-const PERSONAS = new Set(["builder", "brand"]);
+const PERSONAS = new Set(["household", "builder", "brand"]);
 
 type WaitlistBody = {
   persona?: string;
