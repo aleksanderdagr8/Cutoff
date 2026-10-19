@@ -15,6 +15,12 @@ export type {
   EvidencedCommitResult,
 } from "./orders.js";
 export { MemoryRiskRepository } from "./risk.js";
+export type {
+  MerchantScoreEventRow,
+  MerchantScoreRow,
+  RiskAuditRow,
+  RiskCommitStamp,
+} from "./risk.js";
 export { MemoryFulfillmentRepository } from "./fulfillment.js";
 export type {
   FulfillmentJobRow,
@@ -73,6 +79,7 @@ export type {
 export {
   MemoryOfferRepository,
   seedDualFulfillerOffers,
+  seedBrandFeedTopOffers,
   rawFeedFromOffers,
 } from "./offers.js";
 export type { OfferRow, OfferSourceState } from "./offers.js";

@@ -84,6 +84,26 @@ export type {
 } from "./risk.js";
 
 export {
+  SCORE_WEIGHTS,
+  scoreFromEvents,
+  applyMerchantScores,
+  excludeSuspendedMerchants,
+} from "./score.js";
+
+export type {
+  MerchantScoreEventKind,
+  MerchantScoreEvent,
+} from "./score.js";
+
+export { assembleEvidencePack } from "./evidence-pack.js";
+
+export type {
+  EvidencePack,
+  EvidencePackInput,
+  EvidencePackResult,
+} from "./evidence-pack.js";
+
+export {
   DEFAULT_WEBHOOK_REPLAY_WINDOW_MS,
   canCancelOrder,
   acceptInboundShipmentEvent,

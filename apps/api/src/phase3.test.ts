@@ -197,7 +197,10 @@ describe("U7 risk gate", () => {
     );
     const quote = (await quoteRes.json()) as { quote_id: string };
 
-    bindings.risk.setKillSwitch(true);
+    bindings.risk.setKillSwitch(true, {
+      actorId: "ops_test",
+      atUtc: bindings.nowUtc(),
+    });
 
     const commit = await app.fetch(
       new Request("http://localhost/v1/commits", {

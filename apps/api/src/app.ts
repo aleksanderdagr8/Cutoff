@@ -26,6 +26,7 @@ import {
   skipListLineHandler,
   upsertListLineHandler,
 } from "./handlers/list.js";
+import { getEvidencePackHandler } from "./handlers/evidence.js";
 import { verifyOutboundWebhook } from "@cutoff/adapters";
 
 export type AppEnv = {
@@ -186,6 +187,19 @@ export function createApp() {
   /** Agent: order tracking / shipment events. */
   app.get("/v1/orders/:orderId", async (c) => {
     const result = await getOrderTrackingHandler(
+      c.env,
+      c.req.param("orderId"),
+      c.req.header("Authorization") ?? undefined,
+    );
+    if ("error" in result) {
+      return c.json({ error: result.error }, result.status as 401);
+    }
+    return c.json(result);
+  });
+
+  /** Unit 12: exportable evidence pack. */
+  app.get("/v1/orders/:orderId/evidence", async (c) => {
+    const result = await getEvidencePackHandler(
       c.env,
       c.req.param("orderId"),
       c.req.header("Authorization") ?? undefined,

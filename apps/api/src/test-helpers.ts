@@ -1,5 +1,6 @@
 import {
   FakeAggregatorOfferAdapter,
+  FakeBrandFeedOfferAdapter,
   FakeFulfillAdapter,
   FakePayAdapter,
   FakeTaxAdapter,
@@ -17,6 +18,7 @@ import {
   MemoryReceiptRepository,
   MemoryRevocationKv,
   MemoryRiskRepository,
+  seedBrandFeedTopOffers,
   seedDualFulfillerOffers,
   seedFixtureCatalog,
 } from "@cutoff/db";
@@ -39,11 +41,16 @@ export function testBindings(
   const offers = seedDualFulfillerOffers(new MemoryOfferRepository(), {
     nowUtc: "2026-10-19T12:00:00.000Z",
   });
+  // Phase 6: second source on top items (priced above A so A still wins by default).
+  seedBrandFeedTopOffers(offers, {
+    nowUtc: "2026-10-19T12:00:00.000Z",
+  });
   return {
     pay,
     fulfill: overrides.fulfill ?? new FakeFulfillAdapter(),
     tax: new FakeTaxAdapter(),
     offerFeed: new FakeAggregatorOfferAdapter(),
+    brandOfferFeed: new FakeBrandFeedOfferAdapter(),
     orders: new MemoryOrderRepository(pay),
     households: new MemoryHouseholdRepository(),
     agents: new MemoryAgentCredentialRepository(revocationKv),

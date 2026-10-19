@@ -1,5 +1,6 @@
 import {
   FakeAggregatorOfferAdapter,
+  FakeBrandFeedOfferAdapter,
   FakeFulfillAdapter,
   FakePayAdapter,
   FakeTaxAdapter,
@@ -17,6 +18,7 @@ import {
   MemoryReceiptRepository,
   MemoryRevocationKv,
   MemoryRiskRepository,
+  seedBrandFeedTopOffers,
   seedDualFulfillerOffers,
   seedFixtureCatalog,
 } from "@cutoff/db";
@@ -27,18 +29,20 @@ import type { ApiBindings } from "./bindings.js";
  * Cloudflare Workers entry. Bindings are built once per isolate and injected
  * into handlers as plain deps — handlers never reach for ambient globals.
  *
- * Phase 5 uses memory repos + fake pay/fulfill/notify + receipt + list.
+ * Phase 6: dual offer feeds (aggregator + brand) + merchant_scores + evidence export.
  */
 function buildBindings(): ApiBindings {
   const pay = new FakePayAdapter();
   const revocationKv = new MemoryRevocationKv();
   const catalog = seedFixtureCatalog();
   const offers = seedDualFulfillerOffers(new MemoryOfferRepository());
+  seedBrandFeedTopOffers(offers);
   return {
     pay,
     fulfill: new FakeFulfillAdapter(),
     tax: new FakeTaxAdapter(),
     offerFeed: new FakeAggregatorOfferAdapter(),
+    brandOfferFeed: new FakeBrandFeedOfferAdapter(),
     orders: new MemoryOrderRepository(pay),
     households: new MemoryHouseholdRepository(),
     agents: new MemoryAgentCredentialRepository(revocationKv),

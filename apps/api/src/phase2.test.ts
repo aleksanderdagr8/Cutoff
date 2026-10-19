@@ -226,12 +226,13 @@ describe("U6 quote holds and never-substitute", () => {
 });
 
 describe("U5 dual fulfiller visibility to ranker", () => {
-  it("both fulfillers are visible before quote picks a winner", () => {
+  it("aggregator dual + brand feed are visible before quote picks a winner", () => {
     const bindings = testBindings();
     const towels = bindings.offers.listForItem("item_towels_12");
-    expect(towels).toHaveLength(2);
+    // Phase 6: brand feed adds a third source on top items.
+    expect(towels).toHaveLength(3);
     expect(new Set(towels.map((o) => o.fulfillerId))).toEqual(
-      new Set(["fulfiller_a", "fulfiller_b"]),
+      new Set(["fulfiller_a", "fulfiller_b", "fulfiller_brand"]),
     );
   });
 });
