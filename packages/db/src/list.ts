@@ -4,7 +4,12 @@
  * Unit 13–14: lastOrderedAt / nextDueAt / schedule columns (fixed cadence).
  */
 
-import { applySkipMode, computeNextDue, type SkipMode } from "@cutoff/domain";
+import {
+  applySkipMode,
+  computeNextDue,
+  isLineReadyForNudge,
+  type SkipMode,
+} from "@cutoff/domain";
 import type { MaybePromise } from "./types.js";
 import { ulid } from "./ulid.js";
 
@@ -65,6 +70,11 @@ export interface ListRepository {
     householdId: string,
   ): MaybePromise<ListLineRow | null>;
   listForHousehold(householdId: string): MaybePromise<readonly ListLineRow[]>;
+  /**
+   * Unit 20 cron: lines ready for nudge
+   * (paused=false, not snoozed, next_due_at - lead_days <= now).
+   */
+  listDueForNudgeCron(nowUtc: string): MaybePromise<readonly ListLineRow[]>;
   /** Unit 11 compat: pause the line. */
   skip(lineId: string): MaybePromise<ListLineRow | null>;
   /** Unit 15: next | snooze | pause. */
@@ -145,6 +155,18 @@ export class MemoryListRepository implements ListRepository {
 
   listForHousehold(householdId: string): readonly ListLineRow[] {
     return this.lines.filter((l) => l.householdId === householdId);
+  }
+
+  listDueForNudgeCron(nowUtc: string): readonly ListLineRow[] {
+    return this.lines.filter((l) =>
+      isLineReadyForNudge({
+        paused: l.paused,
+        snoozedUntil: l.snoozedUntil,
+        nextDueAt: l.nextDueAt,
+        leadDays: l.leadDays,
+        nowUtc,
+      }),
+    );
   }
 
   skip(lineId: string): ListLineRow | null {

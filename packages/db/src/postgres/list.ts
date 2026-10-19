@@ -2,7 +2,7 @@
  * Thin Postgres list_lines store (Unit 14 schedule columns).
  */
 
-import { applySkipMode, computeNextDue } from "@cutoff/domain";
+import { applySkipMode, computeNextDue, isLineReadyForNudge } from "@cutoff/domain";
 import type {
   ApplyListSkipInput,
   ApplyListSkipResult,
@@ -121,6 +121,27 @@ export class PostgresListRepository implements ListRepository {
       .eq("household_id", householdId);
     throwOnError(error, "list_lines.listForHousehold");
     return ((data ?? []) as DbListLine[]).map(mapListLine);
+  }
+
+  async listDueForNudgeCron(nowUtc: string): Promise<readonly ListLineRow[]> {
+    // Broad fetch of active lines; predicate applied in-process for lead_days.
+    const { data, error } = await this.db
+      .from("list_lines")
+      .select("*")
+      .eq("paused", false)
+      .not("next_due_at", "is", null);
+    throwOnError(error, "list_lines.listDueForNudgeCron");
+    return ((data ?? []) as DbListLine[])
+      .map(mapListLine)
+      .filter((l) =>
+        isLineReadyForNudge({
+          paused: l.paused,
+          snoozedUntil: l.snoozedUntil,
+          nextDueAt: l.nextDueAt,
+          leadDays: l.leadDays,
+          nowUtc,
+        }),
+      );
   }
 
   async skip(lineId: string): Promise<ListLineRow | null> {

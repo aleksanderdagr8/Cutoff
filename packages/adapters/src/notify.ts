@@ -114,14 +114,26 @@ export class TestWebhookReceiver {
 }
 
 /**
- * In-memory outbound queue. Writes land here after the order transaction;
- * `drain` signs and delivers (fake Cloudflare Queue consumer).
+ * Unit 20–21: enqueue surface for reorder nudges (and other outbound jobs).
+ * Durable row write happens first; queue delivery is Unit 21.
  */
-export class MemoryOutboundWebhookQueue {
+export type NudgeQueueJob = Omit<OutboundWebhookJob, "deliveryId"> & {
+  deliveryId?: string;
+};
+
+export interface NudgeQueue {
+  enqueue(job: NudgeQueueJob): void;
+}
+
+/**
+ * In-memory outbound queue. Writes land here after the durable write;
+ * `drain` signs and delivers (fake Cloudflare Queue consumer / Unit 21).
+ */
+export class MemoryOutboundWebhookQueue implements NudgeQueue {
   readonly pending: OutboundWebhookJob[] = [];
   readonly delivered: OutboundWebhookJob[] = [];
 
-  enqueue(job: Omit<OutboundWebhookJob, "deliveryId"> & { deliveryId?: string }): void {
+  enqueue(job: NudgeQueueJob): void {
     this.pending.push({
       deliveryId: job.deliveryId ?? `whdel_${this.pending.length + 1}`,
       url: job.url,

@@ -12,6 +12,7 @@ import {
 } from "@cutoff/db";
 import { createApp } from "./app.js";
 import type { ApiBindings } from "./bindings.js";
+import { runNudgeCron } from "./handlers/nudge-cron.js";
 
 /**
  * Cloudflare Workers entry. Bindings are built once per isolate and injected
@@ -47,6 +48,7 @@ function buildBindings(): ApiBindings {
     reorderNudges: repos.reorderNudges,
     quoteNudgeLinks: repos.quoteNudgeLinks,
     outboundWebhooks: new MemoryOutboundWebhookQueue(),
+    nudgeQueue: new MemoryOutboundWebhookQueue(),
     webhookSecret: "whsec_dev_replace_me",
     webhookTargetUrl: "https://example.invalid/webhooks/cutoff",
     revocationKv: repos.revocationKv,
@@ -65,5 +67,14 @@ export default {
     _ctx: ExecutionContext,
   ): Promise<Response> {
     return app.fetch(request, bindings);
+  },
+
+  /** Unit 20: every 15m — write idempotent nudge rows + enqueue (delivery Unit 21). */
+  async scheduled(
+    _controller: ScheduledController,
+    _env: unknown,
+    _ctx: ExecutionContext,
+  ): Promise<void> {
+    await runNudgeCron(bindings);
   },
 };

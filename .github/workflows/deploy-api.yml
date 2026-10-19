@@ -1,0 +1,46 @@
+name: deploy-api
+on:
+  push:
+    branches: [main]
+    paths:
+      - "apps/api/**"
+      - "packages/**"
+      - "pnpm-lock.yaml"
+      - ".github/workflows/deploy-api.yml"
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    name: Deploy cutoff-api
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Require Cloudflare token
+        id: gate
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+        run: |
+          if [ -z "${CLOUDFLARE_API_TOKEN}" ]; then
+            echo "skip=true" >> "$GITHUB_OUTPUT"
+            echo "CLOUDFLARE_API_TOKEN not set — skipping deploy (see apps/api/DEPLOY.md)"
+          else
+            echo "skip=false" >> "$GITHUB_OUTPUT"
+          fi
+      - uses: pnpm/action-setup@v4
+        if: steps.gate.outputs.skip == 'false'
+        with:
+          version: 9.15.0
+      - uses: actions/setup-node@v4
+        if: steps.gate.outputs.skip == 'false'
+        with:
+          node-version: "22"
+          cache: "pnpm"
+      - name: Install
+        if: steps.gate.outputs.skip == 'false'
+        run: pnpm install --frozen-lockfile
+      - name: Deploy cutoff-api Worker
+        if: steps.gate.outputs.skip == 'false'
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID || '6f016e176bf8507b75cecde460c5689d' }}
+        run: pnpm --filter @cutoff/api run deploy

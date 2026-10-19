@@ -2,4 +2,9 @@ name = "cutoff-api"
 main = "src/index.ts"
 compatibility_date = "2024-12-01"
 
-# Phase 0: no live bindings. Queues/KV/DO arrive with later units.
+# Unit 20: reorder nudge cron (every 15 minutes).
+[triggers]
+crons = ["*/15 * * * *"]
+
+# Unit 21 will wire cutoff-nudges producer/consumer + DLQ.
+# Queues/KV arrive with later units; cron enqueues via in-process NudgeQueue today.

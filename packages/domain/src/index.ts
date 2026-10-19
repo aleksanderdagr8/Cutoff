@@ -146,6 +146,7 @@ export {
   stickyFulfillerForReorder,
   computeNextDue,
   isDueWithin,
+  isLineReadyForNudge,
 } from "./list.js";
 
 export type {
@@ -156,4 +157,5 @@ export type {
   ApplySkipModeResult,
   ComputeNextDueInput,
   ComputeNextDueResult,
+  IsLineReadyForNudgeInput,
 } from "./list.js";
