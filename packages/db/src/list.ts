@@ -1,6 +1,7 @@
 /**
  * Household list module. Owns list_lines only.
  * Unit 11: cadence hint, never-substitute, last quote/order; skip pauses.
+ * Unit 13: lastOrderedAt in-memory for fixed-cadence due (SQL column in Unit 14).
  */
 
 import { applyListLineSkip } from "@cutoff/domain";
@@ -16,6 +17,8 @@ export type ListLineRow = {
   neverSubstitute: boolean;
   lastQuoteId: string | null;
   lastOrderId: string | null;
+  /** UTC ISO of last successful order; drives computeNextDue (Unit 13). */
+  lastOrderedAt: string | null;
   paused: boolean;
   createdAt: string;
 };
@@ -58,6 +61,7 @@ export class MemoryListRepository {
       neverSubstitute: input.neverSubstitute ?? false,
       lastQuoteId: null,
       lastOrderId: null,
+      lastOrderedAt: null,
       paused: false,
       createdAt: input.nowUtc,
     };
@@ -92,10 +96,11 @@ export class MemoryListRepository {
     if (row) row.lastQuoteId = quoteId;
   }
 
-  recordOrder(lineId: string, orderId: string): void {
+  recordOrder(lineId: string, orderId: string, nowUtc: string): void {
     const row = this.get(lineId);
     if (row) {
       row.lastOrderId = orderId;
+      row.lastOrderedAt = nowUtc;
       row.paused = false;
     }
   }

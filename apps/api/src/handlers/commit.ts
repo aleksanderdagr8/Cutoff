@@ -162,7 +162,7 @@ export async function commitHandler(
       .listForHousehold(result.order.householdId)
       .find((l) => l.canonicalItemId === result.order.canonicalItemId);
     if (line) {
-      bindings.list.recordOrder(line.lineId, result.order.orderId);
+      bindings.list.recordOrder(line.lineId, result.order.orderId, nowUtc);
     }
   }
 

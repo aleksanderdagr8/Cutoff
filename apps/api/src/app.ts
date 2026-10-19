@@ -21,6 +21,7 @@ import {
 } from "./handlers/fulfill.js";
 import { getReceiptHandler, skipReceiptHandler } from "./handlers/receipt.js";
 import {
+  getDueListHandler,
   getListHandler,
   reorderHandler,
   skipListLineHandler,
@@ -255,6 +256,19 @@ export function createApp() {
     const result = await getListHandler(
       c.env,
       c.req.header("Authorization") ?? undefined,
+    );
+    if ("error" in result) {
+      return c.json({ error: result.error }, result.status as 401);
+    }
+    return c.json(result);
+  });
+
+  /** Unit 13: due / overdue list lines (fixed cadence). */
+  app.get("/v1/list/due", async (c) => {
+    const result = await getDueListHandler(
+      c.env,
+      c.req.header("Authorization") ?? undefined,
+      c.req.query("within_days"),
     );
     if ("error" in result) {
       return c.json({ error: result.error }, result.status as 401);

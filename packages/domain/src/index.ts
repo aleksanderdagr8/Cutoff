@@ -135,6 +135,13 @@ export {
   hasBannedReorderField,
   applyListLineSkip,
   stickyFulfillerForReorder,
+  computeNextDue,
+  isDueWithin,
 } from "./list.js";
 
-export type { ReorderBannedField, ListLinePauseState } from "./list.js";
+export type {
+  ReorderBannedField,
+  ListLinePauseState,
+  ComputeNextDueInput,
+  ComputeNextDueResult,
+} from "./list.js";
