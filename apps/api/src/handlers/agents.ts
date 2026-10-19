@@ -1,5 +1,25 @@
 import { IssueAgentRequestSchema } from "@cutoff/contracts";
+import { authenticateAgent } from "../auth.js";
 import type { ApiBindings } from "../bindings.js";
+
+/**
+ * Unit 17: agent introspect (Bearer key → scopes).
+ * Used by apps/mcp for scope-filtered tools/list. No secrets returned.
+ */
+export async function getAgentMeHandler(
+  bindings: ApiBindings,
+  authorization: string | undefined,
+) {
+  const auth = await authenticateAgent(bindings, authorization);
+  if (!auth.ok) {
+    return { error: auth.error, status: auth.status };
+  }
+  return {
+    key_id: auth.agent.keyId,
+    scopes: [...auth.agent.scopes],
+    mandate_ids: [...auth.agent.mandateIds],
+  };
+}
 
 /** Human/console: issue agent credential. Secret returned once. */
 export async function issueAgentHandler(

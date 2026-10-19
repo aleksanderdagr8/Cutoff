@@ -49,6 +49,34 @@ importers:
         specifier: ^3.99.0
         version: 3.114.17(@cloudflare/workers-types@4.20260702.1)
 
+  apps/mcp:
+    dependencies:
+      '@cutoff/contracts':
+        specifier: workspace:*
+        version: link:../../packages/contracts
+      '@cutoff/domain':
+        specifier: workspace:*
+        version: link:../../packages/domain
+      hono:
+        specifier: ^4.6.14
+        version: 4.13.13
+      zod:
+        specifier: ^3.24.1
+        version: 3.25.76
+    devDependencies:
+      '@cloudflare/workers-types':
+        specifier: ^4.20241218.0
+        version: 4.20260702.1
+      typescript:
+        specifier: ^5.7.2
+        version: 5.9.3
+      vitest:
+        specifier: ^2.1.8
+        version: 2.1.9(@types/node@22.20.5)(terser@5.36.0)
+      wrangler:
+        specifier: ^3.99.0
+        version: 3.114.17(@cloudflare/workers-types@4.20260702.1)
+
   apps/web:
     dependencies:
       '@cutoff/adapters':

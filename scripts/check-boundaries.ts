@@ -9,6 +9,7 @@ import {
   commitImportsFulfill,
   domainPurityViolations,
   importsForeignTables,
+  mcpImportsDb,
   usesSupabaseOutsideDb,
 } from "./boundaries-lib.js";
 
@@ -68,6 +69,12 @@ function checkFile(file: string): void {
   if (commitImportsFulfill(src, rel)) {
     failures.push(
       `${rel}: commit handler must not import fulfill adapter directly`,
+    );
+  }
+
+  if (mcpImportsDb(src, pkg)) {
+    failures.push(
+      `${rel}: apps/mcp must not import @cutoff/db (API service binding only)`,
     );
   }
 }

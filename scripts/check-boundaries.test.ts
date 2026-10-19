@@ -2,7 +2,7 @@ import { describe, expect, it, afterEach } from "vitest";
 import { writeFileSync, mkdirSync, existsSync, rmSync } from "node:fs";
 import { join } from "node:path";
 import { execFileSync } from "node:child_process";
-import { importsForeignTables } from "./boundaries-lib.js";
+import { importsForeignTables, mcpImportsDb } from "./boundaries-lib.js";
 
 const root = join(import.meta.dirname, "..");
 const probeDir = join(root, "packages/domain/src/__boundary_probe__");
@@ -22,6 +22,15 @@ describe("U0 module boundary check", () => {
       { cwd: root, encoding: "utf8" },
     );
     expect(out).toContain("Boundary check passed");
+  });
+
+  it("rejects apps/mcp importing @cutoff/db", () => {
+    expect(
+      mcpImportsDb('import { something } from "@cutoff/db";', "apps/mcp"),
+    ).toBe(true);
+    expect(mcpImportsDb('import { something } from "@cutoff/db";', "apps/api")).toBe(
+      false,
+    );
   });
 
   it("rejects a module import of another module's tables", () => {

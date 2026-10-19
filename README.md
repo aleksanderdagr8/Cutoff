@@ -81,6 +81,10 @@ Reorder schedule persistence: migration `20261020090000_reorder_schedule.sql` (`
 
 Agent-readable `GET /v1/orders/:orderId` receipt summary (allowlist serializer, `summary`, `why_this_seller`, `receipt_url`). No-PII contract test.
 
+## Phase 11 (Unit 17)
+
+MCP scaffold (`apps/mcp`): Streamable HTTP `/mcp`, service binding to `cutoff-api`, Bearer passthrough, scope-filtered `tools/list`. `GET /v1/agent/me` for introspect. Tool bodies land in Unit 18.
+
 ## Agent auth
 
 `Authorization: Bearer ck_live_…`  

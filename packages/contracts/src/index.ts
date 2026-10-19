@@ -121,6 +121,17 @@ export const IssueAgentRequestSchema = z
 
 export type IssueAgentRequest = z.infer<typeof IssueAgentRequestSchema>;
 
+/** Unit 17 — agent introspect for MCP tools/list scope filtering. */
+export const AgentMeResponseSchema = z
+  .object({
+    key_id: z.string().min(1),
+    scopes: z.array(AgentScopeSchema).min(1),
+    mandate_ids: z.array(z.string().min(1)),
+  })
+  .strict();
+
+export type AgentMeResponse = z.infer<typeof AgentMeResponseSchema>;
+
 /** Phase 2 quote — catalog + offers select the winner; no client amount. */
 export const QuoteRequestSchema = z
   .object({
