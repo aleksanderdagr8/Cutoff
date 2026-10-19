@@ -5,8 +5,10 @@ import {
 } from "@cutoff/contracts";
 import {
   checkMandate,
+  computeNextDue,
   hasBannedReorderField,
   hasScope,
+  isDueWithin,
   quoteAmountsForPack,
   stickyFulfillerForReorder,
 } from "@cutoff/domain";
@@ -14,20 +16,35 @@ import { authenticateAgent } from "../auth.js";
 import type { ApiBindings } from "../bindings.js";
 import { rankedCandidatesForItem } from "../offer-select.js";
 
-function linePayload(line: {
-  lineId: string;
-  canonicalItemId: string;
-  cadenceHintDays: number | null;
-  neverSubstitute: boolean;
-  lastQuoteId: string | null;
-  lastOrderId: string | null;
-  paused: boolean;
-  mandateId: string;
-}) {
+const DEFAULT_DUE_WITHIN_DAYS = 7;
+const MAX_DUE_WITHIN_DAYS = 365;
+
+function linePayload(
+  bindings: ApiBindings,
+  line: {
+    lineId: string;
+    canonicalItemId: string;
+    cadenceHintDays: number | null;
+    neverSubstitute: boolean;
+    lastQuoteId: string | null;
+    lastOrderId: string | null;
+    lastOrderedAt: string | null;
+    paused: boolean;
+    mandateId: string;
+  },
+) {
+  const due = computeNextDue({
+    paused: line.paused,
+    lastOrderedAt: line.lastOrderedAt,
+    cadenceHintDays: line.cadenceHintDays,
+  });
+  const item = bindings.catalog.get(line.canonicalItemId);
   return {
     line_id: line.lineId,
     canonical_item_id: line.canonicalItemId,
+    display_name: item?.description ?? null,
     cadence_hint_days: line.cadenceHintDays,
+    next_due_at: due.nextDueAt,
     never_substitute: line.neverSubstitute,
     last_quote_id: line.lastQuoteId,
     last_order_id: line.lastOrderId,
@@ -52,7 +69,70 @@ export async function getListHandler(
   const lines = bindings.list.listForHousehold(auth.agent.householdId);
   return {
     household_id: auth.agent.householdId,
-    lines: lines.map(linePayload),
+    lines: lines.map((line) => linePayload(bindings, line)),
+  };
+}
+
+/**
+ * Unit 13: lines due or overdue within `within_days` (default 7).
+ * Fixed cadence only; paused / no history never appear.
+ */
+export async function getDueListHandler(
+  bindings: ApiBindings,
+  authorization: string | undefined,
+  withinDaysRaw: string | undefined,
+) {
+  const auth = await authenticateAgent(bindings, authorization);
+  if (!auth.ok) {
+    return { error: auth.error, status: auth.status };
+  }
+  if (!hasScope(auth.agent.scopes, "read_list")) {
+    return { error: "unauthenticated" as const, status: 401 as const };
+  }
+
+  let withinDays = DEFAULT_DUE_WITHIN_DAYS;
+  if (withinDaysRaw !== undefined && withinDaysRaw !== "") {
+    const parsed = Number(withinDaysRaw);
+    if (
+      !Number.isInteger(parsed) ||
+      parsed < 0 ||
+      parsed > MAX_DUE_WITHIN_DAYS
+    ) {
+      return { error: "invalid_body" as const, status: 400 as const };
+    }
+    withinDays = parsed;
+  }
+
+  const nowUtc = bindings.nowUtc();
+  const lines = bindings.list.listForHousehold(auth.agent.householdId);
+  const dueLines = [];
+
+  for (const line of lines) {
+    const due = computeNextDue({
+      paused: line.paused,
+      lastOrderedAt: line.lastOrderedAt,
+      cadenceHintDays: line.cadenceHintDays,
+    });
+    if (!isDueWithin(due.nextDueAt, nowUtc, withinDays) || due.reason == null) {
+      continue;
+    }
+    dueLines.push({
+      ...linePayload(bindings, line),
+      reason: due.reason,
+      nudge_id: null as string | null,
+    });
+  }
+
+  dueLines.sort((a, b) => {
+    const aMs = Date.parse(a.next_due_at ?? "");
+    const bMs = Date.parse(b.next_due_at ?? "");
+    return aMs - bMs;
+  });
+
+  return {
+    household_id: auth.agent.householdId,
+    within_days: withinDays,
+    lines: dueLines,
   };
 }
 
@@ -84,7 +164,7 @@ export async function upsertListLineHandler(
     nowUtc: bindings.nowUtc(),
   });
 
-  return linePayload(line);
+  return linePayload(bindings, line);
 }
 
 /**

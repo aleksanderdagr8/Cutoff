@@ -253,7 +253,7 @@ async function seedIfNeeded(): Promise<OpsStoreState> {
   if (!towelsCommit.ok) throw new Error("ops_seed_towels_commit");
   state.orders.appendStatus(towelsCommit.order.orderId, "placed", t2);
   state.list.recordQuote(towelsLine.lineId, towelsQuote.quote.quoteId);
-  state.list.recordOrder(towelsLine.lineId, towelsCommit.order.orderId);
+  state.list.recordOrder(towelsLine.lineId, towelsCommit.order.orderId, t2);
   state.receipts.issue({
     orderId: towelsCommit.order.orderId,
     householdId: home.household.householdId,
@@ -309,7 +309,7 @@ async function seedIfNeeded(): Promise<OpsStoreState> {
   });
   if (!coffeeCommit.ok) throw new Error("ops_seed_coffee_commit");
   state.list.recordQuote(loftCoffee.lineId, coffeeQuote.quote.quoteId);
-  state.list.recordOrder(loftCoffee.lineId, coffeeCommit.order.orderId);
+  state.list.recordOrder(loftCoffee.lineId, coffeeCommit.order.orderId, t3);
 
   // Never-committed lane: open hold on filter that never committed
   const filterQuote = state.quotes.create({

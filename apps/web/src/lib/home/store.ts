@@ -198,7 +198,7 @@ async function seedIfNeeded(): Promise<HomeStoreState> {
   });
   state.orders.appendStatus(commit.order.orderId, "placed", nowUtc);
   state.list.recordQuote(towels.lineId, quote.quote.quoteId);
-  state.list.recordOrder(towels.lineId, commit.order.orderId);
+  state.list.recordOrder(towels.lineId, commit.order.orderId, nowUtc);
   state.receipts.issue({
     orderId: commit.order.orderId,
     householdId: household.householdId,

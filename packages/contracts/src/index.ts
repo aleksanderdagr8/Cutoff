@@ -308,11 +308,15 @@ export const ReceiptSkipResponseSchema = z.object({
 
 export type ReceiptSkipResponse = z.infer<typeof ReceiptSkipResponseSchema>;
 
-/** Unit 11 — household list line. */
+/** Unit 11 — household list line. Unit 13 adds display_name + next_due_at. */
 export const ListLineSchema = z.object({
   line_id: z.string().min(1),
   canonical_item_id: z.string().min(1),
+  /** Catalog plain-text description (agent-facing display name). */
+  display_name: z.string().min(1).nullable(),
   cadence_hint_days: z.number().int().positive().nullable(),
+  /** Computed fixed-cadence due (Unit 13); null when never due. */
+  next_due_at: UtcIsoSchema.nullable(),
   never_substitute: z.boolean(),
   last_quote_id: z.string().min(1).nullable(),
   last_order_id: z.string().min(1).nullable(),
@@ -328,6 +332,23 @@ export const ListResponseSchema = z.object({
 });
 
 export type ListResponse = z.infer<typeof ListResponseSchema>;
+
+/** Unit 13 — lines due/overdue within a look-ahead window. */
+export const DueListLineSchema = ListLineSchema.extend({
+  reason: z.string().min(1),
+  /** Present once reorder nudges exist (Unit 20+); null in Unit 13. */
+  nudge_id: z.string().min(1).nullable(),
+});
+
+export type DueListLine = z.infer<typeof DueListLineSchema>;
+
+export const DueListResponseSchema = z.object({
+  household_id: z.string().min(1),
+  within_days: z.number().int().nonnegative(),
+  lines: z.array(DueListLineSchema),
+});
+
+export type DueListResponse = z.infer<typeof DueListResponseSchema>;
 
 export const UpsertListLineRequestSchema = z
   .object({

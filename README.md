@@ -65,6 +65,10 @@ pnpm run check:boundaries
 
 Second source (brand feed) on top items; `merchant_scores` from events; evidence pack export; kill switch + merchant suspend. Fakes in CI.
 
+## Phase 7 (Unit 13)
+
+Fixed-cadence due list for agents: `GET /v1/list/due?within_days=7`. `ListLine` includes `display_name` + `next_due_at` (`computeNextDue` in `@cutoff/domain`). Learned cadence deferred.
+
 ## Agent auth
 
 `Authorization: Bearer ck_live_…`  
@@ -73,7 +77,7 @@ Scopes: `quote`, `commit`, `read_list`. Revoked keys get `{ "error": "revoked" }
 ## Quote / Commit / List
 
 `POST /v1/quotes` → `POST /v1/commits` with evidence + `Idempotency-Key`.  
-`GET /v1/list` · `POST /v1/list/reorder` · `POST /v1/list/skip`  
+`GET /v1/list` · `GET /v1/list/due` · `POST /v1/list/reorder` · `POST /v1/list/skip`  
 Successful capture places via `FulfillAdapter` and issues a `receipt_token`.
 
 ## Evidence
