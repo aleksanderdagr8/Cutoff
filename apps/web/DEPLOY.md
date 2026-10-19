@@ -2,10 +2,26 @@
 
 OpenNext adapter → Worker `cutoff-web` on custom domains:
 
-- `https://callcutoff.com` (apex) — **live now** (interim branded landing until OpenNext overwrites)
+- `https://callcutoff.com` (apex) — full OpenNext app (`/`, `/home`, `/ops`)
 - `https://www.callcutoff.com` → 308 redirect to apex (Worker + Next middleware)
 
 Runtime secrets already set on the Worker via Cloudflare API (anon URL/key). Re-set after a wipe if needed.
+
+## MIME / Content-Type (critical)
+
+Workers Static Assets attach `Content-Type` from the **multipart part type at upload**. Wrangler sets this from the file extension. If you upload via the raw Assets API without a part `Content-Type`, Cloudflare serves `application/octet-stream` and browsers **will not apply CSS** (unstyled HTML, default blue links).
+
+Prefer `pnpm --filter @cutoff/web deploy` (Wrangler). If using a custom API/MCP path:
+
+1. Set each asset part’s Content-Type (`text/css`, `application/javascript`, `font/woff2`, …).
+2. Include `assets.config._headers` from `.open-next/assets/_headers` (see `public/_headers`) so Cache-Control + Content-Type overrides apply when assets are served ahead of the Worker.
+
+After deploy, verify:
+
+```bash
+curl -sSI https://callcutoff.com/_next/static/css/<hash>.css | grep -i content-type
+# expect: text/css
+```
 
 ## One-time: secrets & Auth URLs
 
