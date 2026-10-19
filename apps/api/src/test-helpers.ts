@@ -82,6 +82,7 @@ export function testBindings(
     reorderNudges: new MemoryReorderNudgeRepository(),
     quoteNudgeLinks: new MemoryQuoteNudgeLinkStore(),
     outboundWebhooks: new MemoryOutboundWebhookQueue(),
+    nudgeQueue: new MemoryOutboundWebhookQueue(),
     webhookSecret: TEST_WEBHOOK_SECRET,
     webhookTargetUrl: "https://buyer-agent.example/webhooks/cutoff",
     revocationKv,

@@ -6,8 +6,8 @@ Account: `6f016e176bf8507b75cecde460c5689d`
 
 ## Prerequisites
 
-1. `cutoff-api` Worker already deployed (service binding `API` → `cutoff-api`).
-2. Cloudflare API token with Workers edit + route permissions (`CLOUDFLARE_API_TOKEN`).
+1. **`cutoff-api` Worker must already exist** in the account (service binding `API` → `cutoff-api`). Deploy it first: `pnpm --filter @cutoff/api run deploy` or workflow `deploy-api`. Without it, `deploy-mcp` fails with Cloudflare error `10143` (Worker not found).
+2. Cloudflare API token with Workers edit + route permissions (`CLOUDFLARE_API_TOKEN` repo secret — same as `deploy-web`).
 3. DNS for `mcp.callcutoff.com` is created on first deploy via `custom_domain = true`.
 
 ## Local

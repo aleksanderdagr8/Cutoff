@@ -17,7 +17,12 @@ export type {
 } from "./fulfill.js";
 export { FakeFulfillAdapter, AggregatorFulfillAdapter } from "./fulfill.js";
 
-export type { OutboundWebhookJob, SignedWebhookHeaders } from "./notify.js";
+export type {
+  OutboundWebhookJob,
+  SignedWebhookHeaders,
+  NudgeQueue,
+  NudgeQueueJob,
+} from "./notify.js";
 export {
   signOutboundWebhook,
   verifyOutboundWebhook,

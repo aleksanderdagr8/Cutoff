@@ -1,6 +1,7 @@
 import type {
   FulfillAdapter,
   MemoryOutboundWebhookQueue,
+  NudgeQueue,
   OfferFeedAdapter,
   PayAdapter,
   TaxAdapter,
@@ -51,6 +52,8 @@ export type ApiBindings = {
   reorderNudges: ReorderNudgeRepository;
   quoteNudgeLinks: QuoteNudgeLinkStore;
   outboundWebhooks: MemoryOutboundWebhookQueue;
+  /** Unit 20: reorder nudge producer queue (consumer is Unit 21). */
+  nudgeQueue: NudgeQueue;
   /** Shared secret for signing outbound + verifying inbound (injected). */
   webhookSecret: string;
   /** Buyer-agent webhook URL (injected). */

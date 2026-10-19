@@ -5,6 +5,7 @@ import {
   computeNextDue,
   hasBannedReorderField,
   isDueWithin,
+  isLineReadyForNudge,
   stickyFulfillerForReorder,
 } from "./list.js";
 
@@ -80,6 +81,46 @@ describe("Unit 13 computeNextDue (fixed cadence)", () => {
     expect(isDueWithin("2026-10-27T12:00:00.000Z", now, 7)).toBe(false);
     expect(isDueWithin("2026-10-01T12:00:00.000Z", now, 7)).toBe(true);
     expect(isDueWithin(null, now, 7)).toBe(false);
+  });
+
+  it("isLineReadyForNudge respects pause, snooze, and lead_days", () => {
+    const now = "2026-10-19T12:00:00.000Z";
+    expect(
+      isLineReadyForNudge({
+        paused: false,
+        snoozedUntil: null,
+        nextDueAt: "2026-10-22T12:00:00.000Z",
+        leadDays: 3,
+        nowUtc: now,
+      }),
+    ).toBe(true);
+    expect(
+      isLineReadyForNudge({
+        paused: false,
+        snoozedUntil: null,
+        nextDueAt: "2026-10-23T12:00:00.000Z",
+        leadDays: 3,
+        nowUtc: now,
+      }),
+    ).toBe(false);
+    expect(
+      isLineReadyForNudge({
+        paused: true,
+        snoozedUntil: null,
+        nextDueAt: "2026-10-19T12:00:00.000Z",
+        leadDays: 3,
+        nowUtc: now,
+      }),
+    ).toBe(false);
+    expect(
+      isLineReadyForNudge({
+        paused: false,
+        snoozedUntil: "2026-10-26T12:00:00.000Z",
+        nextDueAt: "2026-10-19T12:00:00.000Z",
+        leadDays: 3,
+        nowUtc: now,
+      }),
+    ).toBe(false);
   });
 });
 

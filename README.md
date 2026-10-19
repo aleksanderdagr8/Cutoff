@@ -93,6 +93,10 @@ Seven MCP tools (`cutoff_list_items`, `cutoff_due_items`, `cutoff_quote`, `cutof
 
 MCP rate limits (30 quotes / 5 commits per key per minute), `protocol:"mcp"` + `actor_chain` on evidence, deploy workflow (`deploy-mcp.yml`), route `mcp.callcutoff.com`. See [`apps/mcp/DEPLOY.md`](./apps/mcp/DEPLOY.md).
 
+## Phase 14 (Unit 20)
+
+API cron (`*/15 * * * *`) + idempotent `reorder_nudges` writer + enqueue to `NudgeQueue` (delivery is Unit 21).
+
 ## Agent auth
 
 `Authorization: Bearer ck_live_…`  

@@ -201,3 +201,34 @@ export function isDueWithin(
   if (Number.isNaN(dueMs) || Number.isNaN(nowMs)) return false;
   return dueMs <= nowMs + withinDays * MS_PER_DAY;
 }
+
+export type IsLineReadyForNudgeInput = {
+  paused: boolean;
+  snoozedUntil: string | null;
+  nextDueAt: string | null;
+  leadDays: number;
+  nowUtc: string;
+};
+
+/**
+ * Unit 20 cron predicate:
+ * paused=false AND coalesce(snoozed_until,'-infinity') < now
+ * AND next_due_at - lead_days <= now.
+ */
+export function isLineReadyForNudge(input: IsLineReadyForNudgeInput): boolean {
+  if (input.paused) return false;
+  if (input.nextDueAt == null) return false;
+  const nowMs = Date.parse(input.nowUtc);
+  const dueMs = Date.parse(input.nextDueAt);
+  if (Number.isNaN(nowMs) || Number.isNaN(dueMs)) return false;
+  if (
+    input.snoozedUntil != null &&
+    Date.parse(input.snoozedUntil) > nowMs
+  ) {
+    return false;
+  }
+  const leadDays = Number.isFinite(input.leadDays)
+    ? Math.max(0, Math.trunc(input.leadDays))
+    : 0;
+  return dueMs - leadDays * MS_PER_DAY <= nowMs;
+}
