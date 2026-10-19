@@ -3,14 +3,11 @@ import "server-only";
 import { cookies } from "next/headers";
 import { HOME_SESSION_COOKIE, homeDevBypassEnabled } from "./config";
 import { ensureHomeMember } from "./member";
+import { alignBypassSession } from "./store";
 import { createHomeServerClient } from "./supabase/server";
+import type { HomeSession } from "./types";
 
-export type HomeSession = {
-  memberId: string;
-  householdId: string;
-  email: string;
-  householdName: string;
-};
+export type { HomeSession } from "./types";
 
 async function readBypassCookieSession(): Promise<HomeSession | null> {
   const jar = await cookies();
@@ -49,20 +46,36 @@ async function readSupabaseHomeSession(): Promise<HomeSession | null> {
 
 export async function readHomeSession(): Promise<HomeSession | null> {
   if (homeDevBypassEnabled()) {
-    return readBypassCookieSession();
+    const cookie = await readBypassCookieSession();
+    if (!cookie) return null;
+    // After server restart the in-memory demo household is reseeded; an old
+    // bypass cookie still "looks" signed-in but fails mutations with 401.
+    const aligned = await alignBypassSession(cookie);
+    if (
+      aligned.memberId !== cookie.memberId ||
+      aligned.householdId !== cookie.householdId ||
+      aligned.householdName !== cookie.householdName
+    ) {
+      await writeHomeSession(aligned);
+    }
+    return aligned;
   }
   return readSupabaseHomeSession();
 }
 
 export async function writeHomeSession(session: HomeSession): Promise<void> {
   const jar = await cookies();
-  jar.set(HOME_SESSION_COOKIE, JSON.stringify(session), {
-    httpOnly: true,
-    sameSite: "lax",
-    path: "/",
-    secure: process.env.NODE_ENV === "production",
-    maxAge: 60 * 60 * 24 * 14,
-  });
+  try {
+    jar.set(HOME_SESSION_COOKIE, JSON.stringify(session), {
+      httpOnly: true,
+      sameSite: "lax",
+      path: "/",
+      secure: process.env.NODE_ENV === "production",
+      maxAge: 60 * 60 * 24 * 14,
+    });
+  } catch {
+    // RSC render cannot set cookies — API routes / actions still heal.
+  }
 }
 
 export async function clearHomeSession(): Promise<void> {

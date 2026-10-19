@@ -27,6 +27,7 @@ export function SignInForm({ bypass, supabaseConfigured }: Props) {
     startTransition(async () => {
       const res = await fetch("/api/home/session", {
         method: "POST",
+        credentials: "include",
         headers: { "content-type": "application/json" },
         body: JSON.stringify(
           bypass

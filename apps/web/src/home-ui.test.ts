@@ -68,4 +68,34 @@ describe("household /home UI hygiene", () => {
       true,
     );
   });
+
+  it("home mutation clients send credentials so session cookies ride along", () => {
+    const root = join(import.meta.dirname, "components/home");
+    for (const name of [
+      "mandate-client.tsx",
+      "keys-client.tsx",
+      "list-client.tsx",
+      "receipt-actions.tsx",
+      "sign-in-form.tsx",
+      "sign-out-button.tsx",
+    ]) {
+      const src = readFileSync(join(root, name), "utf8");
+      expect(src, name).toContain('credentials: "include"');
+    }
+  });
+
+  it("bypass demo household uses stable ids and heals stale cookies", () => {
+    const store = readFileSync(
+      join(import.meta.dirname, "lib/home/store.ts"),
+      "utf8",
+    );
+    expect(store).toContain("DEMO_HOUSEHOLD_ID");
+    expect(store).toContain("DEMO_MEMBER_ID");
+    expect(store).toContain("alignBypassSession");
+    const session = readFileSync(
+      join(import.meta.dirname, "lib/home/session.ts"),
+      "utf8",
+    );
+    expect(session).toContain("alignBypassSession");
+  });
 });

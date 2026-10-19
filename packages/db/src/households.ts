@@ -60,17 +60,21 @@ export class MemoryHouseholdRepository {
     return row;
   }
 
-  createHousehold(name: string, memberEmail: string): {
+  createHousehold(
+    name: string,
+    memberEmail: string,
+    ids?: { householdId?: string; memberId?: string },
+  ): {
     household: HouseholdRow;
     member: MemberRow;
   } {
     const household: HouseholdRow = {
-      householdId: ulid(),
+      householdId: ids?.householdId ?? ulid(),
       name,
       createdAt: new Date().toISOString(),
     };
     const member: MemberRow = {
-      memberId: ulid(),
+      memberId: ids?.memberId ?? ulid(),
       householdId: household.householdId,
       email: memberEmail,
       createdAt: new Date().toISOString(),
