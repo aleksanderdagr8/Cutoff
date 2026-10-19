@@ -7,10 +7,12 @@ import {
 } from "@cutoff/domain";
 import { authenticateAgent } from "../auth.js";
 import type { ApiBindings } from "../bindings.js";
+import { placeAfterCapture } from "./fulfill.js";
 
 /**
- * Phase 3 commit: risk gate → mandate re-check → evidence + pay.
+ * Phase 3–4 commit: risk gate → mandate re-check → evidence + pay → place.
  * Charge amount is always the quote landed cents (body cannot raise it).
+ * Place goes through bindings (commit must not import fulfill adapters).
  */
 export async function commitHandler(
   bindings: ApiBindings,
@@ -118,12 +120,61 @@ export async function commitHandler(
     bindings.quotes.markCommitted(quote.quoteId, nowUtc);
   }
 
+  // Phase 4: place after capture. Failure enqueues refund (no bare captured).
+  let status = result.order.status;
+  let jobId: string | undefined;
+  let refundId: string | undefined;
+  if (result.created && result.order.status === "captured") {
+    const placed = await placeAfterCapture(bindings, {
+      orderId: result.order.orderId,
+      householdId: result.order.householdId,
+      canonicalItemId: result.order.canonicalItemId,
+      amountCents: result.order.amountCents,
+      quoteId: result.order.quoteId,
+    });
+    if (placed.ok) {
+      jobId = placed.jobId;
+      status = "placed";
+    } else {
+      refundId = placed.refundId;
+      // Stay captured but refund queued — not a silent stranded capture.
+    }
+  } else if (!result.created && result.order.status === "placed") {
+    const job = bindings.fulfillment.getJobForOrder(result.order.orderId);
+    jobId = job?.jobId;
+    status = result.order.status;
+  }
+
+  // Unit 10: receipt token for the cardholder charge-descriptor link.
+  let receiptToken: string | undefined;
+  if (result.order.status !== "failed") {
+    const receipt = bindings.receipts.issue({
+      orderId: result.order.orderId,
+      householdId: result.order.householdId,
+      nowUtc,
+    });
+    receiptToken = receipt.receiptToken;
+  }
+
+  // Unit 11: update matching list line last_order when present.
+  if (result.created && result.order.status !== "failed") {
+    const line = bindings.list
+      .listForHousehold(result.order.householdId)
+      .find((l) => l.canonicalItemId === result.order.canonicalItemId);
+    if (line) {
+      bindings.list.recordOrder(line.lineId, result.order.orderId);
+    }
+  }
+
   return {
     order_id: result.order.orderId,
     household_id: result.order.householdId,
     amount_cents: result.order.amountCents,
     created: result.created,
-    status: result.order.status,
+    status,
     evidence_id: result.evidence.evidenceId,
+    ...(jobId ? { job_id: jobId } : {}),
+    ...(refundId ? { refund_id: refundId } : {}),
+    ...(receiptToken ? { receipt_token: receiptToken } : {}),
   };
 }

@@ -82,3 +82,39 @@ export type {
   EvidenceFields,
   EvidenceValidation,
 } from "./risk.js";
+
+export {
+  DEFAULT_WEBHOOK_REPLAY_WINDOW_MS,
+  canCancelOrder,
+  acceptInboundShipmentEvent,
+  isLateShip,
+  signaturesEqual,
+} from "./fulfill.js";
+
+export type {
+  OrderLifecycleStatus,
+  CancelFailCode,
+  CancelCheckInput,
+  CancelCheckResult,
+  InboundAcceptResult,
+} from "./fulfill.js";
+
+export {
+  canViewReceipt,
+  receiptSkipAction,
+  whyThisSeller,
+} from "./receipt.js";
+
+export type {
+  ReceiptViewerSession,
+  ReceiptSkipAction,
+} from "./receipt.js";
+
+export {
+  REORDER_BANNED_FIELD_NAMES,
+  hasBannedReorderField,
+  applyListLineSkip,
+  stickyFulfillerForReorder,
+} from "./list.js";
+
+export type { ReorderBannedField, ListLinePauseState } from "./list.js";

@@ -34,6 +34,7 @@ export async function createMandateHandler(
     neverSubstituteIds: parsed.data.never_substitute_ids,
     addressId: parsed.data.address_id,
     actorCap: parsed.data.actor_cap,
+    allowCancel: parsed.data.allow_cancel,
   });
 
   return {
@@ -43,6 +44,7 @@ export async function createMandateHandler(
     expires_at: row.expiresAtUtc,
     address_id: row.addressId,
     canonical_item_ids: row.canonicalItemIds,
+    allow_cancel: row.allowCancel,
   };
 }
 

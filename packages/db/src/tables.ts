@@ -14,8 +14,12 @@ export const MODULE_TABLES = {
   commit: ["orders"],
   ledger: ["order_events", "evidence"],
   pay: ["charges", "refunds"],
-  fulfill: ["fulfillment_jobs", "shipment_events"],
+  fulfill: ["fulfillment_jobs", "shipment_events", "return_requests"],
   risk: ["merchant_scores"],
+  /** Household console receipts (Unit 10) — token → order, not agent-keyed. */
+  receipt: ["receipts"],
+  /** Household reorder list (Unit 11). */
+  list: ["list_lines"],
   /** Unique commit lock: (household_id, idempotency_key) */
   edge: ["idempotency_keys"],
 } as const;

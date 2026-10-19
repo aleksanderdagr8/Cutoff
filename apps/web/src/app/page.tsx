@@ -5,8 +5,8 @@ export default function HomePage() {
         CUTOFF
       </p>
       <p className="mt-2 max-w-md text-[16px] text-secondary">
-        Phase 1: household, agent key, and mandate. Console uses the anon key
-        only — never the service role.
+        Phase 5: household receipt, list, and reorder. Console uses the anon
+        key only — never the service role.
       </p>
     </main>
   );
