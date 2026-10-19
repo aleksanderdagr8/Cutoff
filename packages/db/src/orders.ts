@@ -1,4 +1,8 @@
 import type { PayAdapter } from "@cutoff/adapters";
+import {
+  checkMandateForCommit,
+  type MandateSnapshot,
+} from "@cutoff/domain";
 
 export type OrderRow = {
   orderId: string;
@@ -24,8 +28,18 @@ export type CommitResult = {
   created: boolean;
 };
 
+export type MandatedCommitInput = CommitInput & {
+  mandate: MandateSnapshot;
+  addressId: string;
+  nowUtc: string;
+};
+
+export type MandatedCommitResult =
+  | { ok: true; order: OrderRow; created: boolean }
+  | { ok: false; error: "mandate_miss" };
+
 /**
- * Order repository. Phase 0: in-memory store that enforces
+ * Order repository. Phase 0/1: in-memory store that enforces
  * unique (household_id, idempotency_key). Live Supabase repos come later;
  * no Supabase client may live outside this package.
  */
@@ -70,6 +84,27 @@ export class MemoryOrderRepository {
     this.byIdempotency.set(key, order);
     this.orders.push(order);
     return { order, created: true };
+  }
+
+  /**
+   * Phase 1: mandate-gated commit. Over ceiling / expired / miss →
+   * mandate_miss and no charge written.
+   */
+  async commitWithMandate(
+    input: MandatedCommitInput,
+  ): Promise<MandatedCommitResult> {
+    const check = checkMandateForCommit({
+      mandate: input.mandate,
+      canonicalItemId: input.canonicalItemId,
+      amountCents: input.amountCents,
+      addressId: input.addressId,
+      nowUtc: input.nowUtc,
+    });
+    if (!check.ok) {
+      return { ok: false, error: "mandate_miss" };
+    }
+    const result = await this.commit(input);
+    return { ok: true, order: result.order, created: result.created };
   }
 
   list(): readonly OrderRow[] {
