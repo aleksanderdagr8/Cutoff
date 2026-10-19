@@ -123,11 +123,19 @@ export {
   canViewReceipt,
   receiptSkipAction,
   whyThisSeller,
+  AGENT_ORDER_RECEIPT_ALLOWLIST,
+  AGENT_ORDER_RECEIPT_FORBIDDEN_KEYS,
+  serializeAgentOrderReceipt,
+  agentOrderReceiptHasForbiddenKey,
+  agentOrderReceiptUnknownKeys,
 } from "./receipt.js";
 
 export type {
   ReceiptViewerSession,
   ReceiptSkipAction,
+  AgentOrderReceipt,
+  AgentOrderReceiptInput,
+  AgentOrderReceiptAllowlistKey,
 } from "./receipt.js";
 
 export {
