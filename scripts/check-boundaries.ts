@@ -1,6 +1,7 @@
 /**
  * Unit 0 dependency check: a module must not import another module's tables.
- * Also enforces: domain has no I/O imports; Supabase client only under packages/db.
+ * Also enforces: domain has no I/O imports; Supabase data clients under
+ * packages/db (apps/web may import @supabase/* for Auth session only).
  */
 import { readdirSync, readFileSync, statSync } from "node:fs";
 import { join, relative } from "node:path";

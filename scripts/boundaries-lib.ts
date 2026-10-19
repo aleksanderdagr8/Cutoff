@@ -28,7 +28,9 @@ export function domainPurityViolations(source: string): string[] {
 }
 
 export function usesSupabaseOutsideDb(source: string, pkg: string): boolean {
-  if (pkg === "packages/db") return false;
+  // Repository clients live in packages/db. apps/web may use @supabase/*
+  // for household Auth (anon key + user JWT only — never service_role).
+  if (pkg === "packages/db" || pkg === "apps/web") return false;
   return (
     /from\s+["']@supabase\//.test(source) ||
     /require\(["']@supabase\//.test(source)

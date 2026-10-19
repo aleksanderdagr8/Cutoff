@@ -8,6 +8,7 @@ Versioned Postgres for Cutoff’s **dedicated** sandbox/production project. Matc
 supabase/migrations/
   20261019150000_initial_cutoff_schema.sql   # tables + constraints
   20261019150100_rls_household_tables.sql    # RLS sketches + helper
+  20261019160000_ensure_home_member.sql      # Auth bootstrap RPC for /home
 ```
 
 Ownership map (do not cross-read from other packages):
@@ -37,7 +38,7 @@ Ownership map (do not cross-read from other packages):
 | `apps/web` browser | `NEXT_PUBLIC_SUPABASE_ANON_KEY` + Auth JWT | Household SELECT via `members.auth_user_id = auth.uid()` |
 | Agent | Bearer `ck_live_…` on Worker only | Never uses anon key |
 
-Link `members.auth_user_id` when Auth lands. Until then, member policies match zero rows (fail closed); Worker service role still works.
+Link `members.auth_user_id` via `ensure_home_member()` (SECURITY DEFINER RPC, `authenticated` only) on first `/home` sign-in. Until linked, member policies match zero rows (fail closed); Worker service role still works.
 
 ## Apply when the Cutoff project exists
 

@@ -1,27 +1,30 @@
-import "server-only";
-
 /**
  * Household `/home` config.
+
  *
- * Live Supabase Auth is parked until project secrets exist.
- * Set CUTOFF_HOME_DEV_BYPASS=1 (default when Supabase public URL/anon
- * are missing) to use the local member session + in-memory fakes.
+ * Live path: NEXT_PUBLIC_SUPABASE_URL + NEXT_PUBLIC_SUPABASE_ANON_KEY and
+ * CUTOFF_HOME_DEV_BYPASS left unset/0 → Supabase Auth (email + password).
+ *
+ * Escape hatch: CUTOFF_HOME_DEV_BYPASS=1 → local cookie demo + in-memory fakes
+ * (CI / no Auth). When public Supabase env is missing, bypass stays on
+ * automatically even if the flag is 0.
  */
 export function supabaseConfigured(): boolean {
   return Boolean(
-    process.env.NEXT_PUBLIC_SUPABASE_URL &&
-      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
+    process.env.NEXT_PUBLIC_SUPABASE_URL?.trim() &&
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY?.trim(),
   );
 }
 
-/** Dev bypass is on unless explicitly disabled when Supabase is configured. */
+/** Dev bypass is on unless Auth env is present and bypass is explicitly off. */
 export function homeDevBypassEnabled(): boolean {
   const flag = process.env.CUTOFF_HOME_DEV_BYPASS;
   if (flag === "0" || flag === "false") {
-    return !supabaseConfigured() ? true : false;
+    // Cannot require Auth without public keys — keep local UI usable.
+    return !supabaseConfigured();
   }
   if (flag === "1" || flag === "true") return true;
-  // Default: bypass when secrets are absent so local UI always runs.
+  // Default: bypass only when secrets are absent.
   return !supabaseConfigured();
 }
 

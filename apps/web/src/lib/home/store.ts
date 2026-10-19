@@ -18,6 +18,7 @@ import {
 } from "@cutoff/db";
 import { canViewReceipt, receiptSkipAction, whyThisSeller } from "@cutoff/domain";
 import type { ReceiptResponse } from "@cutoff/contracts";
+import { homeDevBypassEnabled } from "./config";
 import type { HomeSession } from "./session";
 import type {
   HomeKeyView,
@@ -26,6 +27,22 @@ import type {
 } from "./types";
 
 export type { HomeKeyView, HomeListLineView, HomeMandateView } from "./types";
+
+/**
+ * Bypass: session must match the in-memory demo household.
+ * Live Auth: session was resolved via ensure_home_member (Postgres); list /
+ * mandate / keys still use the in-memory store for this slice and may be empty
+ * for a newly created household.
+ */
+function sessionAllowed(
+  state: HomeStoreState,
+  session: HomeSession,
+): boolean {
+  if (state.households.memberOf(session.memberId, session.householdId)) {
+    return true;
+  }
+  return !homeDevBypassEnabled();
+}
 
 type HomeStoreState = {
   households: MemoryHouseholdRepository;
@@ -230,9 +247,7 @@ export async function listLinesForSession(
   session: HomeSession,
 ): Promise<HomeListLineView[]> {
   const state = await getHomeStore();
-  if (
-    !state.households.memberOf(session.memberId, session.householdId)
-  ) {
+  if (!sessionAllowed(state, session)) {
     return [];
   }
   return state.list
@@ -245,7 +260,7 @@ export async function skipListLineForSession(
   lineId: string,
 ): Promise<HomeListLineView | { error: string; status: number }> {
   const state = await getHomeStore();
-  if (!state.households.memberOf(session.memberId, session.householdId)) {
+  if (!sessionAllowed(state, session)) {
     return { error: "unauthenticated", status: 401 };
   }
   const line = state.list.getForHousehold(lineId, session.householdId);
@@ -271,7 +286,16 @@ export async function getReceiptForSession(
   if (!canViewReceipt(viewer, receipt.householdId)) {
     return { error: "unauthenticated", status: 401 };
   }
-  if (!state.households.memberOf(session.memberId, receipt.householdId)) {
+  if (
+    homeDevBypassEnabled() &&
+    !state.households.memberOf(session.memberId, receipt.householdId)
+  ) {
+    return { error: "unauthenticated", status: 401 };
+  }
+  if (
+    !homeDevBypassEnabled() &&
+    session.householdId !== receipt.householdId
+  ) {
     return { error: "unauthenticated", status: 401 };
   }
 
@@ -331,7 +355,16 @@ export async function skipReceiptForSession(
   )) {
     return { error: "unauthenticated", status: 401 };
   }
-  if (!state.households.memberOf(session.memberId, receipt.householdId)) {
+  if (
+    homeDevBypassEnabled() &&
+    !state.households.memberOf(session.memberId, receipt.householdId)
+  ) {
+    return { error: "unauthenticated", status: 401 };
+  }
+  if (
+    !homeDevBypassEnabled() &&
+    session.householdId !== receipt.householdId
+  ) {
     return { error: "unauthenticated", status: 401 };
   }
 
@@ -380,7 +413,7 @@ export async function getMandateForSession(
   session: HomeSession,
 ): Promise<HomeMandateView | null> {
   const state = await getHomeStore();
-  if (!state.households.memberOf(session.memberId, session.householdId)) {
+  if (!sessionAllowed(state, session)) {
     return null;
   }
   const rows = state.mandates.listForHousehold(session.householdId);
@@ -398,7 +431,7 @@ export async function upsertMandateForSession(
   },
 ): Promise<HomeMandateView | { error: string; status: number }> {
   const state = await getHomeStore();
-  if (!state.households.memberOf(session.memberId, session.householdId)) {
+  if (!sessionAllowed(state, session)) {
     return { error: "unauthenticated", status: 401 };
   }
 
@@ -468,7 +501,7 @@ export async function listKeysForSession(
   session: HomeSession,
 ): Promise<HomeKeyView[]> {
   const state = await getHomeStore();
-  if (!state.households.memberOf(session.memberId, session.householdId)) {
+  if (!sessionAllowed(state, session)) {
     return [];
   }
   return state.agents
@@ -484,7 +517,7 @@ export async function issueKeyForSession(
   | { error: string; status: number }
 > {
   const state = await getHomeStore();
-  if (!state.households.memberOf(session.memberId, session.householdId)) {
+  if (!sessionAllowed(state, session)) {
     return { error: "unauthenticated", status: 401 };
   }
   const mandate = state.mandates.listForHousehold(session.householdId)[0];
@@ -512,7 +545,7 @@ export async function revokeKeyForSession(
   keyId: string,
 ): Promise<{ key_id: string; revoked: true } | { error: string; status: number }> {
   const state = await getHomeStore();
-  if (!state.households.memberOf(session.memberId, session.householdId)) {
+  if (!sessionAllowed(state, session)) {
     return { error: "unauthenticated", status: 401 };
   }
   const row = state.agents.selectByKeyId(keyId);
