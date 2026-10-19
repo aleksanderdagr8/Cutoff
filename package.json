@@ -11,6 +11,7 @@
     "test:u0": "pnpm --filter @cutoff/api test && pnpm --filter @cutoff/db test && pnpm --filter @cutoff/domain test && pnpm --filter @cutoff/adapters test && pnpm --filter @cutoff/web test && vitest run && pnpm run check:boundaries",
     "test:u1": "pnpm --filter @cutoff/api test && pnpm --filter @cutoff/db test && pnpm --filter @cutoff/domain test && pnpm --filter @cutoff/web test && pnpm run check:boundaries",
     "test:phase1": "pnpm run test:u1",
+    "test:phase2": "pnpm run test:u0",
     "check:boundaries": "tsx scripts/check-boundaries.ts",
     "typecheck": "pnpm -r run typecheck",
     "lint": "pnpm run check:boundaries"

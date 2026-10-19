@@ -6,6 +6,13 @@ import {
   testBindings,
 } from "./test-helpers.js";
 
+const quoteBody = {
+  mandate_id: "", // filled per test
+  canonical_item_id: "item_towels_12",
+  qty: 1,
+  deliver_by: "2026-10-20",
+};
+
 describe("U1 household RLS", () => {
   it("member A cannot read household B", async () => {
     const bindings = testBindings();
@@ -52,13 +59,7 @@ describe("U2 agent credential", () => {
     const { household, mandate, agent } =
       await seedHouseholdWithMandateAndAgent(bindings);
 
-    const quoteBody = {
-      mandate_id: mandate.mandateId,
-      canonical_item_id: "item_towels_12",
-      qty: 1,
-      deliver_by: "2026-10-20",
-      amount_cents: 1299,
-    };
+    const body = { ...quoteBody, mandate_id: mandate.mandateId };
 
     const ok = await app.fetch(
       new Request("http://localhost/v1/quotes", {
@@ -67,7 +68,7 @@ describe("U2 agent credential", () => {
           "content-type": "application/json",
           Authorization: `Bearer ${agent.secret}`,
         },
-        body: JSON.stringify(quoteBody),
+        body: JSON.stringify(body),
       }),
       bindings,
     );
@@ -88,7 +89,7 @@ describe("U2 agent credential", () => {
           "content-type": "application/json",
           Authorization: `Bearer ${agent.secret}`,
         },
-        body: JSON.stringify(quoteBody),
+        body: JSON.stringify(body),
       }),
       bindings,
     );
@@ -119,7 +120,6 @@ describe("U2 agent credential", () => {
     const bindings = testBindings();
     const { agent } = await seedHouseholdWithMandateAndAgent(bindings);
 
-    // Force a select + authenticate path.
     bindings.agents.selectByKeyId(agent.keyId);
     await bindings.agents.authenticate(agent.secret);
 
@@ -152,11 +152,6 @@ describe("U3 mandate", () => {
       { ceilingCents: 1000 },
     );
 
-    // Quote at ceiling first, then human does not lower — instead we
-    // construct a quote under ceiling and mutate mandate ceiling down
-    // before commit, OR quote with amount under then raise amount via
-    // direct commitWithMandate. Spec: commit over ceiling.
-    // Use repository path with amount over ceiling.
     const pay = bindings.pay as FakePayAdapter;
     const result = await bindings.orders.commitWithMandate({
       householdId: "hh_direct",
@@ -172,7 +167,7 @@ describe("U3 mandate", () => {
     expect(pay.charges).toHaveLength(0);
     expect(bindings.orders.count()).toBe(0);
 
-    // Also via HTTP: quote refuses over_ceiling before commit.
+    // Fixture towels_12 cheaper offer is 1299 > ceiling 1000 → over_ceiling
     const quoteRes = await app.fetch(
       new Request("http://localhost/v1/quotes", {
         method: "POST",
@@ -181,11 +176,8 @@ describe("U3 mandate", () => {
           Authorization: `Bearer ${agent.secret}`,
         },
         body: JSON.stringify({
+          ...quoteBody,
           mandate_id: mandate.mandateId,
-          canonical_item_id: "item_towels_12",
-          qty: 1,
-          deliver_by: "2026-10-20",
-          amount_cents: 1500,
         }),
       }),
       bindings,
@@ -250,11 +242,9 @@ describe("U3 mandate", () => {
           Authorization: `Bearer ${agent.secret}`,
         },
         body: JSON.stringify({
+          ...quoteBody,
           mandate_id: mandate.mandateId,
-          canonical_item_id: "item_towels_12",
-          qty: 1,
           deliver_by: "2026-12-03",
-          amount_cents: 500,
         }),
       }),
       bindings,
@@ -277,18 +267,35 @@ describe("U3 mandate", () => {
           Authorization: `Bearer ${agent.secret}`,
         },
         body: JSON.stringify({
+          ...quoteBody,
           mandate_id: mandate.mandateId,
-          canonical_item_id: "item_towels_12",
-          qty: 1,
-          deliver_by: "2026-10-20",
-          amount_cents: 1800,
         }),
       }),
       bindings,
     );
     expect(before.status).toBe(201);
-    const beforeJson = (await before.json()) as { ceiling_cents: number };
+    const beforeJson = (await before.json()) as {
+      ceiling_cents: number;
+      landed_cents: number;
+      quote_id: string;
+    };
     expect(beforeJson.ceiling_cents).toBe(2000);
+    expect(beforeJson.landed_cents).toBe(1299);
+
+    // Release hold by committing so the next quote can run after ceiling drop.
+    const commit = await app.fetch(
+      new Request("http://localhost/v1/commits", {
+        method: "POST",
+        headers: {
+          "content-type": "application/json",
+          Authorization: `Bearer ${agent.secret}`,
+          "Idempotency-Key": "idem_lower_ceiling",
+        },
+        body: JSON.stringify({ quote_id: beforeJson.quote_id }),
+      }),
+      bindings,
+    );
+    expect(commit.status).toBe(201);
 
     const lower = await app.fetch(
       new Request(
@@ -315,37 +322,13 @@ describe("U3 mandate", () => {
           Authorization: `Bearer ${agent.secret}`,
         },
         body: JSON.stringify({
+          ...quoteBody,
           mandate_id: mandate.mandateId,
-          canonical_item_id: "item_towels_12",
-          qty: 1,
-          deliver_by: "2026-10-20",
-          amount_cents: 1800,
         }),
       }),
       bindings,
     );
     expect(after.status).toBe(403);
     expect(await after.json()).toEqual({ error: "over_ceiling" });
-
-    const under = await app.fetch(
-      new Request("http://localhost/v1/quotes", {
-        method: "POST",
-        headers: {
-          "content-type": "application/json",
-          Authorization: `Bearer ${agent.secret}`,
-        },
-        body: JSON.stringify({
-          mandate_id: mandate.mandateId,
-          canonical_item_id: "item_towels_12",
-          qty: 1,
-          deliver_by: "2026-10-20",
-          amount_cents: 900,
-        }),
-      }),
-      bindings,
-    );
-    expect(under.status).toBe(201);
-    const underJson = (await under.json()) as { ceiling_cents: number };
-    expect(underJson.ceiling_cents).toBe(1000);
   });
 });

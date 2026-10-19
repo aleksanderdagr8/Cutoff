@@ -23,7 +23,7 @@ What the agent is allowed to do in this build (and what it is not).
 
 ## Phase 1 surface
 
-- `GET /health` — public liveness (`phase: "1"`).
+- `GET /health` — public liveness (`phase: "2"`).
 - `POST /v1/households` — human/console (service-role worker).
 - `GET /v1/households/:id` — member session headers or agent Bearer (own household only).
 - `POST /v1/households/:id/mandates` — create mandate.

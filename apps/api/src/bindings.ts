@@ -1,11 +1,18 @@
-import type { FulfillAdapter, PayAdapter, TaxAdapter } from "@cutoff/adapters";
+import type {
+  FulfillAdapter,
+  OfferFeedAdapter,
+  PayAdapter,
+  TaxAdapter,
+} from "@cutoff/adapters";
 import type {
   MemoryAgentCredentialRepository,
+  MemoryCatalogRepository,
   MemoryHouseholdRepository,
   MemoryMandateRepository,
+  MemoryOfferRepository,
   MemoryOrderRepository,
+  MemoryQuoteRepository,
   MemoryRevocationKv,
-  MemoryStubQuoteRepository,
 } from "@cutoff/db";
 
 /**
@@ -16,11 +23,14 @@ export type ApiBindings = {
   pay: PayAdapter;
   fulfill: FulfillAdapter;
   tax: TaxAdapter;
+  offerFeed: OfferFeedAdapter;
   orders: MemoryOrderRepository;
   households: MemoryHouseholdRepository;
   agents: MemoryAgentCredentialRepository;
   mandates: MemoryMandateRepository;
-  quotes: MemoryStubQuoteRepository;
+  quotes: MemoryQuoteRepository;
+  catalog: MemoryCatalogRepository;
+  offers: MemoryOfferRepository;
   revocationKv: MemoryRevocationKv;
   traceId: string;
   /** Injected clock for deterministic tests. */
