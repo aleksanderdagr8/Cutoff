@@ -1,6 +1,7 @@
 node_modules
 dist
 .next
+.open-next
 .turbo
 .wrangler
 .dev.vars
@@ -11,3 +12,4 @@ coverage
 .DS_Store
 *.tsbuildinfo
 .pnpm-store
+cloudflare-env.d.ts

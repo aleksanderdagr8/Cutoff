@@ -1,0 +1,40 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "cutoff-web",
+  "main": ".open-next/worker.js",
+  "account_id": "6f016e176bf8507b75cecde460c5689d",
+  "compatibility_date": "2026-10-19",
+  "compatibility_flags": ["nodejs_compat", "global_fetch_strictly_public"],
+  "upload_source_maps": true,
+  "workers_dev": true,
+  "preview_urls": true,
+  "assets": {
+    "directory": ".open-next/assets",
+    "binding": "ASSETS"
+  },
+  "services": [
+    {
+      "binding": "WORKER_SELF_REFERENCE",
+      "service": "cutoff-web"
+    }
+  ],
+  "observability": {
+    "enabled": true
+  },
+  "routes": [
+    {
+      "pattern": "callcutoff.com",
+      "custom_domain": true
+    },
+    {
+      "pattern": "www.callcutoff.com",
+      "custom_domain": true
+    }
+  ],
+  // Non-secret production defaults. Set Supabase values as Worker secrets /
+  // Build vars — never commit them. See apps/web/DEPLOY.md.
+  "vars": {
+    "CUTOFF_HOME_DEV_BYPASS": "0",
+    "CUTOFF_OPS_DEV_BYPASS": "1"
+  }
+}
