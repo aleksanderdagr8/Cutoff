@@ -15,7 +15,8 @@
   },
   "dependencies": {
     "@cutoff/adapters": "workspace:*",
-    "@cutoff/domain": "workspace:*"
+    "@cutoff/domain": "workspace:*",
+    "@supabase/supabase-js": "2"
   },
   "devDependencies": {
     "typescript": "^5.7.2",

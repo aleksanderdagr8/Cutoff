@@ -5,6 +5,7 @@ import {
   type MandateSnapshot,
 } from "@cutoff/domain";
 import { sha256Hex } from "./hash.js";
+import type { MaybePromise } from "./types.js";
 import { ulid } from "./ulid.js";
 
 export type OrderStatusEvent =
@@ -92,11 +93,37 @@ export type EvidencedCommitResult =
   | { ok: true; order: OrderRow; created: boolean; evidence: EvidenceRow }
   | { ok: false; error: "mandate_miss" };
 
+/** Shared surface for memory + Postgres order repos. */
+export interface OrderRepository {
+  commit(input: CommitInput): Promise<CommitResult>;
+  commitWithMandate(input: MandatedCommitInput): Promise<MandatedCommitResult>;
+  commitWithEvidence(
+    input: EvidencedCommitInput,
+  ): Promise<EvidencedCommitResult>;
+  list(): MaybePromise<readonly OrderRow[]>;
+  get(orderId: string): MaybePromise<OrderRow | null>;
+  listForHousehold(householdId: string): MaybePromise<readonly OrderRow[]>;
+  getForHousehold(
+    orderId: string,
+    householdId: string,
+  ): MaybePromise<OrderRow | null>;
+  count(): MaybePromise<number>;
+  listEvents(orderId?: string): MaybePromise<readonly OrderEventRow[]>;
+  getEvidence(orderId: string): MaybePromise<EvidenceRow | null>;
+  listCharges(): MaybePromise<readonly ChargeRow[]>;
+  chargeCount(): MaybePromise<number>;
+  appendStatus(
+    orderId: string,
+    status: OrderStatusEvent,
+    atUtc: string,
+  ): MaybePromise<OrderEventRow | null>;
+}
+
 /**
  * Order repository. Owns orders + append-only order_events + evidence + charges.
  * Unique (household_id, idempotency_key). Pay adapter injected — never Stripe SDK.
  */
-export class MemoryOrderRepository {
+export class MemoryOrderRepository implements OrderRepository {
   private readonly orders: OrderRow[] = [];
   private readonly byIdempotency = new Map<string, OrderRow>();
   private readonly events: OrderEventRow[] = [];

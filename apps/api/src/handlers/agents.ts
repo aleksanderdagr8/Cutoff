@@ -13,7 +13,7 @@ export async function issueAgentHandler(
   }
 
   for (const mandateId of parsed.data.mandate_ids) {
-    const mandate = bindings.mandates.getForHousehold(mandateId, householdId);
+    const mandate = await bindings.mandates.getForHousehold(mandateId, householdId);
     if (!mandate) {
       return { error: "mandate_miss" as const, status: 400 as const };
     }
@@ -42,7 +42,7 @@ export async function revokeAgentHandler(
   householdId: string,
   keyId: string,
 ) {
-  const row = bindings.agents.selectByKeyId(keyId);
+  const row = await bindings.agents.selectByKeyId(keyId);
   if (!row || row.householdId !== householdId) {
     return { error: "unauthenticated" as const, status: 401 as const };
   }

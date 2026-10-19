@@ -67,7 +67,7 @@ describe("Phase 5 — Unit 10 receipt console", () => {
     const { household, member, mandate, agent } =
       await seedHouseholdWithMandateAndAgent(bindings);
 
-    const other = bindings.households.createHousehold(
+    const other = await bindings.households.createHousehold(
       "Other",
       "b@example.com",
     );
@@ -437,7 +437,7 @@ describe("Phase 5 — Unit 11 list and reorder", () => {
       paused: true,
     });
     expect(fulfill.jobs.length).toBe(placesBefore);
-    expect(bindings.orders.count()).toBe(0);
+    expect(await bindings.orders.count()).toBe(0);
 
     const reorder = await app.fetch(
       new Request("http://localhost/v1/list/reorder", {

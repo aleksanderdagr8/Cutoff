@@ -19,8 +19,8 @@ describe("U1 household RLS", () => {
     const bindings = testBindings();
     const app = createApp();
 
-    const a = bindings.households.createHousehold("Home A", "a@example.com");
-    const b = bindings.households.createHousehold("Home B", "b@example.com");
+    const a = await bindings.households.createHousehold("Home A", "a@example.com");
+    const b = await bindings.households.createHousehold("Home B", "b@example.com");
 
     const res = await app.fetch(
       new Request(`http://localhost/v1/households/${b.household.householdId}`, {
@@ -102,7 +102,7 @@ describe("U2 agent credential", () => {
     const bindings = testBindings();
     const app = createApp();
     const a = await seedHouseholdWithMandateAndAgent(bindings);
-    const b = bindings.households.createHousehold("Home B", "b@example.com");
+    const b = await bindings.households.createHousehold("Home B", "b@example.com");
 
     const res = await app.fetch(
       new Request(
@@ -121,23 +121,23 @@ describe("U2 agent credential", () => {
     const bindings = testBindings();
     const { agent } = await seedHouseholdWithMandateAndAgent(bindings);
 
-    bindings.agents.selectByKeyId(agent.keyId);
+    await bindings.agents.selectByKeyId(agent.keyId);
     await bindings.agents.authenticate(agent.secret);
 
     const haystack = [
-      ...bindings.agents.selectLog,
-      ...bindings.agents.structuredLogs,
+      ...(bindings.agents.selectLog ?? []),
+      ...(bindings.agents.structuredLogs ?? []),
     ].join("\n");
     expect(haystack).not.toContain(agent.secret);
     expect(haystack).not.toMatch(/ck_live_[0-9a-f]{48}/);
-    expect(bindings.agents.storedHashes()).not.toContain(agent.secret);
+    expect(bindings.agents.storedHashes()!).not.toContain(agent.secret);
   });
 
   it("KV miss still revokes via Postgres fallback", async () => {
     const bindings = testBindings();
     const { agent } = await seedHouseholdWithMandateAndAgent(bindings);
     await bindings.agents.revoke(agent.keyId);
-    bindings.revocationKv.clearKey(agent.keyId);
+    bindings.revocationKv.clearKey?.(agent.keyId);
 
     const result = await bindings.agents.authenticate(agent.secret);
     expect(result).toEqual({ ok: false, error: "revoked" });
@@ -166,7 +166,7 @@ describe("U3 mandate", () => {
     });
     expect(result).toEqual({ ok: false, error: "mandate_miss" });
     expect(pay.charges).toHaveLength(0);
-    expect(bindings.orders.count()).toBe(0);
+    expect(await bindings.orders.count()).toBe(0);
 
     // Fixture towels_12 cheaper offer is 1299 > ceiling 1000 → over_ceiling
     const quoteRes = await app.fetch(
@@ -220,7 +220,7 @@ describe("U3 mandate", () => {
     expect(addr.status).toBe(403);
     expect(await addr.json()).toEqual({ error: "mandate_miss" });
 
-    const still = bindings.mandates.get(mandate.mandateId);
+    const still = await bindings.mandates.get(mandate.mandateId);
     expect(still?.ceilingCents).toBe(2000);
     expect(still?.addressId).toBe("addr_home");
   });

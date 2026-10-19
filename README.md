@@ -8,13 +8,13 @@ Buyer's agent decides when to reorder. Cutoff quotes, commits, and stands behind
 apps/web          human app (Next.js) — /home + /ops shells; anon key only in browser
 apps/api          Cloudflare Worker (Hono)
 packages/domain   pure rank / mandate / hold / catalog / quote / risk / score / fulfill / receipt / list
-packages/db       repositories (memory now; Supabase later)
+packages/db       repositories (memory default; Postgres when Supabase env set)
 packages/adapters pay, fulfill, tax, offer feed (aggregator + brand), notify — fake + live
 packages/contracts zod schemas + error codes
 supabase/         versioned SQL migrations (not applied live until sandbox project exists)
 ```
 
-## Supabase schema (when the project exists)
+## Supabase schema + Postgres repos
 
 Migrations live in `supabase/migrations/` and match `packages/db` table ownership. Apply to the **dedicated Cutoff** project only (not AnswerWise):
 
@@ -24,6 +24,9 @@ npx supabase db push
 ```
 
 Or paste the SQL files in order in the Supabase SQL Editor. Full steps: [docs/supabase-schema.md](./docs/supabase-schema.md).
+
+**Repository mode:** `createRepos({ mode: "memory" | "postgres" })` (default `memory`).  
+`resolveReposModeFromEnv()` selects `postgres` only when both `SUPABASE_URL` and `SUPABASE_SERVICE_ROLE` are set; otherwise memory. Unit tests and CI stay on memory. Optional live check: `packages/db` `postgres.integration.test.ts` (skipped without those env vars). Catalog/offers remain in-memory until those adapters land — seed durable parents in Postgres before quote/order writes.
 
 ## Human dashboards (local)
 

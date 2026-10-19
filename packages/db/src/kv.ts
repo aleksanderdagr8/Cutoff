@@ -6,6 +6,8 @@
 export interface RevocationKv {
   putRevoked(keyId: string): Promise<void>;
   isRevoked(keyId: string): Promise<boolean | null>;
+  /** Test helper on memory impl — force a cache miss. */
+  clearKey?(keyId: string): void;
 }
 
 /** In-memory KV. null means "cache miss" so the gate falls back to Postgres. */

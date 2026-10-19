@@ -57,7 +57,7 @@ export async function quoteHandler(
     return { error: "mandate_miss" as const, status: 403 as const };
   }
 
-  const mandateRow = bindings.mandates.getForHousehold(
+  const mandateRow = await bindings.mandates.getForHousehold(
     parsed.data.mandate_id,
     auth.agent.householdId,
   );
@@ -166,7 +166,7 @@ export async function quoteHandler(
     return { error: ceilingCheck.error, status: 403 as const };
   }
 
-  const created = bindings.quotes.create({
+  const created = await bindings.quotes.create({
     householdId: auth.agent.householdId,
     mandateId: mandateRow.mandateId,
     agentKeyId: auth.agent.keyId,

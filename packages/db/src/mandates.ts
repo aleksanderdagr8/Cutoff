@@ -5,6 +5,7 @@
 
 import type { MandateSnapshot } from "@cutoff/domain";
 import { applyLowerCeiling } from "@cutoff/domain";
+import type { MaybePromise } from "./types.js";
 import { ulid } from "./ulid.js";
 
 export type MandateRow = {
@@ -35,7 +36,25 @@ export type CreateMandateInput = {
   allowCancel?: boolean;
 };
 
-export class MemoryMandateRepository {
+/** Shared surface for memory + Postgres mandate repos. */
+export interface MandateRepository {
+  create(input: CreateMandateInput): MaybePromise<MandateRow>;
+  get(mandateId: string): MaybePromise<MandateRow | null>;
+  getForHousehold(
+    mandateId: string,
+    householdId: string,
+  ): MaybePromise<MandateRow | null>;
+  listForHousehold(householdId: string): MaybePromise<readonly MandateRow[]>;
+  listAll(): MaybePromise<readonly MandateRow[]>;
+  toSnapshot(row: MandateRow): MandateSnapshot;
+  lowerCeiling(
+    mandateId: string,
+    householdId: string,
+    requestedCeilingCents: number,
+  ): MaybePromise<MandateRow | null>;
+}
+
+export class MemoryMandateRepository implements MandateRepository {
   private readonly rows: MandateRow[] = [];
 
   create(input: CreateMandateInput): MandateRow {
