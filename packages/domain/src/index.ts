@@ -2,25 +2,8 @@
  * Pure domain functions. No I/O. No adapters. No repositories.
  */
 
-export type RankInputs = {
-  landedCents: number;
-  deliveryDateUtc: string;
-  merchantScore: number;
-};
-
-/**
- * Rank order (brief/spec): lower landed price, then earlier delivery, then higher score.
- * Returns negative if a wins over b, positive if b wins, 0 if tied.
- */
-export function compareRank(a: RankInputs, b: RankInputs): number {
-  if (a.landedCents !== b.landedCents) {
-    return a.landedCents - b.landedCents;
-  }
-  if (a.deliveryDateUtc !== b.deliveryDateUtc) {
-    return a.deliveryDateUtc < b.deliveryDateUtc ? -1 : 1;
-  }
-  return b.merchantScore - a.merchantScore;
-}
+export type { RankInputs } from "./rank.js";
+export { compareRank } from "./rank.js";
 
 export type MandateCeiling = {
   ceilingCents: number;
@@ -60,3 +43,78 @@ export type {
   AgentMandateMutation,
   AgentScope,
 } from "./mandate.js";
+
+export {
+  validateDescription,
+  unitPriceCents,
+  isExcludedByRecall,
+} from "./catalog.js";
+
+export type { DescriptionValidation } from "./catalog.js";
+
+export {
+  MAX_QUOTE_TTL_MS,
+  classifyOffersForQuote,
+  rankOffers,
+  pickWinner,
+  quoteAmountsForPack,
+  isQuoteExpired,
+  quoteExpiresAt,
+} from "./quote.js";
+
+export type {
+  OfferCandidate,
+  FreshnessResult,
+  QuoteAmounts,
+} from "./quote.js";
+
+export {
+  DEFAULT_VELOCITY_CAP_PER_HOUR,
+  evaluateRiskGate,
+  validateEvidenceFields,
+  quoteHashMaterial,
+} from "./risk.js";
+
+export type {
+  RiskFailCode,
+  RiskGateInput,
+  RiskGateResult,
+  EvidenceFields,
+  EvidenceValidation,
+} from "./risk.js";
+
+export {
+  DEFAULT_WEBHOOK_REPLAY_WINDOW_MS,
+  canCancelOrder,
+  acceptInboundShipmentEvent,
+  isLateShip,
+  signaturesEqual,
+} from "./fulfill.js";
+
+export type {
+  OrderLifecycleStatus,
+  CancelFailCode,
+  CancelCheckInput,
+  CancelCheckResult,
+  InboundAcceptResult,
+} from "./fulfill.js";
+
+export {
+  canViewReceipt,
+  receiptSkipAction,
+  whyThisSeller,
+} from "./receipt.js";
+
+export type {
+  ReceiptViewerSession,
+  ReceiptSkipAction,
+} from "./receipt.js";
+
+export {
+  REORDER_BANNED_FIELD_NAMES,
+  hasBannedReorderField,
+  applyListLineSkip,
+  stickyFulfillerForReorder,
+} from "./list.js";
+
+export type { ReorderBannedField, ListLinePauseState } from "./list.js";

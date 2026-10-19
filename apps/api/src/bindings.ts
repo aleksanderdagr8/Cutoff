@@ -1,11 +1,23 @@
-import type { FulfillAdapter, PayAdapter, TaxAdapter } from "@cutoff/adapters";
+import type {
+  FulfillAdapter,
+  MemoryOutboundWebhookQueue,
+  OfferFeedAdapter,
+  PayAdapter,
+  TaxAdapter,
+} from "@cutoff/adapters";
 import type {
   MemoryAgentCredentialRepository,
+  MemoryCatalogRepository,
+  MemoryFulfillmentRepository,
   MemoryHouseholdRepository,
+  MemoryListRepository,
   MemoryMandateRepository,
+  MemoryOfferRepository,
   MemoryOrderRepository,
+  MemoryQuoteRepository,
+  MemoryReceiptRepository,
   MemoryRevocationKv,
-  MemoryStubQuoteRepository,
+  MemoryRiskRepository,
 } from "@cutoff/db";
 
 /**
@@ -16,11 +28,23 @@ export type ApiBindings = {
   pay: PayAdapter;
   fulfill: FulfillAdapter;
   tax: TaxAdapter;
+  offerFeed: OfferFeedAdapter;
   orders: MemoryOrderRepository;
   households: MemoryHouseholdRepository;
   agents: MemoryAgentCredentialRepository;
   mandates: MemoryMandateRepository;
-  quotes: MemoryStubQuoteRepository;
+  quotes: MemoryQuoteRepository;
+  catalog: MemoryCatalogRepository;
+  offers: MemoryOfferRepository;
+  risk: MemoryRiskRepository;
+  fulfillment: MemoryFulfillmentRepository;
+  receipts: MemoryReceiptRepository;
+  list: MemoryListRepository;
+  outboundWebhooks: MemoryOutboundWebhookQueue;
+  /** Shared secret for signing outbound + verifying inbound (injected). */
+  webhookSecret: string;
+  /** Buyer-agent webhook URL (injected). */
+  webhookTargetUrl: string;
   revocationKv: MemoryRevocationKv;
   traceId: string;
   /** Injected clock for deterministic tests. */

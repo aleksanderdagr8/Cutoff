@@ -3,11 +3,31 @@ export type { ModuleName } from "./tables.js";
 export { MemoryOrderRepository } from "./orders.js";
 export type {
   OrderRow,
+  OrderEventRow,
+  OrderStatusEvent,
+  EvidenceRow,
+  ChargeRow,
   CommitInput,
   CommitResult,
   MandatedCommitInput,
   MandatedCommitResult,
+  EvidencedCommitInput,
+  EvidencedCommitResult,
 } from "./orders.js";
+export { MemoryRiskRepository } from "./risk.js";
+export { MemoryFulfillmentRepository } from "./fulfillment.js";
+export type {
+  FulfillmentJobRow,
+  ShipmentEventRow,
+  RefundQueueRow,
+  ReturnRequestRow,
+  InboundShipmentInput,
+  InboundShipmentResult,
+} from "./fulfillment.js";
+export { MemoryReceiptRepository } from "./receipts.js";
+export type { ReceiptRow } from "./receipts.js";
+export { MemoryListRepository } from "./list.js";
+export type { ListLineRow, UpsertListLineInput } from "./list.js";
 export { MemoryHouseholdRepository } from "./households.js";
 export type {
   HouseholdRow,
@@ -29,7 +49,32 @@ export { MemoryMandateRepository } from "./mandates.js";
 export type { MandateRow, CreateMandateInput } from "./mandates.js";
 export { MemoryRevocationKv } from "./kv.js";
 export type { RevocationKv } from "./kv.js";
-export { MemoryStubQuoteRepository } from "./quotes.js";
-export type { StubQuoteRow, CreateStubQuoteInput } from "./quotes.js";
+export { MemoryQuoteRepository, MemoryStubQuoteRepository } from "./quotes.js";
+export type {
+  QuoteRow,
+  StubQuoteRow,
+  CreateQuoteInput,
+  CreateQuoteResult,
+  QuoteScoreInputs,
+  QuoteSubstituteDiff,
+  HoldRow,
+} from "./quotes.js";
+export {
+  MemoryCatalogRepository,
+  seedFixtureCatalog,
+} from "./catalog.js";
+export type {
+  CanonicalItemRow,
+  EquivalenceRow,
+  IngestCanonicalItemInput,
+  IngestResult,
+  PackUnit,
+} from "./catalog.js";
+export {
+  MemoryOfferRepository,
+  seedDualFulfillerOffers,
+  rawFeedFromOffers,
+} from "./offers.js";
+export type { OfferRow, OfferSourceState } from "./offers.js";
 export { ulid } from "./ulid.js";
 export { sha256Hex, generateAgentSecret } from "./hash.js";
