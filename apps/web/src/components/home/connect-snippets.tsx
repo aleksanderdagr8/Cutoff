@@ -98,13 +98,20 @@ export function ConnectSnippets({ secret, selected, onSelect }: Props) {
         Copy a snippet for your assistant. Paste the key only where the snippet
         shows it — never into browser storage.
       </p>
-      <div className="mt-4 flex flex-wrap gap-2 border-b border-hairline pb-3">
+      <div
+        role="tablist"
+        aria-label="Assistant snippets"
+        className="mt-4 flex flex-wrap gap-2 border-b border-hairline pb-3"
+      >
         {TABS.map((tab) => (
           <button
             key={tab.id}
             type="button"
+            role="tab"
+            aria-selected={selected === tab.id}
+            data-client={tab.id}
             onClick={() => onSelect(tab.id)}
-            className={`rounded-control px-3 py-1.5 text-[14px] transition-colors duration-160 ease-out ${
+            className={`rounded-control px-4 py-2 text-[14px] transition-colors duration-160 ease-out ${
               selected === tab.id
                 ? "bg-accent/[0.09] font-medium text-accent"
                 : "text-secondary hover:text-ink"

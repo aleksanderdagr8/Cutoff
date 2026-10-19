@@ -26,7 +26,7 @@ export function ListClient({ initialLines }: Props) {
       mode === "snooze"
         ? new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString()
         : undefined;
-    startTransition(async () => {
+    try {
       const res = await fetch("/api/home/list/skip", {
         method: "POST",
         credentials: "include",
@@ -37,7 +37,6 @@ export function ListClient({ initialLines }: Props) {
           ...(until ? { until } : {}),
         }),
       });
-      setPendingId(null);
       if (!res.ok) {
         setError(
           mode === "snooze"
@@ -52,8 +51,12 @@ export function ListClient({ initialLines }: Props) {
       setLines((prev) =>
         prev.map((l) => (l.line_id === lineId ? { ...l, ...body } : l)),
       );
-      router.refresh();
-    });
+      startTransition(() => {
+        router.refresh();
+      });
+    } finally {
+      setPendingId(null);
+    }
   }
 
   if (lines.length === 0) {
@@ -111,11 +114,11 @@ export function ListClient({ initialLines }: Props) {
                     : ""}
                 </p>
               </div>
-              <div className="flex flex-wrap items-center gap-3">
+              <div className="flex flex-wrap items-center gap-2">
                 {line.receipt_token ? (
                   <Link
                     href={`/home/receipts/${line.receipt_token}`}
-                    className="text-[14px] text-secondary underline-offset-2 hover:text-ink hover:underline"
+                    className="px-2 py-1.5 text-[14px] text-secondary underline-offset-2 hover:text-ink hover:underline"
                   >
                     Receipt
                   </Link>
@@ -125,30 +128,32 @@ export function ListClient({ initialLines }: Props) {
                     <button
                       type="button"
                       disabled={pendingId === line.line_id}
-                      onClick={() => skip(line.line_id, "next")}
-                      className="text-[14px] font-medium text-accent transition-opacity duration-[160ms] ease-out disabled:opacity-40"
+                      onClick={() => void skip(line.line_id, "next")}
+                      className="rounded-control px-2.5 py-1.5 text-[14px] font-medium text-accent transition-opacity duration-[160ms] ease-out hover:bg-accent/[0.08] disabled:opacity-40"
                     >
                       {pendingId === line.line_id ? "…" : "Next"}
                     </button>
                     <button
                       type="button"
                       disabled={pendingId === line.line_id}
-                      onClick={() => skip(line.line_id, "snooze")}
-                      className="text-[14px] text-secondary transition-opacity duration-[160ms] ease-out hover:text-ink disabled:opacity-40"
+                      onClick={() => void skip(line.line_id, "snooze")}
+                      className="rounded-control px-2.5 py-1.5 text-[14px] text-secondary transition-opacity duration-[160ms] ease-out hover:bg-black/[0.04] hover:text-ink disabled:opacity-40"
                     >
                       Snooze 1 wk
                     </button>
                     <button
                       type="button"
                       disabled={pendingId === line.line_id}
-                      onClick={() => skip(line.line_id, "pause")}
-                      className="text-[14px] text-secondary transition-opacity duration-[160ms] ease-out hover:text-ink disabled:opacity-40"
+                      onClick={() => void skip(line.line_id, "pause")}
+                      className="rounded-control px-2.5 py-1.5 text-[14px] text-secondary transition-opacity duration-[160ms] ease-out hover:bg-black/[0.04] hover:text-ink disabled:opacity-40"
                     >
                       Pause
                     </button>
                   </>
                 ) : (
-                  <span className="text-[14px] text-secondary">Paused</span>
+                  <span className="px-2 py-1.5 text-[14px] text-secondary">
+                    Paused
+                  </span>
                 )}
               </div>
             </li>
