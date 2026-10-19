@@ -5,6 +5,6 @@ export function healthHandler(): HealthResponse {
   return {
     ok: true,
     service: "cutoff-api",
-    phase: "1",
+    phase: "2",
   };
 }

@@ -148,7 +148,12 @@ export function createApp() {
       c.req.header("Authorization") ?? undefined,
     );
     if ("error" in result) {
-      return c.json({ error: result.error }, result.status as 401);
+      const err = String(result.error);
+      const payload: { error: string; quote_id?: string } = { error: err };
+      if ("quote_id" in result && typeof result.quote_id === "string") {
+        payload.quote_id = result.quote_id;
+      }
+      return c.json(payload, result.status as 401);
     }
     return c.json(result, 201);
   });

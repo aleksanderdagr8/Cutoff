@@ -49,7 +49,7 @@ export const UtcIsoSchema = z.string().datetime({ offset: true });
 export const HealthResponseSchema = z.object({
   ok: z.literal(true),
   service: z.literal("cutoff-api"),
-  phase: z.literal("1"),
+  phase: z.literal("2"),
 });
 
 export type HealthResponse = z.infer<typeof HealthResponseSchema>;
@@ -119,27 +119,46 @@ export const IssueAgentRequestSchema = z
 
 export type IssueAgentRequest = z.infer<typeof IssueAgentRequestSchema>;
 
-/** Phase 1 stub quote — no catalog; validates mandate + agent auth. */
+/** Phase 2 quote — catalog + offers select the winner; no client amount. */
 export const QuoteRequestSchema = z
   .object({
     mandate_id: z.string().min(1),
     canonical_item_id: z.string().min(1),
     qty: z.number().int().positive().max(99),
     deliver_by: z.string().min(1),
-    /** Stub amount until catalog/offer exist (Unit 6). */
-    amount_cents: CentsSchema,
   })
   .strict();
 
 export type QuoteRequest = z.infer<typeof QuoteRequestSchema>;
 
+export const QuoteSubstituteSchema = z.object({
+  from_canonical_item_id: z.string().min(1),
+  to_canonical_item_id: z.string().min(1),
+  pack_count_delta: z.number().int(),
+  brand_from: z.string(),
+  brand_to: z.string(),
+  price_delta_cents: z.number().int(),
+  day_delta: z.number().int(),
+  formula_flag: z.string().nullable(),
+});
+
 export const QuoteResponseSchema = z.object({
   quote_id: z.string().min(1),
   expires_at: UtcIsoSchema,
   landed_cents: CentsSchema,
+  tax_cents: CentsSchema,
+  unit_price_cents: CentsSchema,
+  delivery_date: z.string().min(1),
+  fulfiller_id: z.string().min(1),
   mandate_id: z.string().min(1),
   canonical_item_id: z.string().min(1),
   ceiling_cents: CentsSchema,
+  score_inputs: z.object({
+    landed_cents: CentsSchema,
+    delivery_date: z.string().min(1),
+    merchant_score: z.number(),
+  }),
+  substitute: QuoteSubstituteSchema.nullable(),
 });
 
 export type QuoteResponse = z.infer<typeof QuoteResponseSchema>;

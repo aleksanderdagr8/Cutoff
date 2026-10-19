@@ -6,3 +6,11 @@ export { FakeFulfillAdapter } from "./fulfill.js";
 
 export type { TaxInput, TaxResult, TaxAdapter } from "./tax.js";
 export { FakeTaxAdapter } from "./tax.js";
+
+export type {
+  RawOfferFeedRow,
+  OfferFeedResult,
+  OfferFeedAdapter,
+  FakeOfferSeed,
+} from "./offer.js";
+export { FakeAggregatorOfferAdapter } from "./offer.js";

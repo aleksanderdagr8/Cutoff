@@ -1,5 +1,10 @@
 import { describe, expect, it } from "vitest";
-import { FakePayAdapter, FakeFulfillAdapter, FakeTaxAdapter } from "./index.js";
+import {
+  FakePayAdapter,
+  FakeFulfillAdapter,
+  FakeTaxAdapter,
+  FakeAggregatorOfferAdapter,
+} from "./index.js";
 
 describe("FakePayAdapter", () => {
   it("dedupes charge by idempotency key", async () => {
@@ -40,5 +45,37 @@ describe("FakeTaxAdapter", () => {
       addressId: "addr_1",
     });
     expect(result.taxCents).toBe(0);
+  });
+});
+
+describe("FakeAggregatorOfferAdapter", () => {
+  it("returns seeded rows when up", async () => {
+    const feed = new FakeAggregatorOfferAdapter([
+      {
+        externalSku: "A-1",
+        gtin: "0001",
+        packCount: 12,
+        priceCents: 100,
+        taxCents: 0,
+        deliveryDateUtc: "2026-10-21",
+        freshUntilUtc: "2026-10-20T00:00:00.000Z",
+        inStock: true,
+        fulfillerId: "fulfiller_a",
+      },
+    ]);
+    const result = await feed.fetchOffers();
+    expect(result.ok).toBe(true);
+    if (result.ok) expect(result.rows).toHaveLength(1);
+  });
+
+  it("reports fulfiller_down without throwing", async () => {
+    const feed = new FakeAggregatorOfferAdapter([]);
+    feed.markDown();
+    const result = await feed.fetchOffers();
+    expect(result).toEqual({
+      ok: false,
+      error: "fulfiller_down",
+      sourceId: "aggregator_fixture",
+    });
   });
 });
