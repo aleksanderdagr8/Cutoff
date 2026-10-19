@@ -2,6 +2,18 @@ import { Hono } from "hono";
 import type { ApiBindings } from "./bindings.js";
 import { healthHandler } from "./handlers/health.js";
 import { fakeCommitHandler } from "./handlers/fake-commit.js";
+import {
+  createHouseholdHandler,
+  getHouseholdHandler,
+} from "./handlers/households.js";
+import { issueAgentHandler, revokeAgentHandler } from "./handlers/agents.js";
+import {
+  agentWidenMandateHandler,
+  createMandateHandler,
+  lowerCeilingHandler,
+} from "./handlers/mandates.js";
+import { quoteHandler } from "./handlers/quote.js";
+import { commitHandler } from "./handlers/commit.js";
 
 export type AppEnv = {
   Bindings: ApiBindings;
@@ -25,6 +37,131 @@ export function createApp() {
       return c.json({ error: result.error }, result.status as 400);
     }
 
+    return c.json(result, result.created ? 201 : 200);
+  });
+
+  /** Human/console (service-role worker). */
+  app.post("/v1/households", async (c) => {
+    const body = await c.req.json().catch(() => null);
+    const result = await createHouseholdHandler(c.env, body);
+    if ("error" in result) {
+      return c.json({ error: result.error }, result.status);
+    }
+    return c.json(result, 201);
+  });
+
+  app.get("/v1/households/:householdId", async (c) => {
+    const result = await getHouseholdHandler(
+      c.env,
+      c.req.param("householdId"),
+      {
+        authorization: c.req.header("Authorization") ?? undefined,
+        memberId: c.req.header("X-Cutoff-Member-Id") ?? undefined,
+        memberHouseholdId:
+          c.req.header("X-Cutoff-Member-Household-Id") ?? undefined,
+      },
+    );
+    if ("error" in result) {
+      return c.json({ error: result.error }, result.status);
+    }
+    return c.json(result);
+  });
+
+  app.post("/v1/households/:householdId/mandates", async (c) => {
+    const body = await c.req.json().catch(() => null);
+    const result = await createMandateHandler(
+      c.env,
+      c.req.param("householdId"),
+      body,
+    );
+    if ("error" in result) {
+      return c.json({ error: result.error }, result.status);
+    }
+    return c.json(result, 201);
+  });
+
+  app.patch(
+    "/v1/households/:householdId/mandates/:mandateId",
+    async (c) => {
+      const body = await c.req.json().catch(() => null);
+      const result = await lowerCeilingHandler(
+        c.env,
+        c.req.param("householdId"),
+        c.req.param("mandateId"),
+        body,
+      );
+      if ("error" in result) {
+        return c.json({ error: result.error }, result.status);
+      }
+      return c.json(result);
+    },
+  );
+
+  app.post("/v1/households/:householdId/agents", async (c) => {
+    const body = await c.req.json().catch(() => null);
+    const result = await issueAgentHandler(
+      c.env,
+      c.req.param("householdId"),
+      body,
+    );
+    if ("error" in result) {
+      return c.json({ error: result.error }, result.status);
+    }
+    return c.json(result, 201);
+  });
+
+  app.post(
+    "/v1/households/:householdId/agents/:keyId/revoke",
+    async (c) => {
+      const result = await revokeAgentHandler(
+        c.env,
+        c.req.param("householdId"),
+        c.req.param("keyId"),
+      );
+      if ("error" in result) {
+        return c.json({ error: result.error }, result.status);
+      }
+      return c.json(result);
+    },
+  );
+
+  /** Agent widen — always denied. */
+  app.post("/v1/mandates/:mandateId/widen", async (c) => {
+    const body = await c.req.json().catch(() => null);
+    const result = await agentWidenMandateHandler(
+      c.env,
+      c.req.param("mandateId"),
+      body,
+      c.req.header("Authorization") ?? undefined,
+    );
+    if ("error" in result) {
+      return c.json({ error: result.error }, result.status);
+    }
+    return c.json(result);
+  });
+
+  app.post("/v1/quotes", async (c) => {
+    const body = await c.req.json().catch(() => null);
+    const result = await quoteHandler(
+      c.env,
+      body,
+      c.req.header("Authorization") ?? undefined,
+    );
+    if ("error" in result) {
+      return c.json({ error: result.error }, result.status as 401);
+    }
+    return c.json(result, 201);
+  });
+
+  app.post("/v1/commits", async (c) => {
+    const body = await c.req.json().catch(() => null);
+    const result = await commitHandler(c.env, body, {
+      authorization: c.req.header("Authorization") ?? undefined,
+      idempotencyKey: c.req.header("Idempotency-Key") ?? undefined,
+    });
+    if ("error" in result) {
+      return c.json({ error: result.error }, result.status as 401);
+    }
     return c.json(result, result.created ? 201 : 200);
   });
 

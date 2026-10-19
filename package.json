@@ -7,8 +7,10 @@
   },
   "scripts": {
     "build": "pnpm -r run build",
-    "test": "pnpm --filter @cutoff/domain --filter @cutoff/adapters --filter @cutoff/db --filter @cutoff/api run test && vitest run",
-    "test:u0": "pnpm --filter @cutoff/api test && pnpm --filter @cutoff/db test && pnpm --filter @cutoff/domain test && pnpm --filter @cutoff/adapters test && vitest run && pnpm run check:boundaries",
+    "test": "pnpm --filter @cutoff/domain --filter @cutoff/adapters --filter @cutoff/db --filter @cutoff/api --filter @cutoff/web run test && vitest run",
+    "test:u0": "pnpm --filter @cutoff/api test && pnpm --filter @cutoff/db test && pnpm --filter @cutoff/domain test && pnpm --filter @cutoff/adapters test && pnpm --filter @cutoff/web test && vitest run && pnpm run check:boundaries",
+    "test:u1": "pnpm --filter @cutoff/api test && pnpm --filter @cutoff/db test && pnpm --filter @cutoff/domain test && pnpm --filter @cutoff/web test && pnpm run check:boundaries",
+    "test:phase1": "pnpm run test:u1",
     "check:boundaries": "tsx scripts/check-boundaries.ts",
     "typecheck": "pnpm -r run typecheck",
     "lint": "pnpm run check:boundaries"

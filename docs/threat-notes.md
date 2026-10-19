@@ -1,27 +1,40 @@
-# Threat notes — Phase 0
+# Threat notes — Phase 1
 
 What the agent is allowed to do in this build (and what it is not).
 
-## Allowed (later units; interfaces only in Phase 0)
+## Allowed
 
-- Call quote and commit with a scoped agent key over HTTPS.
-- Read its household list when the key has `read_list`.
-- Skip a list line when the mandate allows cancel.
-- Receive signed outbound webhooks for order lifecycle events.
+- Call quote and commit with a scoped agent key (`ck_live_…`) over HTTPS.
+- Act only on mandates named at key issue. Scopes: `quote`, `commit`, `read_list`.
+- Read its own household id mapping. Cross-household reads fail closed.
 
 ## Not allowed
 
 - Open merchant, bank, or warehouse accounts.
-- Raise a spend ceiling or add an address.
+- Raise a spend ceiling or add an address (`POST /v1/mandates/:id/widen` → `mandate_miss`).
+- Use scopes `raise_cap` or `new_address` (rejected at issue).
 - Send camera, pantry, weight, sensor, or card (PAN) data — rejected at the edge.
 - Read another household's data.
+- Use a revoked key (KV cache, Postgres fallback → `revoked`).
 - Mutate ledger history; status is append-only events.
 - Bypass adapters to talk to Stripe or a fulfiller SDK directly.
 - Hold customer funds on Cutoff's books.
+- See or recover the agent secret after issue (hash at rest only).
 
-## Phase 0 surface
+## Phase 1 surface
 
-- `GET /health` — public liveness.
-- `POST /v1/_phase0/commits` — fake commit against in-memory store and fake pay. Not production auth. Exists only to prove idempotency (same key → one row).
+- `GET /health` — public liveness (`phase: "1"`).
+- `POST /v1/households` — human/console (service-role worker).
+- `GET /v1/households/:id` — member session headers or agent Bearer (own household only).
+- `POST /v1/households/:id/mandates` — create mandate.
+- `PATCH /v1/households/:id/mandates/:mid` — human lowers ceiling only.
+- `POST /v1/households/:id/agents` — issue key; secret once.
+- `POST /v1/households/:id/agents/:keyId/revoke` — revoke + KV fan-out.
+- `POST /v1/quotes` — agent Bearer; mandate + ceiling check (stub amount until catalog).
+- `POST /v1/commits` — agent Bearer; mandate re-check; fake pay; idempotent.
+- `POST /v1/_phase0/commits` — unauthenticated fake commit retained for U0 idempotency proof.
 
-Production `/v1/*` auth, risk gate, and live adapters arrive in Phases 1–4.
+## Trust
+
+- Browser / `apps/web`: anon key + RLS only. Service role must never appear in the web bundle.
+- Worker: service role for human console writes. Agent path uses hashed credentials, not Supabase Auth users.

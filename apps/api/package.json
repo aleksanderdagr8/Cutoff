@@ -13,6 +13,7 @@
     "@cutoff/adapters": "workspace:*",
     "@cutoff/contracts": "workspace:*",
     "@cutoff/db": "workspace:*",
+    "@cutoff/domain": "workspace:*",
     "hono": "^4.6.14"
   },
   "devDependencies": {

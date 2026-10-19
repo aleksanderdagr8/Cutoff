@@ -29,6 +29,9 @@ importers:
       '@cutoff/db':
         specifier: workspace:*
         version: link:../../packages/db
+      '@cutoff/domain':
+        specifier: workspace:*
+        version: link:../../packages/domain
       hono:
         specifier: ^4.6.14
         version: 4.13.13
@@ -82,6 +85,9 @@ importers:
       typescript:
         specifier: ^5.7.2
         version: 5.9.3
+      vitest:
+        specifier: ^2.1.8
+        version: 2.1.9(@types/node@22.20.5)
 
   packages/adapters:
     devDependencies:
@@ -110,6 +116,9 @@ importers:
       '@cutoff/adapters':
         specifier: workspace:*
         version: link:../adapters
+      '@cutoff/domain':
+        specifier: workspace:*
+        version: link:../domain
     devDependencies:
       typescript:
         specifier: ^5.7.2

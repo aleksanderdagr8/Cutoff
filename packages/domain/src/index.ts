@@ -1,6 +1,5 @@
 /**
  * Pure domain functions. No I/O. No adapters. No repositories.
- * Phase 0: stubs that compile and are unit-tested; Units 2–6 flesh these out.
  */
 
 export type RankInputs = {
@@ -41,3 +40,23 @@ export type HoldKey = {
 export function holdKey(h: HoldKey): string {
   return `${h.householdId}:${h.canonicalItemId}`;
 }
+
+export {
+  checkMandate,
+  checkMandateForCommit,
+  agentMandateWidenDenied,
+  applyLowerCeiling,
+  isAllowedScope,
+  scopesAreValid,
+  hasScope,
+  FORBIDDEN_SCOPES,
+} from "./mandate.js";
+
+export type {
+  MandateSnapshot,
+  MandateCheckInput,
+  MandateCheckResult,
+  MandateFailCode,
+  AgentMandateMutation,
+  AgentScope,
+} from "./mandate.js";

@@ -5,7 +5,8 @@ export default function HomePage() {
         CUTOFF
       </p>
       <p className="mt-2 max-w-md text-[16px] text-secondary">
-        Phase 0 skeleton. Operator and household shells arrive in later units.
+        Phase 1: household, agent key, and mandate. Console uses the anon key
+        only — never the service role.
       </p>
     </main>
   );
