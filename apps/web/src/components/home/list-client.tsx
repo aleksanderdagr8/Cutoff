@@ -44,7 +44,8 @@ export function ListClient({ initialLines }: Props) {
     return (
       <section className="border-t border-hairline pt-8">
         <p className="text-[15px] text-secondary">
-          No replenishment lines yet.
+          No replenishment lines yet. After a mandate is set, your agent can
+          add items here.
         </p>
         <Link
           href="/home/mandate"

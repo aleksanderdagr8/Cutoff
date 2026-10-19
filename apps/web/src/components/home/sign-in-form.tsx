@@ -46,7 +46,7 @@ export function SignInForm({ bypass, supabaseConfigured }: Props) {
         );
         return;
       }
-      router.push("/home/list");
+      router.push("/home");
       router.refresh();
     });
   }
@@ -136,7 +136,7 @@ export function SignInForm({ bypass, supabaseConfigured }: Props) {
       <button
         type="submit"
         disabled={pending || !canSubmit}
-        className="rounded-control bg-accent px-5 py-2.5 text-[15px] font-medium text-white transition-opacity duration-[160ms] ease-out disabled:opacity-40"
+        className="home-cta rounded-control bg-accent px-5 py-2.5 text-[15px] font-medium text-white disabled:opacity-40"
       >
         {pending
           ? "Signing in…"

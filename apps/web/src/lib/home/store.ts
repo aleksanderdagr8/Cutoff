@@ -24,9 +24,15 @@ import type {
   HomeKeyView,
   HomeListLineView,
   HomeMandateView,
+  HomeOrderView,
 } from "./types";
 
-export type { HomeKeyView, HomeListLineView, HomeMandateView } from "./types";
+export type {
+  HomeKeyView,
+  HomeListLineView,
+  HomeMandateView,
+  HomeOrderView,
+} from "./types";
 
 /**
  * Bypass: session must match the in-memory demo household.
@@ -253,6 +259,32 @@ export async function listLinesForSession(
   return state.list
     .listForHousehold(session.householdId)
     .map((line) => lineView(state, line));
+}
+
+export async function listOrdersForSession(
+  session: HomeSession,
+): Promise<HomeOrderView[]> {
+  const state = await getHomeStore();
+  if (!sessionAllowed(state, session)) {
+    return [];
+  }
+  // Live Auth households may not share the in-memory demo id — empty is honest.
+  const orders = state.orders.listForHousehold(session.householdId);
+  return [...orders]
+    .sort((a, b) => (a.createdAt < b.createdAt ? 1 : -1))
+    .map((order) => {
+      const item = state.catalog.get(order.canonicalItemId);
+      const receipt = state.receipts.getByOrder(order.orderId);
+      return {
+        order_id: order.orderId,
+        receipt_token: receipt?.receiptToken ?? null,
+        brand: item?.brand ?? "",
+        description: item?.description ?? order.canonicalItemId,
+        landed_cents: order.amountCents,
+        status: order.status,
+        created_at: order.createdAt,
+      };
+    });
 }
 
 export async function skipListLineForSession(

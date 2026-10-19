@@ -14,12 +14,15 @@ const config: Config = {
       },
       fontFamily: {
         sans: [
-          "SF Pro Text",
-          "SF Pro Display",
+          "var(--font-dm-sans)",
           "ui-sans-serif",
-          "-apple-system",
-          "BlinkMacSystemFont",
-          "Helvetica Neue",
+          "system-ui",
+          "sans-serif",
+        ],
+        display: [
+          "var(--font-syne)",
+          "var(--font-dm-sans)",
+          "ui-sans-serif",
           "sans-serif",
         ],
       },
