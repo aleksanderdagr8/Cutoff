@@ -49,7 +49,7 @@ export const UtcIsoSchema = z.string().datetime({ offset: true });
 export const HealthResponseSchema = z.object({
   ok: z.literal(true),
   service: z.literal("cutoff-api"),
-  phase: z.literal("0"),
+  phase: z.literal("1"),
 });
 
 export type HealthResponse = z.infer<typeof HealthResponseSchema>;
@@ -74,3 +74,94 @@ export const FakeCommitResponseSchema = z.object({
 });
 
 export type FakeCommitResponse = z.infer<typeof FakeCommitResponseSchema>;
+
+export const AgentScopeSchema = z.enum(["quote", "commit", "read_list"]);
+
+export const CreateHouseholdRequestSchema = z
+  .object({
+    name: z.string().min(1).max(120),
+    member_email: z.string().email(),
+  })
+  .strict();
+
+export type CreateHouseholdRequest = z.infer<
+  typeof CreateHouseholdRequestSchema
+>;
+
+export const CreateMandateRequestSchema = z
+  .object({
+    ceiling_cents: CentsSchema,
+    expires_at: UtcIsoSchema,
+    canonical_item_ids: z.array(z.string().min(1)).default([]),
+    category_allow_list: z.array(z.string().min(1)).default([]),
+    never_substitute_ids: z.array(z.string().min(1)).default([]),
+    address_id: z.string().min(1),
+    actor_cap: z.number().int().positive().max(32).default(4),
+  })
+  .strict();
+
+export type CreateMandateRequest = z.infer<typeof CreateMandateRequestSchema>;
+
+export const LowerCeilingRequestSchema = z
+  .object({
+    ceiling_cents: CentsSchema,
+  })
+  .strict();
+
+export type LowerCeilingRequest = z.infer<typeof LowerCeilingRequestSchema>;
+
+export const IssueAgentRequestSchema = z
+  .object({
+    scopes: z.array(AgentScopeSchema).min(1),
+    mandate_ids: z.array(z.string().min(1)).min(1),
+  })
+  .strict();
+
+export type IssueAgentRequest = z.infer<typeof IssueAgentRequestSchema>;
+
+/** Phase 1 stub quote — no catalog; validates mandate + agent auth. */
+export const QuoteRequestSchema = z
+  .object({
+    mandate_id: z.string().min(1),
+    canonical_item_id: z.string().min(1),
+    qty: z.number().int().positive().max(99),
+    deliver_by: z.string().min(1),
+    /** Stub amount until catalog/offer exist (Unit 6). */
+    amount_cents: CentsSchema,
+  })
+  .strict();
+
+export type QuoteRequest = z.infer<typeof QuoteRequestSchema>;
+
+export const QuoteResponseSchema = z.object({
+  quote_id: z.string().min(1),
+  expires_at: UtcIsoSchema,
+  landed_cents: CentsSchema,
+  mandate_id: z.string().min(1),
+  canonical_item_id: z.string().min(1),
+  ceiling_cents: CentsSchema,
+});
+
+export type QuoteResponse = z.infer<typeof QuoteResponseSchema>;
+
+export const CommitRequestSchema = z
+  .object({
+    quote_id: z.string().min(1),
+  })
+  .strict();
+
+export type CommitRequest = z.infer<typeof CommitRequestSchema>;
+
+/** Agent widen attempts — always rejected. */
+export const AgentWidenMandateRequestSchema = z
+  .object({
+    raise_ceiling: z.boolean().optional(),
+    ceiling_cents: CentsSchema.optional(),
+    add_address: z.boolean().optional(),
+    address_id: z.string().min(1).optional(),
+  })
+  .strict();
+
+export type AgentWidenMandateRequest = z.infer<
+  typeof AgentWidenMandateRequestSchema
+>;
