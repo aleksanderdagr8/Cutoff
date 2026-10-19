@@ -2,25 +2,8 @@
  * Pure domain functions. No I/O. No adapters. No repositories.
  */
 
-export type RankInputs = {
-  landedCents: number;
-  deliveryDateUtc: string;
-  merchantScore: number;
-};
-
-/**
- * Rank order (brief/spec): lower landed price, then earlier delivery, then higher score.
- * Returns negative if a wins over b, positive if b wins, 0 if tied.
- */
-export function compareRank(a: RankInputs, b: RankInputs): number {
-  if (a.landedCents !== b.landedCents) {
-    return a.landedCents - b.landedCents;
-  }
-  if (a.deliveryDateUtc !== b.deliveryDateUtc) {
-    return a.deliveryDateUtc < b.deliveryDateUtc ? -1 : 1;
-  }
-  return b.merchantScore - a.merchantScore;
-}
+export type { RankInputs } from "./rank.js";
+export { compareRank } from "./rank.js";
 
 export type MandateCeiling = {
   ceilingCents: number;
@@ -60,3 +43,27 @@ export type {
   AgentMandateMutation,
   AgentScope,
 } from "./mandate.js";
+
+export {
+  validateDescription,
+  unitPriceCents,
+  isExcludedByRecall,
+} from "./catalog.js";
+
+export type { DescriptionValidation } from "./catalog.js";
+
+export {
+  MAX_QUOTE_TTL_MS,
+  classifyOffersForQuote,
+  rankOffers,
+  pickWinner,
+  quoteAmountsForPack,
+  isQuoteExpired,
+  quoteExpiresAt,
+} from "./quote.js";
+
+export type {
+  OfferCandidate,
+  FreshnessResult,
+  QuoteAmounts,
+} from "./quote.js";

@@ -1,12 +1,11 @@
 import { CommitRequestSchema } from "@cutoff/contracts";
-import { hasScope } from "@cutoff/domain";
+import { hasScope, isQuoteExpired } from "@cutoff/domain";
 import { authenticateAgent } from "../auth.js";
 import type { ApiBindings } from "../bindings.js";
 
 /**
- * Phase 1 commit path: agent auth + mandate re-check + fake pay.
- * Full evidence/risk/Stripe arrive in Units 7–8. Body amount is ignored —
- * charge equals the stub quote amount.
+ * Phase 2 commit path: agent auth + mandate re-check + fake pay.
+ * Full evidence/risk/Stripe arrive in Units 7–8. Charge equals quote landed.
  */
 export async function commitHandler(
   bindings: ApiBindings,
@@ -41,7 +40,7 @@ export async function commitHandler(
   }
 
   const nowUtc = bindings.nowUtc();
-  if (Date.parse(nowUtc) >= Date.parse(quote.expiresAtUtc)) {
+  if (isQuoteExpired(quote.expiresAtUtc, nowUtc)) {
     return { error: "quote_expired" as const, status: 400 as const };
   }
 
@@ -57,7 +56,7 @@ export async function commitHandler(
     householdId: auth.agent.householdId,
     canonicalItemId: quote.canonicalItemId,
     quoteId: quote.quoteId,
-    amountCents: quote.amountCents,
+    amountCents: quote.landedCents,
     idempotencyKey: opts.idempotencyKey,
     mandate: bindings.mandates.toSnapshot(mandateRow),
     addressId: quote.addressId,
@@ -67,6 +66,8 @@ export async function commitHandler(
   if (!result.ok) {
     return { error: result.error, status: 403 as const };
   }
+
+  bindings.quotes.markCommitted(quote.quoteId, nowUtc);
 
   return {
     order_id: result.order.orderId,
