@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { createMcpApp } from "./app.js";
 import type { ApiService } from "./bindings.js";
+import { MemoryRateLimiter } from "./rate-limit.js";
 import { toolsForScopes } from "./tools/catalog.js";
 
 function fakeApi(scopes: string[]): ApiService {
@@ -16,6 +17,14 @@ function fakeApi(scopes: string[]): ApiService {
       }
       return Response.json({ error: "not_found" }, { status: 404 });
     },
+  };
+}
+
+function testEnv(scopes: string[]) {
+  return {
+    API: fakeApi(scopes),
+    QUOTE_RATE_LIMITER: new MemoryRateLimiter(10_000),
+    COMMIT_RATE_LIMITER: new MemoryRateLimiter(10_000),
   };
 }
 
@@ -39,7 +48,7 @@ async function mcpRpc(
       headers,
       body: JSON.stringify(body),
     }),
-    { API: fakeApi(scopes) },
+    testEnv(scopes),
   );
 }
 
@@ -67,7 +76,7 @@ describe("Phase 11 — Unit 17 MCP scaffold", () => {
           method: "tools/list",
         }),
       }),
-      { API: fakeApi(["read_list"]) },
+      testEnv(["read_list"]),
     );
     expect(res.status).toBe(401);
     expect(res.headers.get("WWW-Authenticate")).toBe("Bearer");
@@ -145,7 +154,11 @@ describe("Phase 11 — Unit 17 MCP scaffold", () => {
           method: "tools/list",
         }),
       }),
-      { API: api },
+      {
+        API: api,
+        QUOTE_RATE_LIMITER: new MemoryRateLimiter(10_000),
+        COMMIT_RATE_LIMITER: new MemoryRateLimiter(10_000),
+      },
     );
     expect(seenAuth).toBe("Bearer ck_live_passthrough");
   });

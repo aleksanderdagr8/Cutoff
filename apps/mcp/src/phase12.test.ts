@@ -10,6 +10,7 @@ import {
 import { createMcpApp } from "./app.js";
 import type { ApiService } from "./bindings.js";
 import { API_ERROR_GUIDANCE, mapApiError } from "./errors.js";
+import { MemoryRateLimiter } from "./rate-limit.js";
 import { ErrorCode } from "@cutoff/contracts";
 
 function apiServiceFromApp(
@@ -31,11 +32,18 @@ async function connectMcpClient(opts: {
   bindings: TestBindings;
   secret: string;
   clientName?: string;
+  quoteLimit?: number;
+  commitLimit?: number;
 }) {
   const apiApp = createApp();
   const mcpApp = createMcpApp();
   const api = apiServiceFromApp(apiApp, opts.bindings);
   const auth = `Bearer ${opts.secret}`;
+  const mcpEnv = {
+    API: api,
+    QUOTE_RATE_LIMITER: new MemoryRateLimiter(opts.quoteLimit ?? 10_000),
+    COMMIT_RATE_LIMITER: new MemoryRateLimiter(opts.commitLimit ?? 10_000),
+  };
 
   const transport = new StreamableHTTPClientTransport(
     new URL("http://mcp.local/mcp"),
@@ -52,7 +60,7 @@ async function connectMcpClient(opts: {
             headers: init?.headers,
             body: init?.body,
           }),
-          { API: api },
+          mcpEnv,
         );
       },
     },

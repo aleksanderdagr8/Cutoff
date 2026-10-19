@@ -22,6 +22,7 @@
     "test:phase10": "pnpm run test:u0",
     "test:phase11": "pnpm run test:u0",
     "test:phase12": "pnpm run test:u0",
+    "test:phase13": "pnpm run test:u0",
     "check:boundaries": "tsx scripts/check-boundaries.ts",
     "smoke:local": "pnpm --filter @cutoff/api run smoke:local",
     "typecheck": "pnpm -r run typecheck",

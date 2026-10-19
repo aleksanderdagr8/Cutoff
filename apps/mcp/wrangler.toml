@@ -1,9 +1,32 @@
 name = "cutoff-mcp"
 main = "src/index.ts"
 compatibility_date = "2024-12-01"
+account_id = "6f016e176bf8507b75cecde460c5689d"
+workers_dev = true
 
-# Unit 17: service binding to cutoff-api. Forward Authorization unchanged.
-# Local/dev tests inject a fake Fetcher; production wires [[services]].
-# [[services]]
-# binding = "API"
-# service = "cutoff-api"
+# Production: service binding to cutoff-api. Tests inject a fake Fetcher.
+[[services]]
+binding = "API"
+service = "cutoff-api"
+
+# Per-key rate limits (spec §3.6): 30 quotes / 5 commits per minute.
+[[ratelimits]]
+name = "QUOTE_RATE_LIMITER"
+namespace_id = "9101"
+
+  [ratelimits.simple]
+  limit = 30
+  period = 60
+
+[[ratelimits]]
+name = "COMMIT_RATE_LIMITER"
+namespace_id = "9102"
+
+  [ratelimits.simple]
+  limit = 5
+  period = 60
+
+# Custom domain for MCP Streamable HTTP endpoint.
+[[routes]]
+pattern = "mcp.callcutoff.com"
+custom_domain = true

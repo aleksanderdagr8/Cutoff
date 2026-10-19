@@ -5,6 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "wrangler dev src/index.ts",
+    "deploy": "wrangler deploy",
     "typecheck": "tsc --noEmit",
     "build": "tsc --noEmit",
     "test": "vitest run"
@@ -16,10 +17,10 @@
     "zod": "^3.24.1"
   },
   "devDependencies": {
-    "@cloudflare/workers-types": "^4.20241218.0",
+    "@cloudflare/workers-types": "^5.20261019.1",
     "@modelcontextprotocol/sdk": "1.32.1",
     "typescript": "^5.7.2",
     "vitest": "^2.1.8",
-    "wrangler": "^3.99.0"
+    "wrangler": "^4.36.0"
   }
 }

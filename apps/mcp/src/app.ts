@@ -25,7 +25,7 @@ export function createMcpApp() {
   const app = new Hono<McpAppEnv>();
 
   app.get("/health", (c) =>
-    c.json({ ok: true as const, service: "cutoff-mcp", phase: "12" }),
+    c.json({ ok: true as const, service: "cutoff-mcp", phase: "13" }),
   );
 
   /** Stateless Streamable HTTP: GET SSE not offered. */
@@ -48,6 +48,8 @@ export function createMcpApp() {
       api: c.env.API,
       authorization,
       me: me.me,
+      quoteRateLimiter: c.env.QUOTE_RATE_LIMITER,
+      commitRateLimiter: c.env.COMMIT_RATE_LIMITER,
     });
     if (rpc === null) {
       return new Response(null, { status: 202 });
