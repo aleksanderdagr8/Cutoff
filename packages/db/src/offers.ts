@@ -253,3 +253,54 @@ export function rawFeedFromOffers(
     };
   });
 }
+
+/**
+ * Phase 6: brand-feed second source on top items only (towels_12, coffee_12oz).
+ * Default prices sit above aggregator so score/tie tests stay explicit.
+ */
+export function seedBrandFeedTopOffers(
+  offers: MemoryOfferRepository,
+  opts: {
+    nowUtc?: string;
+    /** Override towels_12 brand price. */
+    towels12PriceCents?: number;
+    coffee12PriceCents?: number;
+  } = {},
+): MemoryOfferRepository {
+  const now = opts.nowUtc ?? "2026-10-19T12:00:00.000Z";
+  const freshUntil = new Date(Date.parse(now) + 24 * 60 * 60 * 1000).toISOString();
+  const delivery = "2026-10-21";
+
+  const rows: Array<{
+    canonicalItemId: string;
+    priceCents: number;
+    externalSku: string;
+  }> = [
+    {
+      canonicalItemId: "item_towels_12",
+      priceCents: opts.towels12PriceCents ?? 1399,
+      externalSku: "BRAND-TOWEL-12",
+    },
+    {
+      canonicalItemId: "item_coffee_12oz",
+      priceCents: opts.coffee12PriceCents ?? 1099,
+      externalSku: "BRAND-COFFEE-12",
+    },
+  ];
+
+  for (const r of rows) {
+    offers.upsertNormalized({
+      canonicalItemId: r.canonicalItemId,
+      fulfillerId: "fulfiller_brand",
+      sourceId: "brand_feed_fixture",
+      externalSku: r.externalSku,
+      priceCents: r.priceCents,
+      taxCents: 0,
+      deliveryDateUtc: delivery,
+      freshUntilUtc: freshUntil,
+      inStock: true,
+      merchantScore: 0,
+    });
+  }
+  return offers;
+}

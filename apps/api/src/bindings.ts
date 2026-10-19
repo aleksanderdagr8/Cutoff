@@ -28,7 +28,10 @@ export type ApiBindings = {
   pay: PayAdapter;
   fulfill: FulfillAdapter;
   tax: TaxAdapter;
+  /** Primary aggregator feed. */
   offerFeed: OfferFeedAdapter;
+  /** Phase 6: second source (brand feed) on top items. */
+  brandOfferFeed: OfferFeedAdapter;
   orders: MemoryOrderRepository;
   households: MemoryHouseholdRepository;
   agents: MemoryAgentCredentialRepository;

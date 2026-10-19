@@ -67,3 +67,64 @@ export class FakeAggregatorOfferAdapter implements OfferFeedAdapter {
     };
   }
 }
+
+/**
+ * Canonical item ids the brand-feed second source covers (top SKUs only).
+ * Phase 6: second adapter on the fixture set top items — not the full catalog.
+ */
+export const BRAND_FEED_TOP_ITEM_IDS = [
+  "item_towels_12",
+  "item_coffee_12oz",
+] as const;
+
+export type BrandFeedTopItemId = (typeof BRAND_FEED_TOP_ITEM_IDS)[number];
+
+/**
+ * Fake brand-feed offer adapter (second live source). CI-safe; no network.
+ * Only returns rows whose external mapping is for top items (caller seeds).
+ */
+export class FakeBrandFeedOfferAdapter implements OfferFeedAdapter {
+  readonly sourceId: string;
+  private down = false;
+  private rows: RawOfferFeedRow[];
+  private readonly allowedGtins: ReadonlySet<string> | null;
+
+  constructor(
+    rows: FakeOfferSeed[] = [],
+    opts: {
+      sourceId?: string;
+      /** When set, only these GTINs are emitted (top-item gate). */
+      allowedGtins?: readonly string[];
+    } = {},
+  ) {
+    this.rows = rows.map((r) => ({ ...r }));
+    this.sourceId = opts.sourceId ?? "brand_feed_fixture";
+    this.allowedGtins = opts.allowedGtins
+      ? new Set(opts.allowedGtins)
+      : null;
+  }
+
+  setRows(rows: FakeOfferSeed[]): void {
+    this.rows = rows.map((r) => ({ ...r }));
+  }
+
+  markDown(): void {
+    this.down = true;
+  }
+
+  markUp(): void {
+    this.down = false;
+  }
+
+  async fetchOffers(): Promise<OfferFeedResult> {
+    if (this.down) {
+      return { ok: false, error: "fulfiller_down", sourceId: this.sourceId };
+    }
+    const rows = this.rows
+      .filter((r) =>
+        this.allowedGtins ? this.allowedGtins.has(r.gtin) : true,
+      )
+      .map((r) => ({ ...r }));
+    return { ok: true, sourceId: this.sourceId, rows };
+  }
+}

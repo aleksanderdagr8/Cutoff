@@ -49,7 +49,7 @@ export const UtcIsoSchema = z.string().datetime({ offset: true });
 export const HealthResponseSchema = z.object({
   ok: z.literal(true),
   service: z.literal("cutoff-api"),
-  phase: z.literal("5"),
+  phase: z.literal("6"),
 });
 
 export type HealthResponse = z.infer<typeof HealthResponseSchema>;
@@ -378,3 +378,26 @@ export const SkipListLineResponseSchema = z.object({
 });
 
 export type SkipListLineResponse = z.infer<typeof SkipListLineResponseSchema>;
+
+/** Unit 12 — exportable evidence pack per order. */
+export const EvidencePackResponseSchema = z.object({
+  order_id: z.string().min(1),
+  evidence_id: z.string().min(1),
+  actor_chain: z.array(z.string().min(1)).min(1),
+  protocol: z.string().min(1),
+  agent_key_id: z.string().min(1),
+  mandate_id: z.string().min(1),
+  quote_hash: z.string().min(1),
+  address_id: z.string().min(1),
+  amount_cents: CentsSchema,
+  fulfiller_id: z.string().min(1),
+  quote_id: z.string().min(1),
+  canonical_item_id: z.string().min(1),
+  rank_inputs: z.object({
+    landed_cents: CentsSchema,
+    delivery_date: z.string().min(1),
+    merchant_score: z.number(),
+  }),
+});
+
+export type EvidencePackResponse = z.infer<typeof EvidencePackResponseSchema>;

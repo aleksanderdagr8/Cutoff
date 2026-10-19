@@ -1,29 +1,14 @@
 import { QuoteRequestSchema } from "@cutoff/contracts";
 import {
   checkMandate,
-  classifyOffersForQuote,
   hasScope,
-  pickWinner,
   quoteAmountsForPack,
   type OfferCandidate,
 } from "@cutoff/domain";
-import type { CanonicalItemRow, OfferRow } from "@cutoff/db";
+import type { CanonicalItemRow } from "@cutoff/db";
 import { authenticateAgent } from "../auth.js";
 import type { ApiBindings } from "../bindings.js";
-
-function toCandidate(row: OfferRow): OfferCandidate {
-  return {
-    offerId: row.offerId,
-    fulfillerId: row.fulfillerId,
-    priceCents: row.priceCents,
-    taxCents: row.taxCents,
-    landedCents: row.priceCents + row.taxCents,
-    deliveryDateUtc: row.deliveryDateUtc,
-    merchantScore: row.merchantScore,
-    inStock: row.inStock,
-    freshUntilUtc: row.freshUntilUtc,
-  };
-}
+import { rankedCandidatesForItem } from "../offer-select.js";
 
 function dayDelta(a: string, b: string): number {
   const ms = Date.parse(b) - Date.parse(a);
@@ -37,23 +22,18 @@ function selectForItem(
 ):
   | { ok: true; winner: OfferCandidate; item: CanonicalItemRow }
   | { ok: false; error: "stale_offer" | "out_of_stock" } {
-  const classified = classifyOffersForQuote(
-    bindings.offers.listForItem(item.canonicalItemId).map(toCandidate),
+  const ranked = rankedCandidatesForItem(
+    bindings,
+    item.canonicalItemId,
     nowUtc,
   );
-  if (classified.kind === "fresh") {
-    const winner = pickWinner(classified.offers);
-    if (!winner) return { ok: false, error: "out_of_stock" };
-    return { ok: true, winner, item };
-  }
-  if (classified.kind === "stale_only") {
-    return { ok: false, error: "stale_offer" };
-  }
-  return { ok: false, error: "out_of_stock" };
+  if (!ranked.ok) return ranked;
+  return { ok: true, winner: ranked.winner, item };
 }
 
 /**
- * Phase 2 quote: catalog + dual-fulfiller offers → one immutable winner.
+ * Phase 2–6 quote: catalog + multi-source offers → one immutable winner.
+ * Merchant scores and suspend filter applied at rank time (Unit 12).
  */
 export async function quoteHandler(
   bindings: ApiBindings,

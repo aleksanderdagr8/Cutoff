@@ -4,6 +4,7 @@ import {
   FakeFulfillAdapter,
   FakeTaxAdapter,
   FakeAggregatorOfferAdapter,
+  FakeBrandFeedOfferAdapter,
   StripeSandboxPayAdapter,
 } from "./index.js";
 
@@ -127,5 +128,43 @@ describe("FakeAggregatorOfferAdapter", () => {
       error: "fulfiller_down",
       sourceId: "aggregator_fixture",
     });
+  });
+});
+
+describe("FakeBrandFeedOfferAdapter", () => {
+  it("filters to allowed GTINs (top items)", async () => {
+    const feed = new FakeBrandFeedOfferAdapter(
+      [
+        {
+          externalSku: "TOP",
+          gtin: "111",
+          packCount: 1,
+          priceCents: 50,
+          taxCents: 0,
+          deliveryDateUtc: "2026-10-21",
+          freshUntilUtc: "2026-10-20T00:00:00.000Z",
+          inStock: true,
+          fulfillerId: "fulfiller_brand",
+        },
+        {
+          externalSku: "OTHER",
+          gtin: "222",
+          packCount: 1,
+          priceCents: 50,
+          taxCents: 0,
+          deliveryDateUtc: "2026-10-21",
+          freshUntilUtc: "2026-10-20T00:00:00.000Z",
+          inStock: true,
+          fulfillerId: "fulfiller_brand",
+        },
+      ],
+      { allowedGtins: ["111"] },
+    );
+    const result = await feed.fetchOffers();
+    expect(result.ok).toBe(true);
+    if (result.ok) {
+      expect(result.rows).toHaveLength(1);
+      expect(result.sourceId).toBe("brand_feed_fixture");
+    }
   });
 });

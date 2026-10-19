@@ -5,31 +5,14 @@ import {
 } from "@cutoff/contracts";
 import {
   checkMandate,
-  classifyOffersForQuote,
   hasBannedReorderField,
   hasScope,
-  pickWinner,
   quoteAmountsForPack,
   stickyFulfillerForReorder,
-  type OfferCandidate,
 } from "@cutoff/domain";
-import type { OfferRow } from "@cutoff/db";
 import { authenticateAgent } from "../auth.js";
 import type { ApiBindings } from "../bindings.js";
-
-function toCandidate(row: OfferRow): OfferCandidate {
-  return {
-    offerId: row.offerId,
-    fulfillerId: row.fulfillerId,
-    priceCents: row.priceCents,
-    taxCents: row.taxCents,
-    landedCents: row.priceCents + row.taxCents,
-    deliveryDateUtc: row.deliveryDateUtc,
-    merchantScore: row.merchantScore,
-    inStock: row.inStock,
-    freshUntilUtc: row.freshUntilUtc,
-  };
-}
+import { rankedCandidatesForItem } from "../offer-select.js";
 
 function linePayload(line: {
   lineId: string;
@@ -184,20 +167,15 @@ export async function reorderHandler(
     return { error: "out_of_stock" as const, status: 409 as const };
   }
 
-  const classified = classifyOffersForQuote(
-    bindings.offers.listForItem(item.canonicalItemId).map(toCandidate),
+  const ranked = rankedCandidatesForItem(
+    bindings,
+    item.canonicalItemId,
     nowUtc,
   );
-  if (classified.kind === "stale_only") {
-    return { error: "stale_offer" as const, status: 409 as const };
+  if (!ranked.ok) {
+    return { error: ranked.error, status: 409 as const };
   }
-  if (classified.kind !== "fresh") {
-    return { error: "out_of_stock" as const, status: 409 as const };
-  }
-  const winner = pickWinner(classified.offers);
-  if (!winner) {
-    return { error: "out_of_stock" as const, status: 409 as const };
-  }
+  const winner = ranked.winner;
 
   const amounts = quoteAmountsForPack(
     winner,

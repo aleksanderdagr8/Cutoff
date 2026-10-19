@@ -15,6 +15,7 @@
     "test:phase3": "pnpm run test:u0",
     "test:phase4": "pnpm run test:u0",
     "test:phase5": "pnpm run test:u0",
+    "test:phase6": "pnpm run test:u0",
     "check:boundaries": "tsx scripts/check-boundaries.ts",
     "typecheck": "pnpm -r run typecheck",
     "lint": "pnpm run check:boundaries"

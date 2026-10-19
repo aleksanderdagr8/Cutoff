@@ -33,5 +33,10 @@ export type {
   OfferFeedResult,
   OfferFeedAdapter,
   FakeOfferSeed,
+  BrandFeedTopItemId,
 } from "./offer.js";
-export { FakeAggregatorOfferAdapter } from "./offer.js";
+export {
+  FakeAggregatorOfferAdapter,
+  FakeBrandFeedOfferAdapter,
+  BRAND_FEED_TOP_ITEM_IDS,
+} from "./offer.js";

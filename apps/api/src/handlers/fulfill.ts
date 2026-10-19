@@ -66,6 +66,14 @@ export async function placeAfterCapture(
       reason: "place_failed",
       nowUtc,
     });
+    // Unit 12: refund events feed merchant_scores (tie-break only).
+    bindings.risk.recordScoreEvent({
+      fulfillerId,
+      kind: "refund",
+      orderId: order.orderId,
+      atUtc: nowUtc,
+      actorId: "system.fulfill",
+    });
     return { ok: false, refundId: refund.refundId, error: "place_failed" };
   }
 }
@@ -235,6 +243,19 @@ export async function inboundFulfillWebhookHandler(
     }
     if (result.lateShip && quote) {
       bindings.risk.recordMerchantStrike(quote.fulfillerId, "late_ship");
+    } else if (
+      parsed.data.status === "delivered" &&
+      quote &&
+      !result.lateShip
+    ) {
+      // Unit 12: on-time delivery materializes into merchant_scores.
+      bindings.risk.recordScoreEvent({
+        fulfillerId: quote.fulfillerId,
+        kind: "on_time",
+        orderId: order.orderId,
+        atUtc: nowUtc,
+        actorId: "system.fulfill",
+      });
     }
 
     const outBody = JSON.stringify({

@@ -7,20 +7,20 @@ Buyer's agent decides when to reorder. Cutoff quotes, commits, and stands behind
 ```
 apps/web          human app (Next.js) — anon key only; /home/receipts/:token
 apps/api          Cloudflare Worker (Hono)
-packages/domain   pure rank / mandate / hold / catalog / quote / risk / fulfill / receipt / list
+packages/domain   pure rank / mandate / hold / catalog / quote / risk / score / fulfill / receipt / list
 packages/db       repositories (memory now; Supabase later)
-packages/adapters pay, fulfill, tax, offer feed, notify — fake + live
+packages/adapters pay, fulfill, tax, offer feed (aggregator + brand), notify — fake + live
 packages/contracts zod schemas + error codes
 ```
 
-## Phase 5 (Units 10–11)
+## Phase 6 (Unit 12)
 
-Receipt console for the cardholder; household list + reorder (fresh quote, not sticky). Fakes in CI.
+Second source (brand feed) on top items; `merchant_scores` from events; evidence pack export; kill switch + merchant suspend. Fakes in CI.
 
 ```bash
 pnpm install
-pnpm run test:u0       # Unit 0 + Phase 1–5 suites (CI)
-pnpm run test:phase5   # same as test:u0
+pnpm run test:u0       # Unit 0 + Phase 1–6 suites (CI)
+pnpm run test:phase6   # same as test:u0
 pnpm run typecheck
 pnpm run check:boundaries
 ```
@@ -35,6 +35,10 @@ Scopes: `quote`, `commit`, `read_list`. Revoked keys get `{ "error": "revoked" }
 `POST /v1/quotes` → `POST /v1/commits` with evidence + `Idempotency-Key`.  
 `GET /v1/list` · `POST /v1/list/reorder` · `POST /v1/list/skip`  
 Successful capture places via `FulfillAdapter` and issues a `receipt_token`.
+
+## Evidence
+
+- `GET /v1/orders/:orderId/evidence` — exportable pack (actor chain, quote hash, amount, fulfiller, rank inputs)
 
 ## Receipt (human)
 
