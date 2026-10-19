@@ -47,4 +47,4 @@ jobs:
           NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
           CUTOFF_HOME_DEV_BYPASS: "0"
           CUTOFF_OPS_DEV_BYPASS: "1"
-        run: pnpm --filter @cutoff/web deploy
+        run: pnpm --filter @cutoff/web run deploy

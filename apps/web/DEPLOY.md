@@ -11,7 +11,7 @@ Runtime secrets already set on the Worker via Cloudflare API (anon URL/key). Re-
 
 Workers Static Assets attach `Content-Type` from the **multipart part type at upload**. Wrangler sets this from the file extension. If you upload via the raw Assets API without a part `Content-Type`, Cloudflare serves `application/octet-stream` and browsers **will not apply CSS** (unstyled HTML, default blue links).
 
-Prefer `pnpm --filter @cutoff/web deploy` (Wrangler). If using a custom API/MCP path:
+Prefer `pnpm --filter @cutoff/web run deploy` (Wrangler). If using a custom API/MCP path:
 
 1. Set each asset part’s Content-Type (`text/css`, `application/javascript`, `font/woff2`, …).
 2. Include `assets.config._headers` from `.open-next/assets/_headers` (see `public/_headers`) so Cache-Control + Content-Type overrides apply when assets are served ahead of the Worker.
@@ -57,7 +57,7 @@ export CLOUDFLARE_API_TOKEN=…   # Account: Workers Scripts Edit + Zone DNS Edi
 export CLOUDFLARE_ACCOUNT_ID=6f016e176bf8507b75cecde460c5689d
 
 pnpm install
-pnpm --filter @cutoff/web deploy
+pnpm --filter @cutoff/web run deploy
 ```
 
 Custom domains are declared in `wrangler.jsonc` (`routes` + `custom_domain`). First deploy creates DNS for apex + www.
@@ -72,7 +72,7 @@ After CI merges this branch:
    - Deploy command: `pnpm --filter @cutoff/web exec opennextjs-cloudflare deploy` (or Wrangler deploy of `.open-next`)
 2. Settings → Domains → Custom Domains: `callcutoff.com`, `www.callcutoff.com`
 3. Settings → Variables: set the secrets above; keep bypass vars as in `wrangler.jsonc`
-4. Or from a machine with token: `pnpm --filter @cutoff/web deploy`
+4. Or from a machine with token: `pnpm --filter @cutoff/web run deploy`
 
 MCP (Reed) when zone/Worker write is authorized:
 

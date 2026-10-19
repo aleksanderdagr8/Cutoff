@@ -41,7 +41,7 @@ pnpm --filter @cutoff/web dev
 # http://localhost:3000/ops   — operator  (CUTOFF_OPS_DEV_BYPASS=1 default)
 ```
 
-**Production:** [`https://callcutoff.com`](https://callcutoff.com) (`cutoff-web` Worker). Deploy: `pnpm --filter @cutoff/web deploy` — details in [`apps/web/DEPLOY.md`](./apps/web/DEPLOY.md).
+**Production:** [`https://callcutoff.com`](https://callcutoff.com) (`cutoff-web` Worker). Deploy: `pnpm --filter @cutoff/web run deploy` — details in [`apps/web/DEPLOY.md`](./apps/web/DEPLOY.md).
 
 Bypass-only (CI / no Auth secrets):
 
