@@ -143,4 +143,14 @@ export class MemoryHouseholdRepository {
   getMember(memberId: string): MemberRow | null {
     return this.members.find((m) => m.memberId === memberId) ?? null;
   }
+
+  /** Operator / service-role index — all households. */
+  listHouseholds(): readonly HouseholdRow[] {
+    return this.households;
+  }
+
+  listMembers(householdId?: string): readonly MemberRow[] {
+    if (!householdId) return this.members;
+    return this.members.filter((m) => m.householdId === householdId);
+  }
 }

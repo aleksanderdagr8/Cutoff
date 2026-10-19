@@ -75,6 +75,11 @@ export class MemoryMandateRepository {
     return this.rows.filter((r) => r.householdId === householdId);
   }
 
+  /** Operator index — all mandates across households. */
+  listAll(): readonly MandateRow[] {
+    return this.rows;
+  }
+
   toSnapshot(row: MandateRow): MandateSnapshot {
     return {
       ceilingCents: row.ceilingCents,
