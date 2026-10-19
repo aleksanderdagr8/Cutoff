@@ -1,10 +1,19 @@
 name = "cutoff-api"
 main = "src/index.ts"
 compatibility_date = "2024-12-01"
+account_id = "6f016e176bf8507b75cecde460c5689d"
+workers_dev = true
 
 # Unit 20: reorder nudge cron (every 15 minutes).
 [triggers]
 crons = ["*/15 * * * *"]
 
-# Unit 21 will wire cutoff-nudges producer/consumer + DLQ.
-# Queues/KV arrive with later units; cron enqueues via in-process NudgeQueue today.
+# Unit 21: nudge delivery queue + DLQ (max_retries=5).
+[[queues.producers]]
+binding = "NUDGE_QUEUE"
+queue = "cutoff-nudges"
+
+[[queues.consumers]]
+queue = "cutoff-nudges"
+max_retries = 5
+dead_letter_queue = "cutoff-nudges-dlq"

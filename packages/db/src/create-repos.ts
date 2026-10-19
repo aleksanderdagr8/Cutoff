@@ -100,13 +100,17 @@ export type CutoffRepos = {
  * Env-driven mode: `postgres` when SUPABASE_URL + SUPABASE_SERVICE_ROLE are set,
  * otherwise `memory`. Explicit `createRepos({ mode })` always wins at the call site.
  */
+function nodeProcessEnv(): Record<string, string | undefined> {
+  // Workers have no `process`; Node/CI tests do.
+  return typeof process !== "undefined"
+    ? (process.env as Record<string, string | undefined>)
+    : {};
+}
+
 export function resolveReposModeFromEnv(
-  env: Record<string, string | undefined> = process.env as Record<
-    string,
-    string | undefined
-  >,
+  env?: Record<string, string | undefined>,
 ): ReposMode {
-  return hasSupabaseServiceEnv(env) ? "postgres" : "memory";
+  return hasSupabaseServiceEnv(env ?? nodeProcessEnv()) ? "postgres" : "memory";
 }
 
 /**
@@ -151,9 +155,7 @@ export function createRepos(options: CreateReposOptions): CutoffRepos {
   const supabase =
     options.supabase ??
     (() => {
-      const cfg = readSupabaseServiceEnv(
-        options.env ?? (process.env as Record<string, string | undefined>),
-      );
+      const cfg = readSupabaseServiceEnv(options.env ?? nodeProcessEnv());
       if (!cfg) {
         throw new Error(
           "createRepos({ mode: \"postgres\" }) requires SUPABASE_URL + SUPABASE_SERVICE_ROLE or an explicit supabase client",

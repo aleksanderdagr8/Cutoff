@@ -97,6 +97,10 @@ MCP rate limits (30 quotes / 5 commits per key per minute), `protocol:"mcp"` + `
 
 API cron (`*/15 * * * *`) + idempotent `reorder_nudges` writer + enqueue to `NudgeQueue` (delivery is Unit 21).
 
+## Phase 15 (Unit 21)
+
+`cutoff-nudges` queue consumer: signed agent webhook (`x-cutoff-delivery-id`), email notify adapter, fallback after 5 failures. DLQ `cutoff-nudges-dlq`.
+
 ## Agent auth
 
 `Authorization: Bearer ck_live_…`  

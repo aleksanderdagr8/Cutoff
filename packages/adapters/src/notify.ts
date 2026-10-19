@@ -24,6 +24,7 @@ export type OutboundWebhookJob = {
 export type SignedWebhookHeaders = {
   "x-cutoff-timestamp": string;
   "x-cutoff-signature": string;
+  "x-cutoff-delivery-id"?: string;
 };
 
 async function hmacSha256Hex(secret: string, payload: string): Promise<string> {

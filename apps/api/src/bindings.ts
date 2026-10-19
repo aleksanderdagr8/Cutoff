@@ -1,9 +1,11 @@
 import type {
+  EmailNotifyAdapter,
   FulfillAdapter,
   MemoryOutboundWebhookQueue,
   NudgeQueue,
   OfferFeedAdapter,
   PayAdapter,
+  SecretStore,
   TaxAdapter,
 } from "@cutoff/adapters";
 import type {
@@ -52,8 +54,17 @@ export type ApiBindings = {
   reorderNudges: ReorderNudgeRepository;
   quoteNudgeLinks: QuoteNudgeLinkStore;
   outboundWebhooks: MemoryOutboundWebhookQueue;
-  /** Unit 20: reorder nudge producer queue (consumer is Unit 21). */
+  /** Unit 20–21: reorder nudge queue (CF Queue or memory). */
   nudgeQueue: NudgeQueue;
+  /** Unit 21: household email for reorder.due. */
+  emailNotify: EmailNotifyAdapter;
+  /** Unit 21: resolve agent_webhook_secret_ref. */
+  secrets: SecretStore;
+  /**
+   * Optional fetch override for agent webhook POST (tests).
+   * Defaults to global fetch.
+   */
+  nudgeFetch?: typeof fetch;
   /** Shared secret for signing outbound + verifying inbound (injected). */
   webhookSecret: string;
   /** Buyer-agent webhook URL (injected). */

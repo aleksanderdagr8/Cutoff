@@ -1,10 +1,12 @@
 import {
   FakeAggregatorOfferAdapter,
   FakeBrandFeedOfferAdapter,
+  FakeEmailNotifyAdapter,
   FakeFulfillAdapter,
   FakePayAdapter,
   FakeTaxAdapter,
   MemoryOutboundWebhookQueue,
+  MemorySecretStore,
 } from "@cutoff/adapters";
 import {
   MemoryAgentCredentialRepository,
@@ -83,6 +85,8 @@ export function testBindings(
     quoteNudgeLinks: new MemoryQuoteNudgeLinkStore(),
     outboundWebhooks: new MemoryOutboundWebhookQueue(),
     nudgeQueue: new MemoryOutboundWebhookQueue(),
+    emailNotify: new FakeEmailNotifyAdapter(),
+    secrets: new MemorySecretStore(),
     webhookSecret: TEST_WEBHOOK_SECRET,
     webhookTargetUrl: "https://buyer-agent.example/webhooks/cutoff",
     revocationKv,
