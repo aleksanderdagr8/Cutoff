@@ -41,6 +41,8 @@ export type AuthenticatedAgent = {
   householdId: string;
   scopes: AgentScope[];
   mandateIds: string[];
+  /** ISO-8601 UTC when the key was issued (for risk key-age check). */
+  createdAt: string;
 };
 
 export type AuthAgentResult =
@@ -144,6 +146,7 @@ export class MemoryAgentCredentialRepository {
         householdId: row.householdId,
         scopes: row.scopes,
         mandateIds: row.mandateIds,
+        createdAt: row.createdAt,
       },
     };
   }

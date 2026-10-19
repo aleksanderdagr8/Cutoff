@@ -1,5 +1,10 @@
-export type { ChargeInput, ChargeResult, PayAdapter } from "./pay.js";
-export { FakePayAdapter } from "./pay.js";
+export type {
+  ChargeInput,
+  ChargeResult,
+  ChargeOutcome,
+  PayAdapter,
+} from "./pay.js";
+export { FakePayAdapter, StripeSandboxPayAdapter } from "./pay.js";
 
 export type { PlaceInput, PlaceResult, FulfillAdapter } from "./fulfill.js";
 export { FakeFulfillAdapter } from "./fulfill.js";

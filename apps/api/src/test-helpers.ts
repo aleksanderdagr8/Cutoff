@@ -12,10 +12,17 @@ import {
   MemoryOrderRepository,
   MemoryQuoteRepository,
   MemoryRevocationKv,
+  MemoryRiskRepository,
   seedDualFulfillerOffers,
   seedFixtureCatalog,
 } from "@cutoff/db";
 import type { ApiBindings } from "./bindings.js";
+
+/** Default evidence fields for commit bodies (Unit 8). */
+export const defaultCommitEvidence = {
+  actor_chain: ["buyer_agent", "cutoff"],
+  protocol: "cutoff.v1",
+} as const;
 
 export function testBindings(
   overrides: Partial<Pick<ApiBindings, "nowUtc">> = {},
@@ -38,6 +45,7 @@ export function testBindings(
     quotes: new MemoryQuoteRepository(),
     catalog,
     offers,
+    risk: new MemoryRiskRepository(),
     revocationKv,
     traceId: "trace_test",
     nowUtc: overrides.nowUtc ?? (() => "2026-10-19T12:00:00.000Z"),

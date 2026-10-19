@@ -10,7 +10,7 @@ export type FakeCommitHeaders = {
 
 /**
  * Phase 0 fake commit. Proves idempotency: same key → same order, one row.
- * Not the production /v1/commits path (that arrives in Unit 8).
+ * Not the production /v1/commits path (Units 7–8).
  */
 export async function fakeCommitHandler(
   bindings: ApiBindings,

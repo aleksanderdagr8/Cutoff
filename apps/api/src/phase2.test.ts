@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { createApp } from "./app.js";
 import {
+  defaultCommitEvidence,
   seedHouseholdWithMandateAndAgent,
   testBindings,
 } from "./test-helpers.js";
@@ -184,7 +185,10 @@ describe("U6 quote holds and never-substitute", () => {
           Authorization: `Bearer ${agent.secret}`,
           "Idempotency-Key": "idem_expired",
         },
-        body: JSON.stringify({ quote_id: quote.quote_id }),
+        body: JSON.stringify({
+          quote_id: quote.quote_id,
+          ...defaultCommitEvidence,
+        }),
       }),
       bindings,
     );
