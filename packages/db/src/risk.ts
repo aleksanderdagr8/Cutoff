@@ -14,6 +14,8 @@ export class MemoryRiskRepository {
   killSwitch = false;
   private readonly suspendedMerchants = new Set<string>();
   private readonly commitStamps: RiskCommitStamp[] = [];
+  /** Merchant strike counter from cancel / late ship (not a fee). */
+  private readonly merchantStrikes = new Map<string, number>();
 
   setKillSwitch(on: boolean): void {
     this.killSwitch = on;
@@ -29,6 +31,15 @@ export class MemoryRiskRepository {
 
   isMerchantSuspended(fulfillerId: string): boolean {
     return this.suspendedMerchants.has(fulfillerId);
+  }
+
+  recordMerchantStrike(fulfillerId: string, _reason: "cancel" | "late_ship"): void {
+    const next = (this.merchantStrikes.get(fulfillerId) ?? 0) + 1;
+    this.merchantStrikes.set(fulfillerId, next);
+  }
+
+  merchantStrikeCount(fulfillerId: string): number {
+    return this.merchantStrikes.get(fulfillerId) ?? 0;
   }
 
   /** Record a commit attempt that counts toward velocity (after gate pass). */

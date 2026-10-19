@@ -14,6 +14,12 @@ import {
 } from "./handlers/mandates.js";
 import { quoteHandler } from "./handlers/quote.js";
 import { commitHandler } from "./handlers/commit.js";
+import {
+  cancelOrderHandler,
+  getOrderTrackingHandler,
+  inboundFulfillWebhookHandler,
+} from "./handlers/fulfill.js";
+import { verifyOutboundWebhook } from "@cutoff/adapters";
 
 export type AppEnv = {
   Bindings: ApiBindings;
@@ -163,6 +169,59 @@ export function createApp() {
     const result = await commitHandler(c.env, body, {
       authorization: c.req.header("Authorization") ?? undefined,
       idempotencyKey: c.req.header("Idempotency-Key") ?? undefined,
+    });
+    if ("error" in result) {
+      return c.json({ error: result.error }, result.status as 401);
+    }
+    return c.json(result, result.created ? 201 : 200);
+  });
+
+  /** Agent: order tracking / shipment events. */
+  app.get("/v1/orders/:orderId", async (c) => {
+    const result = await getOrderTrackingHandler(
+      c.env,
+      c.req.param("orderId"),
+      c.req.header("Authorization") ?? undefined,
+    );
+    if ("error" in result) {
+      return c.json({ error: result.error }, result.status as 401);
+    }
+    return c.json(result);
+  });
+
+  /** Agent: cancel-before-ship. */
+  app.post("/v1/orders/cancel", async (c) => {
+    const body = await c.req.json().catch(() => null);
+    const result = await cancelOrderHandler(
+      c.env,
+      body,
+      c.req.header("Authorization") ?? undefined,
+    );
+    if ("error" in result) {
+      return c.json({ error: result.error }, result.status as 401);
+    }
+    return c.json(result);
+  });
+
+  /** Inbound fulfiller webhook — signature required. */
+  app.post("/v1/webhooks/fulfill", async (c) => {
+    const raw = await c.req.text();
+    let body: unknown = null;
+    try {
+      body = JSON.parse(raw);
+    } catch {
+      body = null;
+    }
+    const signatureValid = await verifyOutboundWebhook(
+      c.env.webhookSecret,
+      {
+        timestamp: c.req.header("x-cutoff-timestamp") ?? undefined,
+        signature: c.req.header("x-cutoff-signature") ?? undefined,
+      },
+      raw,
+    );
+    const result = await inboundFulfillWebhookHandler(c.env, body, {
+      signatureValid,
     });
     if ("error" in result) {
       return c.json({ error: result.error }, result.status as 401);

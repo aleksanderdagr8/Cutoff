@@ -1,5 +1,6 @@
 import type {
   FulfillAdapter,
+  MemoryOutboundWebhookQueue,
   OfferFeedAdapter,
   PayAdapter,
   TaxAdapter,
@@ -7,6 +8,7 @@ import type {
 import type {
   MemoryAgentCredentialRepository,
   MemoryCatalogRepository,
+  MemoryFulfillmentRepository,
   MemoryHouseholdRepository,
   MemoryMandateRepository,
   MemoryOfferRepository,
@@ -33,6 +35,12 @@ export type ApiBindings = {
   catalog: MemoryCatalogRepository;
   offers: MemoryOfferRepository;
   risk: MemoryRiskRepository;
+  fulfillment: MemoryFulfillmentRepository;
+  outboundWebhooks: MemoryOutboundWebhookQueue;
+  /** Shared secret for signing outbound + verifying inbound (injected). */
+  webhookSecret: string;
+  /** Buyer-agent webhook URL (injected). */
+  webhookTargetUrl: string;
   revocationKv: MemoryRevocationKv;
   traceId: string;
   /** Injected clock for deterministic tests. */
