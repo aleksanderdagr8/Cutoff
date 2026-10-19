@@ -17,6 +17,8 @@ export type MandateRow = {
   neverSubstituteIds: string[];
   addressId: string;
   actorCap: number;
+  /** Agent may cancel-before-ship when true (Unit 9). */
+  allowCancel: boolean;
   createdAt: string;
   updatedAt: string;
 };
@@ -30,6 +32,7 @@ export type CreateMandateInput = {
   neverSubstituteIds?: string[];
   addressId: string;
   actorCap?: number;
+  allowCancel?: boolean;
 };
 
 export class MemoryMandateRepository {
@@ -47,6 +50,7 @@ export class MemoryMandateRepository {
       neverSubstituteIds: [...(input.neverSubstituteIds ?? [])],
       addressId: input.addressId,
       actorCap: input.actorCap ?? 4,
+      allowCancel: input.allowCancel ?? false,
       createdAt: now,
       updatedAt: now,
     };

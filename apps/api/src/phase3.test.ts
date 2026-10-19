@@ -78,7 +78,8 @@ describe("Phase 3 exit — risk / commit / pay", () => {
       evidence_id: string;
     };
     expect(firstJson.created).toBe(true);
-    expect(firstJson.status).toBe("captured");
+    // Phase 4 places after capture → status is placed when fulfill succeeds.
+    expect(firstJson.status).toBe("placed");
     expect(firstJson.evidence_id).toBeTruthy();
 
     const second = await app.fetch(

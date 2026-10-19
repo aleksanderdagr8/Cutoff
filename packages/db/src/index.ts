@@ -15,6 +15,14 @@ export type {
   EvidencedCommitResult,
 } from "./orders.js";
 export { MemoryRiskRepository } from "./risk.js";
+export { MemoryFulfillmentRepository } from "./fulfillment.js";
+export type {
+  FulfillmentJobRow,
+  ShipmentEventRow,
+  RefundQueueRow,
+  InboundShipmentInput,
+  InboundShipmentResult,
+} from "./fulfillment.js";
 export { MemoryHouseholdRepository } from "./households.js";
 export type {
   HouseholdRow,

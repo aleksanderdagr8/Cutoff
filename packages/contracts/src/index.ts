@@ -49,7 +49,7 @@ export const UtcIsoSchema = z.string().datetime({ offset: true });
 export const HealthResponseSchema = z.object({
   ok: z.literal(true),
   service: z.literal("cutoff-api"),
-  phase: z.literal("3"),
+  phase: z.literal("4"),
 });
 
 export type HealthResponse = z.infer<typeof HealthResponseSchema>;
@@ -97,6 +97,8 @@ export const CreateMandateRequestSchema = z
     never_substitute_ids: z.array(z.string().min(1)).default([]),
     address_id: z.string().min(1),
     actor_cap: z.number().int().positive().max(32).default(4),
+    /** Agent may cancel-before-ship (Unit 9). Default false. */
+    allow_cancel: z.boolean().default(false),
   })
   .strict();
 
@@ -190,9 +192,64 @@ export const CommitResponseSchema = z.object({
     "refunded",
   ]),
   evidence_id: z.string().min(1).optional(),
+  job_id: z.string().min(1).optional(),
+  refund_id: z.string().min(1).optional(),
 });
 
 export type CommitResponse = z.infer<typeof CommitResponseSchema>;
+
+export const CancelOrderRequestSchema = z
+  .object({
+    order_id: z.string().min(1),
+  })
+  .strict();
+
+export type CancelOrderRequest = z.infer<typeof CancelOrderRequestSchema>;
+
+export const CancelOrderResponseSchema = z.object({
+  order_id: z.string().min(1),
+  status: z.literal("cancelled"),
+});
+
+export type CancelOrderResponse = z.infer<typeof CancelOrderResponseSchema>;
+
+export const OrderTrackingResponseSchema = z.object({
+  order_id: z.string().min(1),
+  status: z.enum([
+    "committed",
+    "captured",
+    "failed",
+    "placed",
+    "shipped",
+    "delivered",
+    "refunded",
+  ]),
+  job_id: z.string().nullable(),
+  tracking_number: z.string().nullable(),
+  shipment_events: z.array(
+    z.object({
+      event_id: z.string().min(1),
+      status: z.string().min(1),
+      tracking_number: z.string().nullable(),
+      at: UtcIsoSchema,
+    }),
+  ),
+});
+
+export type OrderTrackingResponse = z.infer<typeof OrderTrackingResponseSchema>;
+
+export const InboundFulfillWebhookSchema = z
+  .object({
+    event_id: z.string().min(1),
+    order_id: z.string().min(1),
+    job_id: z.string().min(1),
+    status: z.enum(["shipped", "delivered", "cancelled", "tracking_update"]),
+    tracking_number: z.string().min(1).nullable(),
+    occurred_at: UtcIsoSchema,
+  })
+  .strict();
+
+export type InboundFulfillWebhook = z.infer<typeof InboundFulfillWebhookSchema>;
 
 /** Agent widen attempts — always rejected. */
 export const AgentWidenMandateRequestSchema = z

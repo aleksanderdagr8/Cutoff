@@ -59,7 +59,7 @@ describe("StripeSandboxPayAdapter", () => {
 });
 
 describe("FakeFulfillAdapter", () => {
-  it("accepts a place", async () => {
+  it("accepts a place, cancel, and track", async () => {
     const fulfill = new FakeFulfillAdapter();
     const result = await fulfill.place({
       orderId: "ord_1",
@@ -68,6 +68,22 @@ describe("FakeFulfillAdapter", () => {
     });
     expect(result.status).toBe("accepted");
     expect(fulfill.jobs).toHaveLength(1);
+    await fulfill.cancel({ jobId: result.jobId, orderId: "ord_1" });
+    expect(fulfill.cancels).toHaveLength(1);
+    const track = await fulfill.track({ jobId: result.jobId });
+    expect(track.status).toBe("cancelled");
+  });
+
+  it("can fail place", async () => {
+    const fulfill = new FakeFulfillAdapter();
+    fulfill.failNextPlace = true;
+    await expect(
+      fulfill.place({
+        orderId: "ord_x",
+        canonicalItemId: "item_1",
+        qty: 1,
+      }),
+    ).rejects.toThrow("fulfill_adapter_error");
   });
 });
 

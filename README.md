@@ -7,20 +7,20 @@ Buyer's agent decides when to reorder. Cutoff quotes, commits, and stands behind
 ```
 apps/web          human app (Next.js) — anon key only
 apps/api          Cloudflare Worker (Hono)
-packages/domain   pure rank / mandate / hold / catalog / quote / risk
+packages/domain   pure rank / mandate / hold / catalog / quote / risk / fulfill
 packages/db       repositories (memory now; Supabase later)
-packages/adapters pay, fulfill, tax, offer feed — fake + live
+packages/adapters pay, fulfill, tax, offer feed, notify — fake + live
 packages/contracts zod schemas + error codes
 ```
 
-## Phase 3 (Units 7–8)
+## Phase 4 (Unit 9)
 
-Risk gate (kill switch, address, velocity) + evidenced commit + fake pay. No live Stripe required for CI exit.
+Fulfill after capture, inbound/outbound signed webhooks, cancel-before-ship. No live aggregator required for CI exit.
 
 ```bash
 pnpm install
-pnpm run test:u0       # Unit 0 + Phase 1–3 suites (CI)
-pnpm run test:phase3   # same as test:u0
+pnpm run test:u0       # Unit 0 + Phase 1–4 suites (CI)
+pnpm run test:phase4   # same as test:u0
 pnpm run typecheck
 pnpm run check:boundaries
 ```
@@ -30,13 +30,13 @@ pnpm run check:boundaries
 `Authorization: Bearer ck_live_…`  
 Scopes: `quote`, `commit`, `read_list`. Revoked keys get `{ "error": "revoked" }`.
 
-## Quote
+## Quote / Commit
 
-`POST /v1/quotes` with `mandate_id`, `canonical_item_id`, `qty`, `deliver_by`.  
-Rank: lower landed → earlier delivery → higher merchant score.  
-Typed errors include `stale_offer`, `hold_active`, `out_of_stock`, `over_ceiling`, `mandate_miss`, `quote_expired`.
+`POST /v1/quotes` → `POST /v1/commits` with evidence + `Idempotency-Key`.  
+Successful capture places via `FulfillAdapter`; place failure enqueues a refund.
 
-## Commit
+## Fulfill / notify
 
-`POST /v1/commits` with `quote_id`, `actor_chain`, `protocol` + `Idempotency-Key`.  
-Risk gate runs first. Charge amount is always the quote landed cents.
+- `GET /v1/orders/:orderId` — tracking + shipment events
+- `POST /v1/orders/cancel` — cancel-before-ship when mandate `allow_cancel`
+- `POST /v1/webhooks/fulfill` — signed inbound; deduped on `event_id`

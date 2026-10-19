@@ -82,3 +82,19 @@ export type {
   EvidenceFields,
   EvidenceValidation,
 } from "./risk.js";
+
+export {
+  DEFAULT_WEBHOOK_REPLAY_WINDOW_MS,
+  canCancelOrder,
+  acceptInboundShipmentEvent,
+  isLateShip,
+  signaturesEqual,
+} from "./fulfill.js";
+
+export type {
+  OrderLifecycleStatus,
+  CancelFailCode,
+  CancelCheckInput,
+  CancelCheckResult,
+  InboundAcceptResult,
+} from "./fulfill.js";

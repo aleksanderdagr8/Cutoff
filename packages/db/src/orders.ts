@@ -307,6 +307,19 @@ export class MemoryOrderRepository {
     return this.orders;
   }
 
+  get(orderId: string): OrderRow | null {
+    return this.orders.find((o) => o.orderId === orderId) ?? null;
+  }
+
+  getForHousehold(
+    orderId: string,
+    householdId: string,
+  ): OrderRow | null {
+    const row = this.get(orderId);
+    if (!row || row.householdId !== householdId) return null;
+    return row;
+  }
+
   count(): number {
     return this.orders.length;
   }
@@ -326,5 +339,21 @@ export class MemoryOrderRepository {
 
   chargeCount(): number {
     return this.chargeRows.length;
+  }
+
+  /**
+   * Append a lifecycle event and update convenience status.
+   * Used by fulfill/notify after capture (placed, shipped, refunded, …).
+   */
+  appendStatus(
+    orderId: string,
+    status: OrderStatusEvent,
+    atUtc: string,
+  ): OrderEventRow | null {
+    const order = this.get(orderId);
+    if (!order) return null;
+    const event = this.appendEvent(orderId, status, atUtc);
+    order.status = status;
+    return event;
   }
 }

@@ -3,9 +3,11 @@ import {
   FakeFulfillAdapter,
   FakePayAdapter,
   FakeTaxAdapter,
+  MemoryOutboundWebhookQueue,
 } from "@cutoff/adapters";
 import {
   MemoryAgentCredentialRepository,
+  MemoryFulfillmentRepository,
   MemoryHouseholdRepository,
   MemoryMandateRepository,
   MemoryOfferRepository,
@@ -24,8 +26,10 @@ export const defaultCommitEvidence = {
   protocol: "cutoff.v1",
 } as const;
 
+export const TEST_WEBHOOK_SECRET = "whsec_test_cutoff_phase4";
+
 export function testBindings(
-  overrides: Partial<Pick<ApiBindings, "nowUtc">> = {},
+  overrides: Partial<Pick<ApiBindings, "nowUtc" | "fulfill">> = {},
 ): ApiBindings {
   const pay = new FakePayAdapter();
   const revocationKv = new MemoryRevocationKv();
@@ -35,7 +39,7 @@ export function testBindings(
   });
   return {
     pay,
-    fulfill: new FakeFulfillAdapter(),
+    fulfill: overrides.fulfill ?? new FakeFulfillAdapter(),
     tax: new FakeTaxAdapter(),
     offerFeed: new FakeAggregatorOfferAdapter(),
     orders: new MemoryOrderRepository(pay),
@@ -46,6 +50,10 @@ export function testBindings(
     catalog,
     offers,
     risk: new MemoryRiskRepository(),
+    fulfillment: new MemoryFulfillmentRepository(),
+    outboundWebhooks: new MemoryOutboundWebhookQueue(),
+    webhookSecret: TEST_WEBHOOK_SECRET,
+    webhookTargetUrl: "https://buyer-agent.example/webhooks/cutoff",
     revocationKv,
     traceId: "trace_test",
     nowUtc: overrides.nowUtc ?? (() => "2026-10-19T12:00:00.000Z"),
@@ -60,6 +68,7 @@ export async function seedHouseholdWithMandateAndAgent(
     itemId?: string;
     neverSubstitute?: boolean;
     scopes?: Array<"quote" | "commit" | "read_list">;
+    allowCancel?: boolean;
   } = {},
 ) {
   const itemId = opts.itemId ?? "item_towels_12";
@@ -75,6 +84,7 @@ export async function seedHouseholdWithMandateAndAgent(
     neverSubstituteIds:
       opts.neverSubstitute === false ? [] : [itemId],
     addressId: "addr_home",
+    allowCancel: opts.allowCancel ?? false,
   });
   const agent = await bindings.agents.issue({
     householdId: household.householdId,
