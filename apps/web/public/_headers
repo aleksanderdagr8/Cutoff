@@ -1,2 +1,18 @@
+# Workers Static Assets headers (copied into .open-next/assets).
+# Content-Type overrides matter when assets were uploaded without MIME
+# (browsers refuse stylesheets served as application/octet-stream).
+
 /_next/static/*
-  Cache-Control: public,max-age=31536000,immutable
+  Cache-Control: public, max-age=31536000, immutable
+
+/_next/static/css/*
+  Content-Type: text/css; charset=utf-8
+
+/_next/static/chunks/*
+  Content-Type: application/javascript; charset=utf-8
+
+/_next/static/media/*.woff2
+  Content-Type: font/woff2
+
+/_next/static/media/*.woff
+  Content-Type: font/woff
