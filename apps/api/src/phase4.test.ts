@@ -314,7 +314,7 @@ describe("U9 fulfill and notify", () => {
     };
 
     // Force shipped via ledger without webhook (status gate).
-    bindings.orders.appendStatus(
+    await bindings.orders.appendStatus(
       commit.order_id,
       "shipped",
       "2026-10-19T12:00:00.000Z",

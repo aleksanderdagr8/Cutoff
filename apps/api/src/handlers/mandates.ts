@@ -17,7 +17,7 @@ export async function createMandateHandler(
   if (!parsed.success) {
     return { error: "invalid_body" as const, status: 400 as const };
   }
-  const household = bindings.households.getHousehold(
+  const household = await bindings.households.getHousehold(
     { role: "service_role" },
     householdId,
   );
@@ -25,7 +25,7 @@ export async function createMandateHandler(
     return { error: "unauthenticated" as const, status: 401 as const };
   }
 
-  const row = bindings.mandates.create({
+  const row = await bindings.mandates.create({
     householdId,
     ceilingCents: parsed.data.ceiling_cents,
     expiresAtUtc: parsed.data.expires_at,
@@ -59,7 +59,7 @@ export async function lowerCeilingHandler(
   if (!parsed.success) {
     return { error: "invalid_body" as const, status: 400 as const };
   }
-  const updated = bindings.mandates.lowerCeiling(
+  const updated = await bindings.mandates.lowerCeiling(
     mandateId,
     householdId,
     parsed.data.ceiling_cents,

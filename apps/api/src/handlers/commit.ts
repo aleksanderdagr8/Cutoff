@@ -38,7 +38,7 @@ export async function commitHandler(
     return { error: "invalid_body" as const, status: 400 as const };
   }
 
-  const quote = bindings.quotes.get(parsed.data.quote_id);
+  const quote = await bindings.quotes.get(parsed.data.quote_id);
   if (!quote || quote.householdId !== auth.agent.householdId) {
     return { error: "quote_mismatch" as const, status: 400 as const };
   }
@@ -51,7 +51,7 @@ export async function commitHandler(
     return { error: "quote_expired" as const, status: 400 as const };
   }
 
-  const mandateRow = bindings.mandates.getForHousehold(
+  const mandateRow = await bindings.mandates.getForHousehold(
     quote.mandateId,
     auth.agent.householdId,
   );
@@ -117,7 +117,7 @@ export async function commitHandler(
   }
 
   if (result.created && result.order.status !== "failed") {
-    bindings.quotes.markCommitted(quote.quoteId, nowUtc);
+    await bindings.quotes.markCommitted(quote.quoteId, nowUtc);
   }
 
   // Phase 4: place after capture. Failure enqueues refund (no bare captured).

@@ -5,6 +5,7 @@
  */
 
 import { holdKey, quoteExpiresAt, MAX_QUOTE_TTL_MS } from "@cutoff/domain";
+import type { MaybePromise } from "./types.js";
 import { ulid } from "./ulid.js";
 
 export type QuoteScoreInputs = {
@@ -82,7 +83,29 @@ export type HoldRow = {
   quoteId: string;
 };
 
-export class MemoryQuoteRepository {
+/** Shared surface for memory + Postgres quote repos. */
+export interface QuoteRepository {
+  attemptInsertWithPlacement(_row: Record<string, unknown>): {
+    ok: false;
+    error: "placement_rejected";
+  };
+  create(input: CreateQuoteInput): MaybePromise<CreateQuoteResult>;
+  get(quoteId: string): MaybePromise<QuoteRow | null>;
+  markCommitted(
+    quoteId: string,
+    atUtc: string,
+  ): MaybePromise<QuoteRow | null>;
+  openHold(
+    householdId: string,
+    canonicalItemId: string,
+  ): MaybePromise<HoldRow | null>;
+  listAll(): MaybePromise<readonly QuoteRow[]>;
+  listOpenHolds(): MaybePromise<readonly HoldRow[]>;
+  releaseHold(quoteId: string): MaybePromise<HoldRow | null>;
+  schemaHasPlacementColumn(): boolean;
+}
+
+export class MemoryQuoteRepository implements QuoteRepository {
   private readonly rows: QuoteRow[] = [];
   private readonly holds = new Map<string, HoldRow>();
 

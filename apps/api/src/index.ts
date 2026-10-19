@@ -7,20 +7,8 @@ import {
   MemoryOutboundWebhookQueue,
 } from "@cutoff/adapters";
 import {
-  MemoryAgentCredentialRepository,
-  MemoryFulfillmentRepository,
-  MemoryHouseholdRepository,
-  MemoryListRepository,
-  MemoryMandateRepository,
-  MemoryOfferRepository,
-  MemoryOrderRepository,
-  MemoryQuoteRepository,
-  MemoryReceiptRepository,
-  MemoryRevocationKv,
-  MemoryRiskRepository,
-  seedBrandFeedTopOffers,
-  seedDualFulfillerOffers,
-  seedFixtureCatalog,
+  createRepos,
+  resolveReposModeFromEnv,
 } from "@cutoff/db";
 import { createApp } from "./app.js";
 import type { ApiBindings } from "./bindings.js";
@@ -29,35 +17,36 @@ import type { ApiBindings } from "./bindings.js";
  * Cloudflare Workers entry. Bindings are built once per isolate and injected
  * into handlers as plain deps — handlers never reach for ambient globals.
  *
- * Phase 6: dual offer feeds (aggregator + brand) + merchant_scores + evidence export.
+ * Repos: memory by default; Postgres when SUPABASE_URL + SUPABASE_SERVICE_ROLE
+ * are set (see createRepos / docs).
  */
 function buildBindings(): ApiBindings {
   const pay = new FakePayAdapter();
-  const revocationKv = new MemoryRevocationKv();
-  const catalog = seedFixtureCatalog();
-  const offers = seedDualFulfillerOffers(new MemoryOfferRepository());
-  seedBrandFeedTopOffers(offers);
+  const repos = createRepos({
+    mode: resolveReposModeFromEnv(),
+    pay,
+  });
   return {
     pay,
     fulfill: new FakeFulfillAdapter(),
     tax: new FakeTaxAdapter(),
     offerFeed: new FakeAggregatorOfferAdapter(),
     brandOfferFeed: new FakeBrandFeedOfferAdapter(),
-    orders: new MemoryOrderRepository(pay),
-    households: new MemoryHouseholdRepository(),
-    agents: new MemoryAgentCredentialRepository(revocationKv),
-    mandates: new MemoryMandateRepository(),
-    quotes: new MemoryQuoteRepository(),
-    catalog,
-    offers,
-    risk: new MemoryRiskRepository(),
-    fulfillment: new MemoryFulfillmentRepository(),
-    receipts: new MemoryReceiptRepository(),
-    list: new MemoryListRepository(),
+    orders: repos.orders,
+    households: repos.households,
+    agents: repos.agents,
+    mandates: repos.mandates,
+    quotes: repos.quotes,
+    catalog: repos.catalog,
+    offers: repos.offers,
+    risk: repos.risk,
+    fulfillment: repos.fulfillment,
+    receipts: repos.receipts,
+    list: repos.list,
     outboundWebhooks: new MemoryOutboundWebhookQueue(),
     webhookSecret: "whsec_dev_replace_me",
     webhookTargetUrl: "https://example.invalid/webhooks/cutoff",
-    revocationKv,
+    revocationKv: repos.revocationKv,
     traceId: crypto.randomUUID(),
     nowUtc: () => new Date().toISOString(),
   };

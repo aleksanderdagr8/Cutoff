@@ -156,9 +156,9 @@ describe("Phase 6 — Unit 12 score and second source", () => {
     expect(q.score_inputs.merchant_score).toBe(0);
 
     // Order exists for the brand winner — exit criterion.
-    const order = bindings.orders.get(commit.order_id);
+    const order = await bindings.orders.get(commit.order_id);
     expect(order).not.toBeNull();
-    expect(bindings.quotes.get(order!.quoteId)?.fulfillerId).toBe(
+    expect((await bindings.quotes.get(order!.quoteId))?.fulfillerId).toBe(
       "fulfiller_brand",
     );
   });
@@ -340,9 +340,8 @@ describe("Phase 6 — Unit 12 score and second source", () => {
       order_id: string;
       job_id: string;
     };
-    const quoteRow = bindings.quotes.get(
-      bindings.orders.get(commit.order_id)!.quoteId,
-    )!;
+    const orderRow = await bindings.orders.get(commit.order_id);
+    const quoteRow = (await bindings.quotes.get(orderRow!.quoteId))!;
 
     const body = JSON.stringify({
       event_id: "evt_p6_delivered",

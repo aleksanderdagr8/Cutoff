@@ -7,6 +7,7 @@ import type { AgentScope } from "@cutoff/domain";
 import { scopesAreValid } from "@cutoff/domain";
 import { generateAgentSecret, sha256Hex } from "./hash.js";
 import type { RevocationKv } from "./kv.js";
+import type { MaybePromise } from "./types.js";
 import { ulid } from "./ulid.js";
 
 export type AgentCredentialRow = {
@@ -49,7 +50,26 @@ export type AuthAgentResult =
   | { ok: true; agent: AuthenticatedAgent }
   | { ok: false; error: "unauthenticated" | "revoked" };
 
-export class MemoryAgentCredentialRepository {
+/** Shared surface for memory + Postgres agent credential repos. */
+export interface AgentCredentialRepository {
+  issue(input: IssueAgentInput): Promise<IssueAgentResult>;
+  revoke(keyId: string): Promise<boolean>;
+  authenticate(bearerSecret: string): Promise<AuthAgentResult>;
+  selectByKeyId(
+    keyId: string,
+  ): MaybePromise<Omit<AgentCredentialRow, never> | null>;
+  listForHousehold(
+    householdId: string,
+  ): MaybePromise<readonly AgentCredentialRow[]>;
+  /** Test helpers present on memory impl. */
+  readonly selectLog?: string[];
+  readonly structuredLogs?: string[];
+  storedHashes?(): string[];
+}
+
+export class MemoryAgentCredentialRepository
+  implements AgentCredentialRepository
+{
   private readonly rows: AgentCredentialRow[] = [];
   /** Select projection log for U2: prove secret never appears. */
   readonly selectLog: string[] = [];

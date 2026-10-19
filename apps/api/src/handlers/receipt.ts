@@ -41,12 +41,12 @@ export async function getReceiptHandler(
   // RLS-shaped household membership double-check.
   if (
     session.role === "member" &&
-    !bindings.households.memberOf(session.memberId!, receipt.householdId)
+    !await bindings.households.memberOf(session.memberId!, receipt.householdId)
   ) {
     return { error: "unauthenticated" as const, status: 401 as const };
   }
 
-  const order = bindings.orders.getForHousehold(
+  const order = await bindings.orders.getForHousehold(
     receipt.orderId,
     receipt.householdId,
   );
@@ -54,7 +54,7 @@ export async function getReceiptHandler(
     return { error: "unauthenticated" as const, status: 401 as const };
   }
 
-  const quote = bindings.quotes.get(order.quoteId);
+  const quote = await bindings.quotes.get(order.quoteId);
   if (!quote) {
     return { error: "quote_mismatch" as const, status: 400 as const };
   }
@@ -108,12 +108,12 @@ export async function skipReceiptHandler(
   }
   if (
     session.role === "member" &&
-    !bindings.households.memberOf(session.memberId!, receipt.householdId)
+    !await bindings.households.memberOf(session.memberId!, receipt.householdId)
   ) {
     return { error: "unauthenticated" as const, status: 401 as const };
   }
 
-  const order = bindings.orders.getForHousehold(
+  const order = await bindings.orders.getForHousehold(
     receipt.orderId,
     receipt.householdId,
   );
@@ -159,7 +159,7 @@ export async function skipReceiptHandler(
     };
   }
 
-  const quote = bindings.quotes.get(order.quoteId);
+  const quote = await bindings.quotes.get(order.quoteId);
   const nowUtc = bindings.nowUtc();
   const job = bindings.fulfillment.getJobForOrder(order.orderId);
   if (job) {
@@ -175,7 +175,7 @@ export async function skipReceiptHandler(
     reason: "human",
     nowUtc,
   });
-  bindings.orders.appendStatus(order.orderId, "refunded", nowUtc);
+  await bindings.orders.appendStatus(order.orderId, "refunded", nowUtc);
   if (quote) {
     bindings.risk.recordMerchantStrike(
       job?.fulfillerId ?? quote.fulfillerId,

@@ -43,7 +43,7 @@ describe("U0 fake commit idempotency", () => {
     expect(firstJson.created).toBe(true);
     expect(secondJson.created).toBe(false);
     expect(secondJson.order_id).toBe(firstJson.order_id);
-    expect(bindings.orders.count()).toBe(1);
+    expect(await bindings.orders.count()).toBe(1);
     expect((bindings.pay as FakePayAdapter).charges).toHaveLength(1);
   });
 

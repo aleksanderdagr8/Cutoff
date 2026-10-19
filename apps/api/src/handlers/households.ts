@@ -14,7 +14,7 @@ export async function createHouseholdHandler(
   if (!parsed.success) {
     return { error: "invalid_body" as const, status: 400 as const };
   }
-  const { household, member } = bindings.households.createHousehold(
+  const { household, member } = await bindings.households.createHousehold(
     parsed.data.name,
     parsed.data.member_email,
   );
@@ -47,7 +47,7 @@ export async function getHouseholdHandler(
     if (auth.agent.householdId !== householdId) {
       return { error: "unauthenticated" as const, status: 401 as const };
     }
-    const household = bindings.households.getHousehold(
+    const household = await bindings.households.getHousehold(
       { role: "service_role" },
       householdId,
     );
@@ -61,7 +61,7 @@ export async function getHouseholdHandler(
   }
 
   if (opts.memberId && opts.memberHouseholdId) {
-    const household = bindings.households.getHousehold(
+    const household = await bindings.households.getHousehold(
       {
         role: "member",
         memberId: opts.memberId,

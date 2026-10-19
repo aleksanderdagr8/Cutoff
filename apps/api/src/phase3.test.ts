@@ -105,8 +105,8 @@ describe("Phase 3 exit — risk / commit / pay", () => {
     expect(secondJson.order_id).toBe(firstJson.order_id);
     expect(secondJson.created).toBe(false);
     expect(pay.charges).toHaveLength(1);
-    expect(bindings.orders.chargeCount()).toBe(1);
-    expect(bindings.orders.count()).toBe(1);
+    expect(await bindings.orders.chargeCount()).toBe(1);
+    expect(await bindings.orders.count()).toBe(1);
   });
 
   it("commit over ceiling returns mandate_miss and captures nothing", async () => {
@@ -167,8 +167,8 @@ describe("Phase 3 exit — risk / commit / pay", () => {
     expect(commit.status).toBe(403);
     expect(await commit.json()).toEqual({ error: "mandate_miss" });
     expect(pay.charges).toHaveLength(0);
-    expect(bindings.orders.chargeCount()).toBe(0);
-    expect(bindings.orders.count()).toBe(0);
+    expect(await bindings.orders.chargeCount()).toBe(0);
+    expect(await bindings.orders.count()).toBe(0);
   });
 });
 
@@ -245,7 +245,7 @@ describe("U7 risk gate", () => {
       bindings,
     );
     const quote = (await quoteRes.json()) as { quote_id: string };
-    const row = bindings.quotes.get(quote.quote_id)!;
+    const row = (await bindings.quotes.get(quote.quote_id))!;
     row.addressId = "addr_not_on_mandate";
 
     const commit = await app.fetch(
@@ -382,9 +382,9 @@ describe("U8 commit and pay", () => {
     };
     expect(json.status).toBe("failed");
     expect(pay.charges).toHaveLength(0);
-    expect(bindings.orders.chargeCount()).toBe(0);
+    expect(await bindings.orders.chargeCount()).toBe(0);
 
-    const events = bindings.orders.listEvents(json.order_id);
+    const events = await bindings.orders.listEvents(json.order_id);
     expect(events.map((e) => e.status)).toEqual(["committed", "failed"]);
     expect(events.some((e) => e.status === "captured")).toBe(false);
   });
@@ -451,7 +451,7 @@ describe("U8 commit and pay", () => {
       order_id: string;
       evidence_id: string;
     };
-    const evidence = bindings.orders.getEvidence(json.order_id);
+    const evidence = await bindings.orders.getEvidence(json.order_id);
     expect(evidence).not.toBeNull();
     expect(evidence!.actorChain).toEqual(["buyer_agent", "household"]);
     expect(evidence!.protocol).toBe("cutoff.v1");

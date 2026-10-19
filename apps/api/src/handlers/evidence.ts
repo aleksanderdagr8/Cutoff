@@ -23,7 +23,7 @@ export async function getEvidencePackHandler(
     return { error: "unauthenticated" as const, status: 401 as const };
   }
 
-  const order = bindings.orders.getForHousehold(
+  const order = await bindings.orders.getForHousehold(
     orderId,
     auth.agent.householdId,
   );
@@ -31,12 +31,12 @@ export async function getEvidencePackHandler(
     return { error: "mandate_miss" as const, status: 404 as const };
   }
 
-  const evidence = bindings.orders.getEvidence(order.orderId);
+  const evidence = await bindings.orders.getEvidence(order.orderId);
   if (!evidence) {
     return { error: "mandate_miss" as const, status: 404 as const };
   }
 
-  const quote = bindings.quotes.get(order.quoteId);
+  const quote = await bindings.quotes.get(order.quoteId);
   if (!quote) {
     return { error: "quote_mismatch" as const, status: 400 as const };
   }

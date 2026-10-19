@@ -67,7 +67,7 @@ export async function upsertListLineHandler(
     return { error: "invalid_body" as const, status: 400 as const };
   }
 
-  const mandate = bindings.mandates.getForHousehold(
+  const mandate = await bindings.mandates.getForHousehold(
     parsed.data.mandate_id,
     householdId,
   );
@@ -135,7 +135,7 @@ export async function reorderHandler(
     return { error: "mandate_miss" as const, status: 403 as const };
   }
 
-  const mandateRow = bindings.mandates.getForHousehold(
+  const mandateRow = await bindings.mandates.getForHousehold(
     line.mandateId,
     auth.agent.householdId,
   );
@@ -159,7 +159,7 @@ export async function reorderHandler(
 
   // Explicitly discard last winner — reorder is not sticky.
   void stickyFulfillerForReorder(
-    bindings.quotes.get(line.lastQuoteId ?? "")?.fulfillerId ?? null,
+    (await bindings.quotes.get(line.lastQuoteId ?? ""))?.fulfillerId ?? null,
   );
 
   const item = bindings.catalog.getQuotable(line.canonicalItemId);
@@ -195,7 +195,7 @@ export async function reorderHandler(
     return { error: ceilingCheck.error, status: 403 as const };
   }
 
-  const created = bindings.quotes.create({
+  const created = await bindings.quotes.create({
     householdId: auth.agent.householdId,
     mandateId: line.mandateId,
     agentKeyId: auth.agent.keyId,

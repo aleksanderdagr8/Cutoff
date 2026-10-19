@@ -134,7 +134,7 @@ describe("smoke:local — quote → commit → receipt (fakes)", () => {
     expect(second.created).toBe(false);
     expect(second.order_id).toBe(first.order_id);
     expect(pay.charges).toHaveLength(1);
-    expect(bindings.orders.count()).toBe(1);
+    expect(await bindings.orders.count()).toBe(1);
     step(
       "POST /v1/commits (2nd)",
       `same order_id, created=false, charges=${pay.charges.length}`,

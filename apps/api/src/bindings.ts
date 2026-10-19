@@ -6,18 +6,19 @@ import type {
   TaxAdapter,
 } from "@cutoff/adapters";
 import type {
-  MemoryAgentCredentialRepository,
+  AgentCredentialRepository,
+  MandateRepository,
   MemoryCatalogRepository,
   MemoryFulfillmentRepository,
   MemoryHouseholdRepository,
   MemoryListRepository,
-  MemoryMandateRepository,
   MemoryOfferRepository,
-  MemoryOrderRepository,
-  MemoryQuoteRepository,
   MemoryReceiptRepository,
-  MemoryRevocationKv,
   MemoryRiskRepository,
+  OrderRepository,
+  PostgresHouseholdRepository,
+  QuoteRepository,
+  RevocationKv,
 } from "@cutoff/db";
 
 /**
@@ -32,11 +33,11 @@ export type ApiBindings = {
   offerFeed: OfferFeedAdapter;
   /** Phase 6: second source (brand feed) on top items. */
   brandOfferFeed: OfferFeedAdapter;
-  orders: MemoryOrderRepository;
-  households: MemoryHouseholdRepository;
-  agents: MemoryAgentCredentialRepository;
-  mandates: MemoryMandateRepository;
-  quotes: MemoryQuoteRepository;
+  orders: OrderRepository;
+  households: MemoryHouseholdRepository | PostgresHouseholdRepository;
+  agents: AgentCredentialRepository;
+  mandates: MandateRepository;
+  quotes: QuoteRepository;
   catalog: MemoryCatalogRepository;
   offers: MemoryOfferRepository;
   risk: MemoryRiskRepository;
@@ -48,7 +49,7 @@ export type ApiBindings = {
   webhookSecret: string;
   /** Buyer-agent webhook URL (injected). */
   webhookTargetUrl: string;
-  revocationKv: MemoryRevocationKv;
+  revocationKv: RevocationKv;
   traceId: string;
   /** Injected clock for deterministic tests. */
   nowUtc: () => string;

@@ -68,5 +68,6 @@ Run in order. Do not commit service role keys, DB passwords, or `.env`.
 
 1. Confirm tables in **Table Editor**.
 2. Confirm RLS is **enabled** on household tables.
-3. Keep CI / `pnpm run smoke:local` on memory repos until `packages/db` gets a live Supabase adapter.
+3. Flip repos with `SUPABASE_URL` + `SUPABASE_SERVICE_ROLE` (see README / live-sandbox-setup). CI and `pnpm run smoke:local` stay on memory (`createRepos({ mode: "memory" })`).
 4. Put `SUPABASE_URL` / `SUPABASE_SERVICE_ROLE` / `NEXT_PUBLIC_*` only in local `.env` or Worker secrets — never in git.
+5. Before quote/order against Postgres, seed `canonical_items` + `offers` (and households) in the DB — catalog/offer repos are still memory fixtures.

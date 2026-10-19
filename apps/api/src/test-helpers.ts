@@ -32,9 +32,22 @@ export const defaultCommitEvidence = {
 
 export const TEST_WEBHOOK_SECRET = "whsec_test_cutoff_phase4";
 
+/** CI / unit tests always use memory repositories. */
+export type TestBindings = Omit<
+  ApiBindings,
+  "orders" | "households" | "agents" | "mandates" | "quotes" | "revocationKv"
+> & {
+  orders: MemoryOrderRepository;
+  households: MemoryHouseholdRepository;
+  agents: MemoryAgentCredentialRepository;
+  mandates: MemoryMandateRepository;
+  quotes: MemoryQuoteRepository;
+  revocationKv: MemoryRevocationKv;
+};
+
 export function testBindings(
   overrides: Partial<Pick<ApiBindings, "nowUtc" | "fulfill">> = {},
-): ApiBindings {
+): TestBindings {
   const pay = new FakePayAdapter();
   const revocationKv = new MemoryRevocationKv();
   const catalog = seedFixtureCatalog();
@@ -72,7 +85,7 @@ export function testBindings(
 }
 
 export async function seedHouseholdWithMandateAndAgent(
-  bindings: ApiBindings,
+  bindings: TestBindings,
   opts: {
     ceilingCents?: number;
     expiresAt?: string;
@@ -83,11 +96,11 @@ export async function seedHouseholdWithMandateAndAgent(
   } = {},
 ) {
   const itemId = opts.itemId ?? "item_towels_12";
-  const { household, member } = bindings.households.createHousehold(
+  const { household, member } = await bindings.households.createHousehold(
     "Test Home",
     "a@example.com",
   );
-  const mandate = bindings.mandates.create({
+  const mandate = await bindings.mandates.create({
     householdId: household.householdId,
     ceilingCents: opts.ceilingCents ?? 2000,
     expiresAtUtc: opts.expiresAt ?? "2026-12-01T00:00:00.000Z",

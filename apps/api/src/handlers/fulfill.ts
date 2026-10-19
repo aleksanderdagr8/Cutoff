@@ -25,7 +25,7 @@ export async function placeAfterCapture(
   | { ok: false; refundId: string; error: "place_failed" }
 > {
   const nowUtc = bindings.nowUtc();
-  const quote = bindings.quotes.get(order.quoteId);
+  const quote = await bindings.quotes.get(order.quoteId);
   const fulfillerId = quote?.fulfillerId ?? "unknown";
 
   try {
@@ -42,7 +42,7 @@ export async function placeAfterCapture(
       fulfillerId,
       nowUtc,
     });
-    bindings.orders.appendStatus(order.orderId, "placed", nowUtc);
+    await bindings.orders.appendStatus(order.orderId, "placed", nowUtc);
 
     const body = JSON.stringify({
       type: "order.placed",
@@ -92,7 +92,7 @@ export async function getOrderTrackingHandler(
     return { error: "unauthenticated" as const, status: 401 as const };
   }
 
-  const order = bindings.orders.getForHousehold(
+  const order = await bindings.orders.getForHousehold(
     orderId,
     auth.agent.householdId,
   );
@@ -138,7 +138,7 @@ export async function cancelOrderHandler(
     return { error: "invalid_body" as const, status: 400 as const };
   }
 
-  const order = bindings.orders.getForHousehold(
+  const order = await bindings.orders.getForHousehold(
     parsed.data.order_id,
     auth.agent.householdId,
   );
@@ -146,11 +146,11 @@ export async function cancelOrderHandler(
     return { error: "mandate_miss" as const, status: 404 as const };
   }
 
-  const quote = bindings.quotes.get(order.quoteId);
+  const quote = await bindings.quotes.get(order.quoteId);
   if (!quote) {
     return { error: "quote_mismatch" as const, status: 400 as const };
   }
-  const mandateRow = bindings.mandates.getForHousehold(
+  const mandateRow = await bindings.mandates.getForHousehold(
     quote.mandateId,
     auth.agent.householdId,
   );
@@ -182,7 +182,7 @@ export async function cancelOrderHandler(
     reason: "cancel_before_ship",
     nowUtc,
   });
-  bindings.orders.appendStatus(order.orderId, "refunded", nowUtc);
+  await bindings.orders.appendStatus(order.orderId, "refunded", nowUtc);
   bindings.risk.recordMerchantStrike(
     job?.fulfillerId ?? quote.fulfillerId,
     "cancel",
@@ -212,12 +212,12 @@ export async function inboundFulfillWebhookHandler(
     return { error: "invalid_body" as const, status: 400 as const };
   }
 
-  const order = bindings.orders.get(parsed.data.order_id);
+  const order = await bindings.orders.get(parsed.data.order_id);
   if (!order) {
     return { error: "mandate_miss" as const, status: 404 as const };
   }
 
-  const quote = bindings.quotes.get(order.quoteId);
+  const quote = await bindings.quotes.get(order.quoteId);
   const nowUtc = bindings.nowUtc();
 
   const result = bindings.fulfillment.ingestInbound({
@@ -237,9 +237,9 @@ export async function inboundFulfillWebhookHandler(
 
   if (result.created) {
     if (parsed.data.status === "shipped") {
-      bindings.orders.appendStatus(order.orderId, "shipped", nowUtc);
+      await bindings.orders.appendStatus(order.orderId, "shipped", nowUtc);
     } else if (parsed.data.status === "delivered") {
-      bindings.orders.appendStatus(order.orderId, "delivered", nowUtc);
+      await bindings.orders.appendStatus(order.orderId, "delivered", nowUtc);
     }
     if (result.lateShip && quote) {
       bindings.risk.recordMerchantStrike(quote.fulfillerId, "late_ship");
