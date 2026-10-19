@@ -9,6 +9,7 @@ supabase/migrations/
   20261019150000_initial_cutoff_schema.sql   # tables + constraints
   20261019150100_rls_household_tables.sql    # RLS sketches + helper
   20261019160000_ensure_home_member.sql      # Auth bootstrap RPC for /home
+  20261020090000_reorder_schedule.sql        # Unit 14 schedule + nudges + RLS
 ```
 
 Ownership map (do not cross-read from other packages):
@@ -27,7 +28,8 @@ Ownership map (do not cross-read from other packages):
 | fulfill | `fulfillment_jobs`, `shipment_events`, `return_requests` |
 | risk | `merchant_scores`, `merchant_score_events`, `risk_*` |
 | receipt | `receipts` |
-| list | `list_lines` |
+| list | `list_lines` (+ `cadence_source`, `last_ordered_at`, `next_due_at`, `snoozed_until`, `lead_days`; `learned_interval_days` reserved P4) |
+| nudge | `household_nudge_settings`, `reorder_nudges` |
 | edge | `idempotency_keys` (+ unique on `orders`) |
 
 ## Auth model (when wired)
@@ -60,8 +62,8 @@ npx supabase db push
 ### Option B — SQL Editor
 
 1. Open the Cutoff project → **SQL** → **New query**.
-2. Paste and run `supabase/migrations/20261019150000_initial_cutoff_schema.sql`.
-3. Paste and run `supabase/migrations/20261019150100_rls_household_tables.sql`.
+2. Paste and run each file in `supabase/migrations/` in timestamp order
+   (schema → RLS → `ensure_home_member` → `reorder_schedule`).
 
 Run in order. Do not commit service role keys, DB passwords, or `.env`.
 

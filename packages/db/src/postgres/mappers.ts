@@ -1,5 +1,13 @@
 import type { AgentScope } from "@cutoff/domain";
 import type { AgentCredentialRow } from "../agents.js";
+import type { CadenceSource, ListLineRow } from "../list.js";
+import type { MandateRow } from "../mandates.js";
+import type {
+  HouseholdNudgeSettingsRow,
+  NudgeChannel,
+  NudgeStatus,
+  ReorderNudgeRow,
+} from "../nudges.js";
 import type {
   ChargeRow,
   EvidenceRow,
@@ -7,7 +15,6 @@ import type {
   OrderRow,
   OrderStatusEvent,
 } from "../orders.js";
-import type { MandateRow } from "../mandates.js";
 import type {
   HoldRow,
   QuoteRow,
@@ -108,6 +115,46 @@ export type DbCharge = {
   order_id: string;
   amount_cents: number;
   idempotency_key: string;
+  created_at: string;
+};
+
+export type DbListLine = {
+  line_id: string;
+  household_id: string;
+  mandate_id: string;
+  canonical_item_id: string;
+  cadence_hint_days: number | null;
+  cadence_source: CadenceSource;
+  learned_interval_days: number | null;
+  never_substitute: boolean;
+  last_quote_id: string | null;
+  last_order_id: string | null;
+  last_ordered_at: string | null;
+  next_due_at: string | null;
+  snoozed_until: string | null;
+  lead_days: number;
+  paused: boolean;
+  created_at: string;
+};
+
+export type DbHouseholdNudgeSettings = {
+  household_id: string;
+  agent_webhook_url: string | null;
+  agent_webhook_secret_ref: string | null;
+  email_enabled: boolean;
+  auto_commit_enabled: boolean;
+  updated_at: string;
+};
+
+export type DbReorderNudge = {
+  nudge_id: string;
+  household_id: string;
+  line_id: string;
+  due_at: string;
+  channel: NudgeChannel;
+  status: NudgeStatus;
+  attempts: number;
+  resolved_order_id: string | null;
   created_at: string;
 };
 
@@ -226,6 +273,54 @@ export function mapCharge(row: DbCharge): ChargeRow {
     orderId: row.order_id,
     amountCents: row.amount_cents,
     idempotencyKey: row.idempotency_key,
+    createdAt: row.created_at,
+  };
+}
+
+export function mapListLine(row: DbListLine): ListLineRow {
+  return {
+    lineId: row.line_id,
+    householdId: row.household_id,
+    mandateId: row.mandate_id,
+    canonicalItemId: row.canonical_item_id,
+    cadenceHintDays: row.cadence_hint_days,
+    cadenceSource: row.cadence_source,
+    learnedIntervalDays: row.learned_interval_days,
+    neverSubstitute: row.never_substitute,
+    lastQuoteId: row.last_quote_id,
+    lastOrderId: row.last_order_id,
+    lastOrderedAt: row.last_ordered_at,
+    nextDueAt: row.next_due_at,
+    snoozedUntil: row.snoozed_until,
+    leadDays: row.lead_days,
+    paused: row.paused,
+    createdAt: row.created_at,
+  };
+}
+
+export function mapHouseholdNudgeSettings(
+  row: DbHouseholdNudgeSettings,
+): HouseholdNudgeSettingsRow {
+  return {
+    householdId: row.household_id,
+    agentWebhookUrl: row.agent_webhook_url,
+    agentWebhookSecretRef: row.agent_webhook_secret_ref,
+    emailEnabled: row.email_enabled,
+    autoCommitEnabled: false,
+    updatedAt: row.updated_at,
+  };
+}
+
+export function mapReorderNudge(row: DbReorderNudge): ReorderNudgeRow {
+  return {
+    nudgeId: row.nudge_id,
+    householdId: row.household_id,
+    lineId: row.line_id,
+    dueAt: row.due_at,
+    channel: row.channel,
+    status: row.status,
+    attempts: row.attempts,
+    resolvedOrderId: row.resolved_order_id,
     createdAt: row.created_at,
   };
 }

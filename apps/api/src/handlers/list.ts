@@ -66,7 +66,7 @@ export async function getListHandler(
     return { error: "unauthenticated" as const, status: 401 as const };
   }
 
-  const lines = bindings.list.listForHousehold(auth.agent.householdId);
+  const lines = await bindings.list.listForHousehold(auth.agent.householdId);
   return {
     household_id: auth.agent.householdId,
     lines: lines.map((line) => linePayload(bindings, line)),
@@ -104,7 +104,7 @@ export async function getDueListHandler(
   }
 
   const nowUtc = bindings.nowUtc();
-  const lines = bindings.list.listForHousehold(auth.agent.householdId);
+  const lines = await bindings.list.listForHousehold(auth.agent.householdId);
   const dueLines = [];
 
   for (const line of lines) {
@@ -155,7 +155,7 @@ export async function upsertListLineHandler(
     return { error: "mandate_miss" as const, status: 403 as const };
   }
 
-  const line = bindings.list.upsert({
+  const line = await bindings.list.upsert({
     householdId,
     mandateId: parsed.data.mandate_id,
     canonicalItemId: parsed.data.canonical_item_id,
@@ -200,7 +200,7 @@ export async function reorderHandler(
     return { error: "invalid_body" as const, status: 400 as const };
   }
 
-  const line = bindings.list.getForHousehold(
+  const line = await bindings.list.getForHousehold(
     parsed.data.list_line_id,
     auth.agent.householdId,
   );
@@ -308,7 +308,7 @@ export async function reorderHandler(
     return { error: "invalid_body" as const, status: 400 as const };
   }
 
-  bindings.list.recordQuote(line.lineId, created.quote.quoteId);
+  await bindings.list.recordQuote(line.lineId, created.quote.quoteId);
 
   return {
     list_line_id: line.lineId,
@@ -338,7 +338,7 @@ export async function skipListLineHandler(
     return { error: "invalid_body" as const, status: 400 as const };
   }
 
-  const line = bindings.list.getForHousehold(
+  const line = await bindings.list.getForHousehold(
     parsed.data.list_line_id,
     auth.agent.householdId,
   );
@@ -346,7 +346,7 @@ export async function skipListLineHandler(
     return { error: "mandate_miss" as const, status: 404 as const };
   }
 
-  const skipped = bindings.list.skip(line.lineId);
+  const skipped = await bindings.list.skip(line.lineId);
   if (!skipped) {
     return { error: "mandate_miss" as const, status: 404 as const };
   }

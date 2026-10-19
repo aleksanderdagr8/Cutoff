@@ -69,6 +69,10 @@ Second source (brand feed) on top items; `merchant_scores` from events; evidence
 
 Fixed-cadence due list for agents: `GET /v1/list/due?within_days=7`. `ListLine` includes `display_name` + `next_due_at` (`computeNextDue` in `@cutoff/domain`). Learned cadence deferred.
 
+## Phase 8 (Unit 14)
+
+Reorder schedule persistence: migration `20261020090000_reorder_schedule.sql` (`list_lines` due columns, `household_nudge_settings`, `reorder_nudges` + RLS). Memory + Postgres list/nudge repos; learned cadence columns reserved unused.
+
 ## Agent auth
 
 `Authorization: Bearer ck_live_…`  
