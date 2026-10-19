@@ -2,11 +2,17 @@
 
 import { useState, type FormEvent } from "react";
 
-type Persona = "builder" | "brand";
+type Persona = "household" | "builder" | "brand";
 type Status = "idle" | "submitting" | "success" | "error";
 
+const SUCCESS_TAIL: Record<Persona, string> = {
+  household: " for households",
+  builder: " for agent builders",
+  brand: " for brand / supply conversations",
+};
+
 export function WaitlistForm() {
-  const [persona, setPersona] = useState<Persona>("builder");
+  const [persona, setPersona] = useState<Persona>("household");
   const [email, setEmail] = useState("");
   const [name, setName] = useState("");
   const [company, setCompany] = useState("");
@@ -57,10 +63,8 @@ export function WaitlistForm() {
         </p>
         <p className="mt-3 text-[15px] leading-relaxed text-secondary">
           We&apos;ll reach out when early access opens
-          {persona === "builder"
-            ? " for agent builders"
-            : " for brand / supply conversations"}
-          . No API key was generated — this is lead capture only.
+          {SUCCESS_TAIL[persona]}. No API key was generated — this is lead
+          capture only.
         </p>
       </div>
     );
@@ -75,6 +79,11 @@ export function WaitlistForm() {
         <div className="mt-3 flex flex-col gap-3 sm:flex-row sm:gap-8">
           {(
             [
+              {
+                value: "household" as const,
+                label: "Household",
+                hint: "Want replenishment under my rules",
+              },
               {
                 value: "builder" as const,
                 label: "Agent builder",
@@ -144,7 +153,11 @@ export function WaitlistForm() {
         </div>
         <div>
           <label htmlFor="wl-company" className="text-[13px] text-secondary">
-            {persona === "builder" ? "Project" : "Company"}{" "}
+            {persona === "builder"
+              ? "Project"
+              : persona === "household"
+                ? "Household"
+                : "Company"}{" "}
             <span className="text-secondary/70">(optional)</span>
           </label>
           <input
@@ -159,7 +172,9 @@ export function WaitlistForm() {
 
       <div>
         <label htmlFor="wl-note" className="text-[13px] text-secondary">
-          What are you building?{" "}
+          {persona === "household"
+            ? "What do you reorder?"
+            : "What are you building?"}{" "}
           <span className="text-secondary/70">(optional)</span>
         </label>
         <textarea

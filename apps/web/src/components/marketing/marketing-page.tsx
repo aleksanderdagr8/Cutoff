@@ -3,26 +3,41 @@ import { BuildersPanel } from "./builders-panel";
 import { HeroTerminal } from "./hero-terminal";
 import { WaitlistForm } from "./waitlist-form";
 
-const STEPS = [
+const WHY_CARE = [
+  {
+    title: "An agent that works for you",
+    body: "Looks out for the household — not the company that wants you to forget you subscribed, keep shipping, and quietly raise prices.",
+  },
+  {
+    title: "Keep the refill. Lose the trap.",
+    body: "Cancel, skip, or pause on your terms. Your agent shops the shelf — it doesn't own the subscription.",
+  },
+  {
+    title: "The price you were quoted — or a clear no",
+    body: "No silent cart inflation between yes and charge. A locked landed quote, or a typed failure in the open.",
+  },
+] as const;
+
+const ENFORCED = [
   {
     n: "01",
-    title: "Quote",
-    body: "Agent asks for a landed price on a canonical replenishment item.",
+    title: "Mandate",
+    body: "You set the ceiling, address, and never-substitute once. Nothing commits outside that fence.",
   },
   {
     n: "02",
-    title: "Mandate",
-    body: "Household ceiling, address, and never-substitute rules bound the buy.",
+    title: "Locked quote",
+    body: "Short-lived landed price. Commit honors it or fails loudly — never a surprise total.",
   },
   {
     n: "03",
-    title: "Commit",
-    body: "Idempotent capture against the quote — typed failure if anything drifted.",
+    title: "Right item",
+    body: "Canonical replenishment — coffee, filters, pet, towels. No \"close enough\" substitution.",
   },
   {
     n: "04",
-    title: "Receipt",
-    body: "Evidence pack stays with the household, even if the key is revoked later.",
+    title: "Receipt you keep",
+    body: "Evidence stays with the household, even if you revoke the agent key later. Cutoff stands behind the order.",
   },
 ] as const;
 
@@ -40,8 +55,11 @@ export function MarketingPage() {
             CUTOFF
           </a>
           <nav className="hidden items-center gap-7 text-[14px] text-secondary md:flex">
-            <a href="#architecture" className="hover:text-ink">
-              Architecture
+            <a href="#why" className="hover:text-ink">
+              Why care
+            </a>
+            <a href="#enforced" className="hover:text-ink">
+              How it works
             </a>
             <a href="#builders" className="hover:text-ink">
               For builders
@@ -63,18 +81,20 @@ export function MarketingPage() {
       </header>
 
       <main id="top" className="relative">
-        {/* Hero — one composition */}
+        {/* Hero — one composition: brand + outcome + proof */}
         <section className="mx-auto grid max-w-[1120px] gap-12 px-6 pb-20 pt-14 md:grid-cols-2 md:items-center md:gap-16 md:px-8 md:pb-28 md:pt-20">
           <div className="marketing-enter">
             <p className="font-display text-[48px] font-semibold leading-[0.95] tracking-[-0.045em] text-ink md:text-[64px]">
               CUTOFF
             </p>
-            <h1 className="mt-5 max-w-md text-[22px] font-medium leading-snug tracking-[-0.02em] text-ink md:text-[26px]">
-              The shelf agents call when a person says buy.
+            <h1 className="mt-5 max-w-lg text-[22px] font-medium leading-snug tracking-[-0.02em] text-ink md:text-[26px]">
+              Your agent should work for you — not the shelf that wants you
+              stuck.
             </h1>
             <p className="mt-4 max-w-md text-[16px] leading-relaxed text-secondary">
-              Deterministic quotes and commits for replenishment — coffee,
-              filters, towels — not a scraped storefront.
+              The buy path for household replenishment: coffee, filters, pet,
+              towels — under a mandate you control. Skip when you don&apos;t
+              need it. Keep the receipt.
             </p>
             <div className="mt-8 flex flex-wrap items-center gap-4">
               <a
@@ -84,34 +104,67 @@ export function MarketingPage() {
                 Request early access
               </a>
               <a
-                href="#architecture"
+                href="#why"
                 className="text-[15px] font-medium text-accent underline-offset-4 hover:underline"
               >
-                How it works
+                Why this is different
               </a>
             </div>
           </div>
           <HeroTerminal />
         </section>
 
-        {/* How it works */}
-        <section
-          id="architecture"
-          className="border-t border-hairline bg-surface/40"
-        >
+        {/* Why care — H2 / H1 / H3 */}
+        <section id="why" className="border-t border-hairline bg-surface/40">
           <div className="mx-auto max-w-[1120px] px-6 py-20 md:px-8 md:py-24">
             <p className="text-[13px] font-medium uppercase tracking-[0.1em] text-secondary">
-              Architecture
+              Why care
             </p>
             <h2 className="mt-3 max-w-xl font-display text-[32px] font-semibold tracking-[-0.03em] text-ink md:text-[40px]">
-              Quote → mandate → commit → receipt
+              Why this is different
             </h2>
             <p className="mt-4 max-w-lg text-[16px] leading-relaxed text-secondary">
-              One path. Cutoff is merchant of record; agents never hold a card,
-              and households keep the evidence.
+              Subscribe &amp; Save and auto-ship clubs are built to keep
+              shipping. Scraped storefronts are built to dodge bots. Cutoff is
+              built so <em className="not-italic text-ink">your</em> rules
+              bound the buy.
+            </p>
+            <ul className="mt-14 grid gap-10 md:grid-cols-3 md:gap-8">
+              {WHY_CARE.map((beat) => (
+                <li key={beat.title} className="border-t border-hairline pt-5">
+                  <h3 className="text-[17px] font-medium text-ink">
+                    {beat.title}
+                  </h3>
+                  <p className="mt-2 text-[14px] leading-relaxed text-secondary">
+                    {beat.body}
+                  </p>
+                </li>
+              ))}
+            </ul>
+            <p className="mt-12 max-w-2xl text-[15px] leading-relaxed text-secondary">
+              Spending ceiling, never-substitute, locked landed price — and an
+              agent that can&apos;t quietly raise the cap. Rank is price and
+              delivery, not placement. Cutoff stands behind the order.
+            </p>
+          </div>
+        </section>
+
+        {/* How it's enforced — Direction C reframing Architecture */}
+        <section id="enforced" className="border-t border-hairline">
+          <div className="mx-auto max-w-[1120px] px-6 py-20 md:px-8 md:py-24">
+            <p className="text-[13px] font-medium uppercase tracking-[0.1em] text-secondary">
+              How it works
+            </p>
+            <h2 className="mt-3 max-w-xl font-display text-[32px] font-semibold tracking-[-0.03em] text-ink md:text-[40px]">
+              Say buy once. Get what you meant.
+            </h2>
+            <p className="mt-4 max-w-lg text-[16px] leading-relaxed text-secondary">
+              No silent cart inflation. No &ldquo;we substituted.&rdquo; No
+              ad-ranked shelf. Cutoff locks a landed quote, honors
+              never-substitute, and leaves a receipt with the household.
             </p>
             <ol className="mt-14 grid gap-10 sm:grid-cols-2 lg:grid-cols-4 lg:gap-8">
-              {STEPS.map((step) => (
+              {ENFORCED.map((step) => (
                 <li key={step.n} className="border-t border-hairline pt-5">
                   <p className="font-mono text-[12px] text-accent">{step.n}</p>
                   <h3 className="mt-2 text-[17px] font-medium text-ink">
@@ -126,8 +179,8 @@ export function MarketingPage() {
           </div>
         </section>
 
-        {/* For builders */}
-        <section id="builders" className="border-t border-hairline">
+        {/* For builders — proof under household thesis */}
+        <section id="builders" className="border-t border-hairline bg-surface/40">
           <div className="mx-auto max-w-[1120px] px-6 py-20 md:px-8 md:py-24">
             <p className="text-[13px] font-medium uppercase tracking-[0.1em] text-secondary">
               For builders
@@ -136,9 +189,9 @@ export function MarketingPage() {
               JSON your agent can trust
             </h2>
             <p className="mt-4 max-w-lg text-[16px] leading-relaxed text-secondary">
-              Bearer keys, short-lived quotes, and an evidence pack on every
-              commit. Early access is sandbox-honest — not a live production
-              claim.
+              How household outcomes get enforced: Bearer keys, short-lived
+              quotes, and an evidence pack on every commit. Early access is
+              sandbox-honest — not a live production claim.
             </p>
             <div className="mt-12">
               <BuildersPanel />
@@ -172,10 +225,7 @@ export function MarketingPage() {
         </section>
 
         {/* Waitlist */}
-        <section
-          id="early-access"
-          className="border-t border-hairline"
-        >
+        <section id="early-access" className="border-t border-hairline">
           <div className="mx-auto max-w-[1120px] px-6 py-20 md:px-8 md:py-24">
             <p className="text-[13px] font-medium uppercase tracking-[0.1em] text-secondary">
               Early access
@@ -184,9 +234,9 @@ export function MarketingPage() {
               Pilot waitlist
             </h2>
             <p className="mt-4 max-w-lg text-[16px] leading-relaxed text-secondary">
-              No published pricing yet. Tell us whether you&apos;re building an
-              agent or exploring supply — we&apos;ll follow up when the sandbox
-              opens to more builders.
+              No published pricing yet. Tell us whether you&apos;re a household,
+              building an agent, or exploring supply — we&apos;ll follow up when
+              early access opens further.
             </p>
             <div className="mt-12">
               <WaitlistForm />
@@ -201,8 +251,9 @@ export function MarketingPage() {
             <p className="font-display text-[16px] font-semibold tracking-[-0.02em] text-ink">
               CUTOFF
             </p>
-            <p className="mt-1 text-[13px] text-secondary">
-              The shelf agents call when a person says buy.
+            <p className="mt-1 max-w-sm text-[13px] text-secondary">
+              Your agent should work for you — not the shelf that wants you
+              stuck.
             </p>
           </div>
           <div className="flex flex-wrap gap-x-6 gap-y-2 text-[14px] text-secondary">
