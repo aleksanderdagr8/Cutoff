@@ -2,6 +2,8 @@ import "server-only";
 
 import { cookies } from "next/headers";
 import { HOME_SESSION_COOKIE, homeDevBypassEnabled } from "./config";
+import { ensureHomeMember } from "./member";
+import { createHomeServerClient } from "./supabase/server";
 
 export type HomeSession = {
   memberId: string;
@@ -10,7 +12,7 @@ export type HomeSession = {
   householdName: string;
 };
 
-export async function readHomeSession(): Promise<HomeSession | null> {
+async function readBypassCookieSession(): Promise<HomeSession | null> {
   const jar = await cookies();
   const raw = jar.get(HOME_SESSION_COOKIE)?.value;
   if (!raw) return null;
@@ -30,6 +32,28 @@ export async function readHomeSession(): Promise<HomeSession | null> {
   }
 }
 
+async function readSupabaseHomeSession(): Promise<HomeSession | null> {
+  try {
+    const supabase = await createHomeServerClient();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+    if (!user) return null;
+    const member = await ensureHomeMember(supabase);
+    if ("error" in member) return null;
+    return member;
+  } catch {
+    return null;
+  }
+}
+
+export async function readHomeSession(): Promise<HomeSession | null> {
+  if (homeDevBypassEnabled()) {
+    return readBypassCookieSession();
+  }
+  return readSupabaseHomeSession();
+}
+
 export async function writeHomeSession(session: HomeSession): Promise<void> {
   const jar = await cookies();
   jar.set(HOME_SESSION_COOKIE, JSON.stringify(session), {
@@ -46,10 +70,7 @@ export async function clearHomeSession(): Promise<void> {
   jar.delete(HOME_SESSION_COOKIE);
 }
 
-/** Auth gate for BFF + pages. Bypass uses cookie; live Auth not wired yet. */
+/** Auth gate for BFF + pages. */
 export async function requireHomeSession(): Promise<HomeSession | null> {
-  const session = await readHomeSession();
-  if (session) return session;
-  if (!homeDevBypassEnabled()) return null;
-  return null;
+  return readHomeSession();
 }

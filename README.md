@@ -30,16 +30,18 @@ Or paste the SQL files in order in the Supabase SQL Editor. Full steps: [docs/su
 
 ## Human dashboards (local)
 
-Both shells use **dev bypass** when Supabase public env is unset (cookie session + in-memory fakes). Live Auth is parked until secrets exist.
+**`/home` Auth:** with `NEXT_PUBLIC_SUPABASE_URL` + `NEXT_PUBLIC_SUPABASE_ANON_KEY` set and `CUTOFF_HOME_DEV_BYPASS` unset/0 → Supabase email+password; first sign-in runs `ensure_home_member` (links `auth.users` → `members.auth_user_id`). Escape hatch: `CUTOFF_HOME_DEV_BYPASS=1` (cookie demo). If public Supabase env is missing, bypass stays on automatically.
+
+**`/ops`:** still uses `CUTOFF_OPS_DEV_BYPASS` until operator TOTP lands.
 
 ```bash
 pnpm install
 pnpm --filter @cutoff/web dev
-# http://localhost:3000/home  — household (CUTOFF_HOME_DEV_BYPASS=1 default)
+# http://localhost:3000/home  — household (Auth or bypass)
 # http://localhost:3000/ops   — operator  (CUTOFF_OPS_DEV_BYPASS=1 default)
 ```
 
-Explicit flags (same as defaults when `NEXT_PUBLIC_SUPABASE_*` are empty):
+Bypass-only (CI / no Auth secrets):
 
 ```bash
 CUTOFF_HOME_DEV_BYPASS=1 CUTOFF_OPS_DEV_BYPASS=1 pnpm --filter @cutoff/web dev
