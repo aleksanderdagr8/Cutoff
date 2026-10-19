@@ -14,13 +14,17 @@ const config: Config = {
       },
       fontFamily: {
         sans: [
+          "SF Pro Text",
+          "SF Pro Display",
           "ui-sans-serif",
           "-apple-system",
           "BlinkMacSystemFont",
-          "SF Pro Text",
-          "Inter",
+          "Helvetica Neue",
           "sans-serif",
         ],
+      },
+      transitionDuration: {
+        160: "160ms",
       },
       borderRadius: {
         card: "12px",
