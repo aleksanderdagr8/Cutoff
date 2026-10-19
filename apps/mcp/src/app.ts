@@ -1,6 +1,5 @@
 /**
- * Cutoff MCP Worker app (Unit 17 scaffold).
- * Streamable HTTP at /mcp. Bearer passthrough → API service binding.
+ * Cutoff MCP Worker. Streamable HTTP at /mcp. Bearer → API service binding.
  */
 
 import { Hono } from "hono";
@@ -26,11 +25,12 @@ export function createMcpApp() {
   const app = new Hono<McpAppEnv>();
 
   app.get("/health", (c) =>
-    c.json({ ok: true as const, service: "cutoff-mcp", phase: "11" }),
+    c.json({ ok: true as const, service: "cutoff-mcp", phase: "12" }),
   );
 
-  /** Stateless Streamable HTTP: GET not used (no SSE session). */
+  /** Stateless Streamable HTTP: GET SSE not offered. */
   app.get("/mcp", (c) => c.text("Method Not Allowed", 405));
+  app.delete("/mcp", (c) => c.text("Method Not Allowed", 405));
 
   app.post("/mcp", async (c) => {
     const authorization = c.req.header("Authorization");
@@ -44,7 +44,11 @@ export function createMcpApp() {
     }
 
     const body = await c.req.json().catch(() => null);
-    const rpc = await handleMcpJsonRpc(body, me.me.scopes);
+    const rpc = await handleMcpJsonRpc(body, {
+      api: c.env.API,
+      authorization,
+      me: me.me,
+    });
     if (rpc === null) {
       return new Response(null, { status: 202 });
     }

@@ -1,6 +1,5 @@
 /**
- * Unit 17: tool catalog metadata for tools/list.
- * Full tool implementations land in Unit 18 — handlers here are stubs.
+ * Tool catalog metadata for tools/list (LLM-facing descriptions + annotations).
  */
 
 import type { AgentScope } from "@cutoff/domain";
@@ -24,7 +23,7 @@ export const MCP_TOOL_CATALOG: readonly McpToolDef[] = [
   {
     name: "cutoff_list_items",
     description:
-      "List household reorder lines (cadence, paused, next due). Read-only.",
+      "List household reorder lines (cadence, paused, next due, never-substitute). Read-only. Does not place orders.",
     requiredScopes: ["read_list"],
     inputSchema: { type: "object", properties: {}, additionalProperties: false },
     annotations: { readOnlyHint: true },
@@ -32,7 +31,7 @@ export const MCP_TOOL_CATALOG: readonly McpToolDef[] = [
   {
     name: "cutoff_due_items",
     description:
-      "List lines due or overdue within within_days (default 7). Read-only.",
+      "List lines due or overdue within within_days (default 7). Read-only. Use before quoting a reorder.",
     requiredScopes: ["read_list"],
     inputSchema: {
       type: "object",
@@ -46,7 +45,7 @@ export const MCP_TOOL_CATALOG: readonly McpToolDef[] = [
   {
     name: "cutoff_quote",
     description:
-      "Get a fresh quote for a mandate item or list line. Does not place an order.",
+      "Get a fresh quote. Pass mandate_id + canonical_item_id + qty + deliver_by, or list_line_id + qty + deliver_by for a list reorder. Does not place an order. Never invent a quote_id — only use one returned here.",
     requiredScopes: ["quote"],
     inputSchema: {
       type: "object",
@@ -56,6 +55,7 @@ export const MCP_TOOL_CATALOG: readonly McpToolDef[] = [
         list_line_id: { type: "string" },
         qty: { type: "integer", minimum: 1, maximum: 99 },
         deliver_by: { type: "string" },
+        nudge_id: { type: "string" },
       },
       required: ["qty", "deliver_by"],
       additionalProperties: false,
@@ -64,7 +64,7 @@ export const MCP_TOOL_CATALOG: readonly McpToolDef[] = [
   {
     name: "cutoff_commit",
     description:
-      "Place the order for a quote. Only after user confirmation unless they told you to reorder without asking. Pass the same idempotency_key on retry.",
+      "Place the order for a quote returned by cutoff_quote. Only call this after the user has confirmed the item, quantity, and landed_cents total, unless they have told you to reorder this item without asking. Pass the same idempotency_key if you retry. Never invent a quote_id. If you get quote_expired or stale_offer, call cutoff_quote again. You cannot raise the spending ceiling: over_ceiling means tell the household.",
     requiredScopes: ["commit"],
     inputSchema: {
       type: "object",
@@ -80,7 +80,7 @@ export const MCP_TOOL_CATALOG: readonly McpToolDef[] = [
   {
     name: "cutoff_get_receipt",
     description:
-      "Agent-readable order receipt summary (status, why-this-seller, receipt URL).",
+      "Agent-readable order receipt: status, shipment events, why-this-seller, receipt URL. Read-only.",
     anyOfScopes: ["read_list", "commit"],
     inputSchema: {
       type: "object",
@@ -93,7 +93,7 @@ export const MCP_TOOL_CATALOG: readonly McpToolDef[] = [
   {
     name: "cutoff_skip",
     description:
-      "Skip a list line: mode next | snooze | pause (default pause).",
+      "Skip a list line: mode next (advance one cycle), snooze (until required), or pause (default). Does not place an order.",
     requiredScopes: ["read_list"],
     inputSchema: {
       type: "object",
@@ -108,7 +108,8 @@ export const MCP_TOOL_CATALOG: readonly McpToolDef[] = [
   },
   {
     name: "cutoff_cancel_order",
-    description: "Cancel an order before ship when the mandate allows.",
+    description:
+      "Cancel an order before ship when the mandate allows. If not_cancellable, call cutoff_get_receipt instead.",
     requiredScopes: ["commit"],
     inputSchema: {
       type: "object",
