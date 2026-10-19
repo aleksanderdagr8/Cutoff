@@ -215,30 +215,70 @@ export const CancelOrderResponseSchema = z.object({
 
 export type CancelOrderResponse = z.infer<typeof CancelOrderResponseSchema>;
 
-export const OrderTrackingResponseSchema = z.object({
-  order_id: z.string().min(1),
-  status: z.enum([
-    "committed",
-    "captured",
-    "failed",
-    "placed",
-    "shipped",
-    "delivered",
-    "refunded",
-  ]),
-  job_id: z.string().nullable(),
-  tracking_number: z.string().nullable(),
-  shipment_events: z.array(
-    z.object({
-      event_id: z.string().min(1),
-      status: z.string().min(1),
-      tracking_number: z.string().nullable(),
-      at: UtcIsoSchema,
-    }),
-  ),
-});
+/** Unit 16 — agent-readable order receipt (allowlisted; no PII). */
+export const AgentWhyThisSellerSchema = z
+  .object({
+    landed_cents: CentsSchema,
+    delivery_date: z.string().min(1),
+    merchant_score: z.number(),
+  })
+  .strict();
+
+export const AgentShipmentEventSchema = z
+  .object({
+    event_id: z.string().min(1),
+    status: z.string().min(1),
+    tracking_number: z.string().nullable(),
+    at: UtcIsoSchema,
+  })
+  .strict();
+
+export const OrderTrackingResponseSchema = z
+  .object({
+    order_id: z.string().min(1),
+    status: z.enum([
+      "committed",
+      "captured",
+      "failed",
+      "placed",
+      "shipped",
+      "delivered",
+      "refunded",
+    ]),
+    amount_cents: CentsSchema,
+    canonical_item_id: z.string().min(1),
+    display_name: z.string().min(1).nullable(),
+    fulfiller_id: z.string().min(1).nullable(),
+    why_this_seller: AgentWhyThisSellerSchema.nullable(),
+    job_id: z.string().nullable(),
+    tracking_number: z.string().nullable(),
+    shipment_events: z.array(AgentShipmentEventSchema),
+    /** Household console path; never the raw receipt token alone as a secret. */
+    receipt_url: z.string().min(1).nullable(),
+    /** One-line model-facing summary. */
+    summary: z.string().min(1),
+  })
+  .strict();
 
 export type OrderTrackingResponse = z.infer<typeof OrderTrackingResponseSchema>;
+
+/** Keys allowed on agent GET /v1/orders/:orderId (contract + serializer). */
+export const AGENT_ORDER_RECEIPT_KEYS = [
+  "order_id",
+  "status",
+  "amount_cents",
+  "canonical_item_id",
+  "display_name",
+  "fulfiller_id",
+  "why_this_seller",
+  "job_id",
+  "tracking_number",
+  "shipment_events",
+  "receipt_url",
+  "summary",
+] as const;
+
+export type AgentOrderReceiptKey = (typeof AGENT_ORDER_RECEIPT_KEYS)[number];
 
 export const InboundFulfillWebhookSchema = z
   .object({

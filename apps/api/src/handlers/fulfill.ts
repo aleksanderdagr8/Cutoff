@@ -2,7 +2,12 @@ import {
   CancelOrderRequestSchema,
   InboundFulfillWebhookSchema,
 } from "@cutoff/contracts";
-import { canCancelOrder, hasScope } from "@cutoff/domain";
+import {
+  canCancelOrder,
+  hasScope,
+  serializeAgentOrderReceipt,
+  whyThisSeller,
+} from "@cutoff/domain";
 import { authenticateAgent } from "../auth.js";
 import type { ApiBindings } from "../bindings.js";
 
@@ -78,7 +83,10 @@ export async function placeAfterCapture(
   }
 }
 
-/** Agent: fetch tracking / shipment events for an order. */
+/**
+ * Unit 16: agent-readable order receipt summary (allowlisted).
+ * Scopes: read_list or commit. Never returns payment/address/email secrets.
+ */
 export async function getOrderTrackingHandler(
   bindings: ApiBindings,
   orderId: string,
@@ -88,7 +96,10 @@ export async function getOrderTrackingHandler(
   if (!auth.ok) {
     return { error: auth.error, status: auth.status };
   }
-  if (!hasScope(auth.agent.scopes, "commit") && !hasScope(auth.agent.scopes, "read_list")) {
+  if (
+    !hasScope(auth.agent.scopes, "commit") &&
+    !hasScope(auth.agent.scopes, "read_list")
+  ) {
     return { error: "unauthenticated" as const, status: 401 as const };
   }
 
@@ -105,18 +116,36 @@ export async function getOrderTrackingHandler(
   const latestTracking =
     [...events].reverse().find((e) => e.trackingNumber)?.trackingNumber ?? null;
 
-  return {
-    order_id: order.orderId,
+  const quote = await bindings.quotes.get(order.quoteId);
+  const item = bindings.catalog.get(order.canonicalItemId);
+  const receipt = bindings.receipts.getByOrder(order.orderId);
+
+  return serializeAgentOrderReceipt({
+    orderId: order.orderId,
     status: order.status,
-    job_id: job?.jobId ?? null,
-    tracking_number: latestTracking,
-    shipment_events: events.map((e) => ({
-      event_id: e.externalEventId,
+    amountCents: order.amountCents,
+    canonicalItemId: order.canonicalItemId,
+    displayName: item?.description ?? null,
+    fulfillerId: quote?.fulfillerId ?? null,
+    whyThisSeller: quote
+      ? whyThisSeller({
+          landedCents: quote.scoreInputs.landedCents,
+          deliveryDateUtc: quote.scoreInputs.deliveryDateUtc,
+          merchantScore: quote.scoreInputs.merchantScore,
+        })
+      : null,
+    jobId: job?.jobId ?? null,
+    trackingNumber: latestTracking,
+    shipmentEvents: events.map((e) => ({
+      eventId: e.externalEventId,
       status: e.status,
-      tracking_number: e.trackingNumber,
-      at: e.atUtc,
+      trackingNumber: e.trackingNumber,
+      atUtc: e.atUtc,
     })),
-  };
+    receiptUrl: receipt
+      ? `/home/receipts/${receipt.receiptToken}`
+      : null,
+  });
 }
 
 /** Agent: cancel-before-ship when mandate allows. */

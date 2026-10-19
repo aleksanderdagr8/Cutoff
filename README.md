@@ -77,6 +77,10 @@ Reorder schedule persistence: migration `20261020090000_reorder_schedule.sql` (`
 
 `POST /v1/list/skip` modes `next` | `snooze` | `pause` (default pause). Optional `nudge_id` on reorder → acted + `resolved_order_id` on commit. Pending nudges skipped on skip.
 
+## Phase 10 (Unit 16)
+
+Agent-readable `GET /v1/orders/:orderId` receipt summary (allowlist serializer, `summary`, `why_this_seller`, `receipt_url`). No-PII contract test.
+
 ## Agent auth
 
 `Authorization: Bearer ck_live_…`  
@@ -90,6 +94,7 @@ Successful capture places via `FulfillAdapter` and issues a `receipt_token`.
 
 ## Evidence
 
+- `GET /v1/orders/:orderId` — agent receipt summary (allowlisted; `summary` + why-this-seller)
 - `GET /v1/orders/:orderId/evidence` — exportable pack (actor chain, quote hash, amount, fulfiller, rank inputs)
 
 ## Receipt (human)
