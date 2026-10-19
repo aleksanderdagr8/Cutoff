@@ -1,11 +1,29 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 
+const APEX_HOST = "callcutoff.com";
+const WWW_HOST = "www.callcutoff.com";
+
 /**
- * Refresh Supabase Auth cookies on /home so Server Components see a live JWT.
- * No-op when public env is missing (dev bypass path).
+ * www → apex redirect (production custom domains) + Supabase Auth cookie
+ * refresh on /home so Server Components see a live JWT.
+ * Auth refresh is a no-op when public env is missing (dev bypass path).
  */
 export async function middleware(request: NextRequest) {
+  const host = request.headers.get("host")?.split(":")[0]?.toLowerCase();
+  if (host === WWW_HOST) {
+    const url = request.nextUrl.clone();
+    url.hostname = APEX_HOST;
+    url.protocol = "https:";
+    return NextResponse.redirect(url, 308);
+  }
+
+  // Skip Auth refresh outside household routes.
+  const path = request.nextUrl.pathname;
+  if (!path.startsWith("/home") && !path.startsWith("/api/home")) {
+    return NextResponse.next();
+  }
+
   let response = NextResponse.next({
     request,
   });
@@ -42,5 +60,8 @@ export async function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/home/:path*", "/api/home/:path*"],
+  matcher: [
+    "/",
+    "/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)",
+  ],
 };

@@ -5,7 +5,7 @@ Buyer's agent decides when to reorder. Cutoff quotes, commits, and stands behind
 ## Layout
 
 ```
-apps/web          human app (Next.js) — /home + /ops shells; anon key only in browser
+apps/web          human app (Next.js → OpenNext Workers) — `/` marketing, `/home`, `/ops`; see apps/web/DEPLOY.md
 apps/api          Cloudflare Worker (Hono)
 packages/domain   pure rank / mandate / hold / catalog / quote / risk / score / fulfill / receipt / list
 packages/db       repositories (memory default; Postgres when Supabase env set)
@@ -40,6 +40,8 @@ pnpm --filter @cutoff/web dev
 # http://localhost:3000/home  — household (Auth or bypass)
 # http://localhost:3000/ops   — operator  (CUTOFF_OPS_DEV_BYPASS=1 default)
 ```
+
+**Production:** [`https://callcutoff.com`](https://callcutoff.com) (`cutoff-web` Worker). Deploy: `pnpm --filter @cutoff/web deploy` — details in [`apps/web/DEPLOY.md`](./apps/web/DEPLOY.md).
 
 Bypass-only (CI / no Auth secrets):
 

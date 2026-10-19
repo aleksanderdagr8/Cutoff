@@ -8,7 +8,13 @@ import { join } from "node:path";
  */
 function walk(dir: string, acc: string[] = []): string[] {
   for (const name of readdirSync(dir)) {
-    if (name === "node_modules" || name === ".next" || name === "dist") {
+    if (
+      name === "node_modules" ||
+      name === ".next" ||
+      name === ".open-next" ||
+      name === ".wrangler" ||
+      name === "dist"
+    ) {
       continue;
     }
     const path = join(dir, name);
