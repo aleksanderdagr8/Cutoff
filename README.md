@@ -85,6 +85,10 @@ Agent-readable `GET /v1/orders/:orderId` receipt summary (allowlist serializer, 
 
 MCP scaffold (`apps/mcp`): Streamable HTTP `/mcp`, service binding to `cutoff-api`, Bearer passthrough, scope-filtered `tools/list`. `GET /v1/agent/me` for introspect. Tool bodies land in Unit 18.
 
+## Phase 12 (Unit 18)
+
+Seven MCP tools (`cutoff_list_items`, `cutoff_due_items`, `cutoff_quote`, `cutoff_commit`, `cutoff_get_receipt`, `cutoff_skip`, `cutoff_cancel_order`), API error → tool-result map with `next_action`, annotations. Tests use the MCP SDK client against `createApp()` fakes.
+
 ## Agent auth
 
 `Authorization: Bearer ck_live_…`  
