@@ -1,23 +1,7 @@
 import { describe, expect, it } from "vitest";
-import {
-  FakeFulfillAdapter,
-  FakePayAdapter,
-  FakeTaxAdapter,
-} from "@cutoff/adapters";
-import { MemoryOrderRepository } from "@cutoff/db";
+import { FakePayAdapter } from "@cutoff/adapters";
 import { createApp } from "./app.js";
-import type { ApiBindings } from "./bindings.js";
-
-function testBindings(): ApiBindings {
-  const pay = new FakePayAdapter();
-  return {
-    pay,
-    fulfill: new FakeFulfillAdapter(),
-    tax: new FakeTaxAdapter(),
-    orders: new MemoryOrderRepository(pay),
-    traceId: "trace_test",
-  };
-}
+import { testBindings } from "./test-helpers.js";
 
 describe("U0 fake commit idempotency", () => {
   it("commit twice with the same Idempotency-Key returns the same order id and one row", async () => {
@@ -63,7 +47,7 @@ describe("U0 fake commit idempotency", () => {
     expect((bindings.pay as FakePayAdapter).charges).toHaveLength(1);
   });
 
-  it("GET /health returns ok", async () => {
+  it("GET /health returns ok for phase 1", async () => {
     const bindings = testBindings();
     const app = createApp();
     const res = await app.fetch(
@@ -74,7 +58,7 @@ describe("U0 fake commit idempotency", () => {
     expect(await res.json()).toEqual({
       ok: true,
       service: "cutoff-api",
-      phase: "0",
+      phase: "1",
     });
   });
 });

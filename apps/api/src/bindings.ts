@@ -1,5 +1,12 @@
 import type { FulfillAdapter, PayAdapter, TaxAdapter } from "@cutoff/adapters";
-import type { MemoryOrderRepository } from "@cutoff/db";
+import type {
+  MemoryAgentCredentialRepository,
+  MemoryHouseholdRepository,
+  MemoryMandateRepository,
+  MemoryOrderRepository,
+  MemoryRevocationKv,
+  MemoryStubQuoteRepository,
+} from "@cutoff/db";
 
 /**
  * Injected bindings. Worker handler stays a plain function of these deps.
@@ -10,5 +17,12 @@ export type ApiBindings = {
   fulfill: FulfillAdapter;
   tax: TaxAdapter;
   orders: MemoryOrderRepository;
+  households: MemoryHouseholdRepository;
+  agents: MemoryAgentCredentialRepository;
+  mandates: MemoryMandateRepository;
+  quotes: MemoryStubQuoteRepository;
+  revocationKv: MemoryRevocationKv;
   traceId: string;
+  /** Injected clock for deterministic tests. */
+  nowUtc: () => string;
 };
