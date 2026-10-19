@@ -89,6 +89,10 @@ MCP scaffold (`apps/mcp`): Streamable HTTP `/mcp`, service binding to `cutoff-ap
 
 Seven MCP tools (`cutoff_list_items`, `cutoff_due_items`, `cutoff_quote`, `cutoff_commit`, `cutoff_get_receipt`, `cutoff_skip`, `cutoff_cancel_order`), API error → tool-result map with `next_action`, annotations. Tests use the MCP SDK client against `createApp()` fakes.
 
+## Phase 13 (Unit 19)
+
+MCP rate limits (30 quotes / 5 commits per key per minute), `protocol:"mcp"` + `actor_chain` on evidence, deploy workflow (`deploy-mcp.yml`), route `mcp.callcutoff.com`. See [`apps/mcp/DEPLOY.md`](./apps/mcp/DEPLOY.md).
+
 ## Agent auth
 
 `Authorization: Bearer ck_live_…`  

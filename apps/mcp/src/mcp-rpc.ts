@@ -6,6 +6,7 @@
 import type { AgentMe } from "./api-client.js";
 import type { ApiService } from "./bindings.js";
 import { rememberClientName } from "./client-info.js";
+import type { RateLimiter } from "./rate-limit.js";
 import { callTool } from "./tools/call.js";
 import { toolsForScopes, type McpToolDef } from "./tools/catalog.js";
 
@@ -22,6 +23,8 @@ export type McpRpcContext = {
   api: ApiService;
   authorization: string;
   me: AgentMe;
+  quoteRateLimiter: RateLimiter;
+  commitRateLimiter: RateLimiter;
 };
 
 function ok(id: JsonRpcId, result: unknown) {
@@ -97,6 +100,8 @@ export async function handleMcpJsonRpc(
         api: ctx.api,
         authorization: ctx.authorization,
         me: ctx.me,
+        quoteRateLimiter: ctx.quoteRateLimiter,
+        commitRateLimiter: ctx.commitRateLimiter,
       });
       return ok(id, result);
     }

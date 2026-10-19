@@ -7,6 +7,10 @@ import type { ApiService } from "../bindings.js";
 import { clientNameForKey } from "../client-info.js";
 import { toolErrorResult, toolOkResult } from "../errors.js";
 import {
+  rateLimitedToolResult,
+  type RateLimiter,
+} from "../rate-limit.js";
+import {
   serializeCancel,
   serializeCommit,
   serializeDueList,
@@ -21,6 +25,8 @@ export type ToolCallContext = {
   api: ApiService;
   authorization: string;
   me: AgentMe;
+  quoteRateLimiter: RateLimiter;
+  commitRateLimiter: RateLimiter;
 };
 
 type Json = Record<string, unknown>;
@@ -95,6 +101,11 @@ async function quote(ctx: ToolCallContext, input: Json) {
     return toolErrorResult("invalid_body");
   }
 
+  const allowed = await ctx.quoteRateLimiter.limit({ key: ctx.me.keyId });
+  if (!allowed.success) {
+    return rateLimitedToolResult("quote");
+  }
+
   if (typeof input.list_line_id === "string") {
     const payload: Json = {
       list_line_id: input.list_line_id,
@@ -143,6 +154,11 @@ async function commit(ctx: ToolCallContext, input: Json) {
   const idempotencyKey = input.idempotency_key;
   if (typeof quoteId !== "string" || typeof idempotencyKey !== "string") {
     return toolErrorResult("invalid_body");
+  }
+
+  const allowed = await ctx.commitRateLimiter.limit({ key: ctx.me.keyId });
+  if (!allowed.success) {
+    return rateLimitedToolResult("commit");
   }
 
   const client = clientNameForKey(ctx.me.keyId);
