@@ -51,4 +51,31 @@ describe("Unit 14 MemoryListRepository schedule parity", () => {
     expect(updated.paused).toBe(true);
     expect(updated.nextDueAt).toBeNull();
   });
+
+  it("applySkip next and snooze", () => {
+    const repo = new MemoryListRepository();
+    const line = repo.upsert({
+      householdId: "hh_1",
+      mandateId: "m_1",
+      canonicalItemId: "item_towels_12",
+      cadenceHintDays: 30,
+      nowUtc: "2026-10-01T12:00:00.000Z",
+    });
+    repo.recordOrder(line.lineId, "ord_1", "2026-09-21T12:00:00.000Z");
+    const next = repo.applySkip({
+      lineId: line.lineId,
+      mode: "next",
+      nowUtc: "2026-10-19T12:00:00.000Z",
+    });
+    expect(next.ok && next.line.nextDueAt).toBe("2026-11-20T12:00:00.000Z");
+    const snooze = repo.applySkip({
+      lineId: line.lineId,
+      mode: "snooze",
+      until: "2026-10-26T12:00:00.000Z",
+      nowUtc: "2026-10-19T12:00:00.000Z",
+    });
+    expect(snooze.ok && snooze.line.snoozedUntil).toBe(
+      "2026-10-26T12:00:00.000Z",
+    );
+  });
 });

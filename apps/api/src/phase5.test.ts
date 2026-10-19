@@ -432,9 +432,12 @@ describe("Phase 5 — Unit 11 list and reorder", () => {
       bindings,
     );
     expect(skip.status).toBe(200);
-    expect(await skip.json()).toEqual({
+    expect(await skip.json()).toMatchObject({
       line_id: line.line_id,
+      mode: "pause",
       paused: true,
+      next_due_at: null,
+      snoozed_until: null,
     });
     expect(fulfill.jobs.length).toBe(placesBefore);
     expect(await bindings.orders.count()).toBe(0);

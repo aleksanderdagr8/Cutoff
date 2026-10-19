@@ -186,6 +186,19 @@ export class PostgresReorderNudgeRepository implements ReorderNudgeRepository {
     return mapReorderNudge(data as DbReorderNudge);
   }
 
+  async markPendingSkippedForLine(
+    lineId: string,
+  ): Promise<readonly ReorderNudgeRow[]> {
+    const { data, error } = await this.db
+      .from("reorder_nudges")
+      .update({ status: "skipped" })
+      .eq("line_id", lineId)
+      .eq("status", "pending")
+      .select("*");
+    throwOnError(error, "reorder_nudges.markPendingSkippedForLine");
+    return ((data ?? []) as DbReorderNudge[]).map(mapReorderNudge);
+  }
+
   private async findByCycle(
     lineId: string,
     dueAt: string,

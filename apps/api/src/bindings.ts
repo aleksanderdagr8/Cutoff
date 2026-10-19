@@ -18,6 +18,7 @@ import type {
   MemoryRiskRepository,
   OrderRepository,
   PostgresHouseholdRepository,
+  QuoteNudgeLinkStore,
   QuoteRepository,
   ReorderNudgeRepository,
   RevocationKv,
@@ -48,6 +49,7 @@ export type ApiBindings = {
   list: ListRepository;
   nudgeSettings: HouseholdNudgeSettingsRepository;
   reorderNudges: ReorderNudgeRepository;
+  quoteNudgeLinks: QuoteNudgeLinkStore;
   outboundWebhooks: MemoryOutboundWebhookQueue;
   /** Shared secret for signing outbound + verifying inbound (injected). */
   webhookSecret: string;

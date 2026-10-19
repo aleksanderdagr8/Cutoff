@@ -2,8 +2,10 @@
  * Thin Postgres list_lines store (Unit 14 schedule columns).
  */
 
-import { applyListLineSkip, computeNextDue } from "@cutoff/domain";
+import { applySkipMode, computeNextDue } from "@cutoff/domain";
 import type {
+  ApplyListSkipInput,
+  ApplyListSkipResult,
   ListLineRow,
   ListRepository,
   UpsertListLineInput,
@@ -122,22 +124,40 @@ export class PostgresListRepository implements ListRepository {
   }
 
   async skip(lineId: string): Promise<ListLineRow | null> {
-    const row = await this.get(lineId);
-    if (!row) return null;
-    const next = applyListLineSkip(row);
-    const nextDueAt = nextDueFields({
-      paused: next.paused,
-      lastOrderedAt: row.lastOrderedAt,
-      cadenceHintDays: row.cadenceHintDays,
+    const result = await this.applySkip({
+      lineId,
+      mode: "pause",
+      nowUtc: new Date().toISOString(),
     });
+    return result.ok ? result.line : null;
+  }
+
+  async applySkip(input: ApplyListSkipInput): Promise<ApplyListSkipResult> {
+    const row = await this.get(input.lineId);
+    if (!row) return { ok: false, error: "not_found" };
+    const next = applySkipMode({
+      mode: input.mode,
+      until: input.until,
+      nowUtc: input.nowUtc,
+      cadenceHintDays: row.cadenceHintDays,
+      nextDueAt: row.nextDueAt,
+      paused: row.paused,
+      snoozedUntil: row.snoozedUntil,
+    });
+    if (!next.ok) return { ok: false, error: next.error };
+
     const { data, error } = await this.db
       .from("list_lines")
-      .update({ paused: next.paused, next_due_at: nextDueAt })
-      .eq("line_id", lineId)
+      .update({
+        paused: next.paused,
+        next_due_at: next.nextDueAt,
+        snoozed_until: next.snoozedUntil,
+      })
+      .eq("line_id", input.lineId)
       .select("*")
       .single();
-    throwOnError(error, "list_lines.skip");
-    return mapListLine(data as DbListLine);
+    throwOnError(error, "list_lines.applySkip");
+    return { ok: true, line: mapListLine(data as DbListLine) };
   }
 
   async recordQuote(lineId: string, quoteId: string): Promise<void> {
