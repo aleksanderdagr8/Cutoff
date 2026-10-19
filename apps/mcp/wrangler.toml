@@ -1,0 +1,9 @@
+name = "cutoff-mcp"
+main = "src/index.ts"
+compatibility_date = "2024-12-01"
+
+# Unit 17: service binding to cutoff-api. Forward Authorization unchanged.
+# Local/dev tests inject a fake Fetcher; production wires [[services]].
+# [[services]]
+# binding = "API"
+# service = "cutoff-api"

@@ -6,7 +6,11 @@ import {
   createHouseholdHandler,
   getHouseholdHandler,
 } from "./handlers/households.js";
-import { issueAgentHandler, revokeAgentHandler } from "./handlers/agents.js";
+import {
+  getAgentMeHandler,
+  issueAgentHandler,
+  revokeAgentHandler,
+} from "./handlers/agents.js";
 import {
   agentWidenMandateHandler,
   createMandateHandler,
@@ -139,6 +143,18 @@ export function createApp() {
       return c.json(result);
     },
   );
+
+  /** Unit 17: agent introspect for MCP scope filtering. */
+  app.get("/v1/agent/me", async (c) => {
+    const result = await getAgentMeHandler(
+      c.env,
+      c.req.header("Authorization") ?? undefined,
+    );
+    if ("error" in result) {
+      return c.json({ error: result.error }, result.status as 401);
+    }
+    return c.json(result);
+  });
 
   /** Agent widen — always denied. */
   app.post("/v1/mandates/:mandateId/widen", async (c) => {

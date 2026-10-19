@@ -43,3 +43,12 @@ export function commitImportsFulfill(source: string, rel: string): boolean {
   }
   return /FakeFulfillAdapter/.test(source);
 }
+
+/** Unit 17: apps/mcp must not import @cutoff/db (no DB credentials). */
+export function mcpImportsDb(source: string, pkg: string): boolean {
+  if (pkg !== "apps/mcp") return false;
+  return (
+    /from\s+["']@cutoff\/db["']/.test(source) ||
+    /require\(["']@cutoff\/db["']\)/.test(source)
+  );
+}
