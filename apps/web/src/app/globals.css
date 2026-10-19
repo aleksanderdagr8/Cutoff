@@ -55,3 +55,15 @@ body {
 .home-row {
   animation: home-fade 160ms ease-out both;
 }
+
+.ops-enter {
+  animation: home-rise 160ms ease-out both;
+}
+
+.ops-enter-delay {
+  animation-delay: 40ms;
+}
+
+.ops-row {
+  animation: home-fade 160ms ease-out both;
+}

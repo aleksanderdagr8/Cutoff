@@ -179,6 +179,31 @@ export class MemoryQuoteRepository {
     return this.holds.get(holdKey({ householdId, canonicalItemId })) ?? null;
   }
 
+  listAll(): readonly QuoteRow[] {
+    return this.rows;
+  }
+
+  listOpenHolds(): readonly HoldRow[] {
+    return [...this.holds.values()];
+  }
+
+  /**
+   * Operator release-hold: drop the open hold for a quote without committing.
+   * Quote row stays immutable; hold lane clears.
+   */
+  releaseHold(quoteId: string): HoldRow | null {
+    const quote = this.get(quoteId);
+    if (!quote || quote.committedAtUtc) return null;
+    const key = holdKey({
+      householdId: quote.householdId,
+      canonicalItemId: quote.canonicalItemId,
+    });
+    const hold = this.holds.get(key);
+    if (!hold || hold.quoteId !== quoteId) return null;
+    this.holds.delete(key);
+    return hold;
+  }
+
   /** Schema probe: quote rows never expose placement. */
   schemaHasPlacementColumn(): boolean {
     return false;
