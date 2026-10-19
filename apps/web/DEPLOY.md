@@ -42,6 +42,8 @@ printf '%s' "$NEXT_PUBLIC_SUPABASE_URL" | pnpm exec wrangler secret put NEXT_PUB
 printf '%s' "$NEXT_PUBLIC_SUPABASE_ANON_KEY" | pnpm exec wrangler secret put NEXT_PUBLIC_SUPABASE_ANON_KEY
 ```
 
+**GitHub Actions** (`deploy-web.yml`): store `CLOUDFLARE_API_TOKEN`, `NEXT_PUBLIC_SUPABASE_URL`, and `NEXT_PUBLIC_SUPABASE_ANON_KEY` as repository **Secrets** (not Variables). Optional: `CLOUDFLARE_ACCOUNT_ID` (defaults in workflow).
+
 **Aleks — Supabase Dashboard → Authentication → URL configuration**
 
 1. Site URL → `https://callcutoff.com`
