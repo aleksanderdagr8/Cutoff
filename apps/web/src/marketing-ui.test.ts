@@ -18,6 +18,7 @@ describe("marketing `/` hygiene", () => {
       "marketing-page.tsx",
       "hero-terminal.tsx",
       "builders-panel.tsx",
+      "proof-strip.tsx",
       "waitlist-form.tsx",
     ];
     const joined = files
@@ -39,6 +40,63 @@ describe("marketing `/` hygiene", () => {
     expect(joined).toMatch(/household/i);
   });
 
+  it("proof strip ships Top 5 one-liners under Why care, not in the hero", () => {
+    const page = readFileSync(
+      join(import.meta.dirname, "components/marketing/marketing-page.tsx"),
+      "utf8",
+    );
+    const strip = readFileSync(
+      join(import.meta.dirname, "components/marketing/proof-strip.tsx"),
+      "utf8",
+    );
+    expect(page).toContain("ProofStrip");
+    expect(page.indexOf("Why care")).toBeLessThan(page.indexOf("<ProofStrip"));
+    expect(page.indexOf("<ProofStrip")).toBeLessThan(page.indexOf('id="enforced"'));
+    expect(strip).toContain("What agents hit today");
+    expect(strip).toContain("/docs/why-agents-fail");
+    expect(strip).toMatch(/13 of 16/);
+    expect(strip).toMatch(/τ-bench|tau-bench|pass/i);
+    expect(strip).toMatch(/\$825/);
+    expect(strip).toMatch(/Perplexity/);
+    expect(strip).toMatch(/\$2\.5B|2\.5B/);
+    expect(strip).toMatch(/prefers-reduced-motion|reduceMotion/);
+  });
+
+  it("builders panel cites shelf-not-scrape with Amazon + Cloudflare", () => {
+    const page = readFileSync(
+      join(import.meta.dirname, "components/marketing/marketing-page.tsx"),
+      "utf8",
+    );
+    const builders = readFileSync(
+      join(import.meta.dirname, "components/marketing/builders-panel.tsx"),
+      "utf8",
+    );
+    expect(page).toMatch(/alleges/i);
+    expect(page).toMatch(/Perplexity/);
+    expect(page).toMatch(/Cloudflare/);
+    expect(builders).toMatch(/Why scrape fails/);
+    expect(builders).toMatch(/shelf, not a storefront/i);
+  });
+
+  it("public evidence docs page prefers primaries and hedges ⚠ items", () => {
+    const docs = readFileSync(
+      join(import.meta.dirname, "app/docs/why-agents-fail/page.tsx"),
+      "utf8",
+    );
+    expect(docs).toContain("arxiv.org/abs/2307.13854");
+    expect(docs).toContain("arxiv.org/abs/2406.12045");
+    expect(docs).toContain("blog.cloudflare.com/secure-agentic-commerce");
+    expect(docs).toContain(
+      "ftc.gov/news-events/news/press-releases/2025/09/ftc-secures-historic-25-billion-settlement-against-amazon",
+    );
+    expect(docs).toContain("courtlistener.com");
+    expect(docs).toMatch(/historical baseline/i);
+    expect(docs).toMatch(/alleges/i);
+    expect(docs).not.toMatch(/en banc/i);
+    expect(docs).not.toMatch(/reddit\.com/i);
+    expect(docs).not.toMatch(/wrong charged total.*found/i);
+  });
+
   it("waitlist stub accepts POST and does not mint API keys", () => {
     const src = readFileSync(
       join(import.meta.dirname, "app/api/waitlist/route.ts"),
@@ -56,6 +114,7 @@ describe("marketing `/` hygiene", () => {
       "marketing-page.tsx",
       "hero-terminal.tsx",
       "builders-panel.tsx",
+      "proof-strip.tsx",
       "waitlist-form.tsx",
     ]) {
       expect(statSync(join(root, name)).isFile()).toBe(true);
