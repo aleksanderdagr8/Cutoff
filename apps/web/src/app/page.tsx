@@ -11,16 +11,19 @@ export default function RootPage() {
         <p className="mt-3 max-w-md text-[17px] leading-relaxed text-secondary">
           The shelf agents call when a person says buy.
         </p>
-        <div className="mt-8 flex flex-wrap gap-6">
+        <div className="mt-8 flex flex-wrap gap-4">
           <Link
             href="/home"
             className="rounded-control bg-accent px-5 py-2.5 text-[15px] font-medium text-white transition-opacity duration-[160ms] ease-out hover:opacity-90"
           >
             Household
           </Link>
-          <span className="self-center text-[14px] text-secondary">
-            Operator console comes after /home.
-          </span>
+          <Link
+            href="/ops"
+            className="rounded-control border border-hairline px-5 py-2.5 text-[15px] font-medium text-ink transition-colors duration-[160ms] ease-out hover:border-accent hover:text-accent"
+          >
+            Operator
+          </Link>
         </div>
       </div>
     </main>
