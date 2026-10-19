@@ -1,5 +1,13 @@
 /** Shared household `/home` view types (safe for client imports). */
 
+/** Cookie / Auth session payload for household `/home` (no secrets). */
+export type HomeSession = {
+  memberId: string;
+  householdId: string;
+  email: string;
+  householdName: string;
+};
+
 export type HomeListLineView = {
   line_id: string;
   canonical_item_id: string;

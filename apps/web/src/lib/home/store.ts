@@ -19,12 +19,12 @@ import {
 import { canViewReceipt, receiptSkipAction, whyThisSeller } from "@cutoff/domain";
 import type { ReceiptResponse } from "@cutoff/contracts";
 import { homeDevBypassEnabled } from "./config";
-import type { HomeSession } from "./session";
 import type {
   HomeKeyView,
   HomeListLineView,
   HomeMandateView,
   HomeOrderView,
+  HomeSession,
 } from "./types";
 
 export type {
@@ -32,7 +32,12 @@ export type {
   HomeListLineView,
   HomeMandateView,
   HomeOrderView,
+  HomeSession,
 } from "./types";
+
+/** Stable across process restarts so the bypass cookie keeps working. */
+export const DEMO_HOUSEHOLD_ID = "01DEMOHOMEHOUSEHOLD00000001";
+export const DEMO_MEMBER_ID = "01DEMOHOMEMEMBER0000000001";
 
 /**
  * Bypass: session must match the in-memory demo household.
@@ -109,6 +114,7 @@ async function seedIfNeeded(): Promise<HomeStoreState> {
   const { household, member } = state.households.createHousehold(
     "Demo Home",
     "member@cutoff.local",
+    { householdId: DEMO_HOUSEHOLD_ID, memberId: DEMO_MEMBER_ID },
   );
 
   const mandate = state.mandates.create({
@@ -217,6 +223,24 @@ export async function demoSession(): Promise<HomeSession> {
     householdId: state.demoHouseholdId,
     email: state.demoMember.email,
     householdName: state.demoHouseholdName,
+  };
+}
+
+/**
+ * Rebind a stale bypass cookie to the current in-memory demo household.
+ * Survives store reseeds after `next dev` / process restart.
+ */
+export async function alignBypassSession(
+  session: HomeSession,
+): Promise<HomeSession> {
+  const state = await getHomeStore();
+  if (state.households.memberOf(session.memberId, session.householdId)) {
+    return session;
+  }
+  const demo = await demoSession();
+  return {
+    ...demo,
+    email: session.email.trim() || demo.email,
   };
 }
 

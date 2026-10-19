@@ -6,7 +6,10 @@ export function SignOutButton() {
       type="button"
       className="text-[13px] text-secondary underline-offset-2 transition-colors duration-160 ease-out hover:text-ink hover:underline"
       onClick={async () => {
-        await fetch("/api/home/session", { method: "DELETE" });
+        await fetch("/api/home/session", {
+          method: "DELETE",
+          credentials: "include",
+        });
         window.location.href = "/home/sign-in";
       }}
     >

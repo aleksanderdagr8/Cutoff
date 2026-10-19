@@ -38,6 +38,7 @@ export function MandateClient({ initialMandate }: Props) {
     startTransition(async () => {
       const res = await fetch("/api/home/mandate", {
         method: "PUT",
+        credentials: "include",
         headers: { "content-type": "application/json" },
         body: JSON.stringify({
           ceiling_cents: cents,

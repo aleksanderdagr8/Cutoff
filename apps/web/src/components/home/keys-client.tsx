@@ -21,6 +21,7 @@ export function KeysClient({ initialKeys }: Props) {
     startTransition(async () => {
       const res = await fetch("/api/home/keys", {
         method: "POST",
+        credentials: "include",
         headers: { "content-type": "application/json" },
         body: JSON.stringify({
           scopes: ["quote", "commit", "read_list"],
@@ -53,6 +54,7 @@ export function KeysClient({ initialKeys }: Props) {
     startTransition(async () => {
       const res = await fetch(`/api/home/keys/${keyId}/revoke`, {
         method: "POST",
+        credentials: "include",
       });
       if (!res.ok) {
         setError("Could not revoke key.");

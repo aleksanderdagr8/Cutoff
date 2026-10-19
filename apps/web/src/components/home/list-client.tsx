@@ -23,6 +23,7 @@ export function ListClient({ initialLines }: Props) {
     startTransition(async () => {
       const res = await fetch("/api/home/list/skip", {
         method: "POST",
+        credentials: "include",
         headers: { "content-type": "application/json" },
         body: JSON.stringify({ list_line_id: lineId }),
       });

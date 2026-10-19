@@ -21,6 +21,7 @@ export function ReceiptActions({ token, skipAvailable }: Props) {
     startTransition(async () => {
       const res = await fetch(`/api/home/receipts/${token}/skip`, {
         method: "POST",
+        credentials: "include",
       });
       if (!res.ok) {
         setError("Skip failed.");

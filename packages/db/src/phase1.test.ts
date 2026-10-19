@@ -50,6 +50,21 @@ describe("U1 MemoryHouseholdRepository", () => {
       ),
     ).toEqual({ ok: true });
   });
+
+  it("accepts stable household/member ids for demo seed", () => {
+    const repo = new MemoryHouseholdRepository();
+    const { household, member } = repo.createHousehold(
+      "Demo Home",
+      "member@cutoff.local",
+      {
+        householdId: "01DEMOHOMEHOUSEHOLD00000001",
+        memberId: "01DEMOHOMEMEMBER0000000001",
+      },
+    );
+    expect(household.householdId).toBe("01DEMOHOMEHOUSEHOLD00000001");
+    expect(member.memberId).toBe("01DEMOHOMEMEMBER0000000001");
+    expect(repo.memberOf(member.memberId, household.householdId)).toBe(true);
+  });
 });
 
 describe("U2 MemoryAgentCredentialRepository", () => {
