@@ -18,14 +18,17 @@ export default async function OpsLivePage() {
       active="live"
       bypass={opsDevBypassEnabled()}
     >
-      <h1 className="text-[28px] font-semibold tracking-tight text-ink">
-        Live flow
-      </h1>
-      <p className="mt-2 max-w-xl text-[15px] text-secondary">
-        One row per order from events. Side lane for quotes that never
-        committed. Alerts stay in a strip — not a card grid.
+      <p className="text-[13px] font-medium uppercase tracking-[0.1em] text-secondary">
+        CUTOFF · Ops
       </p>
-      <div className="mt-8">
+      <h1 className="mt-3 font-display text-[34px] font-semibold tracking-[-0.03em] text-ink md:text-[44px]">
+        Live
+      </h1>
+      <p className="mt-3 max-w-xl text-[16px] leading-relaxed text-secondary">
+        Order events as they land. Open a row for evidence and actions. Quotes
+        that never committed sit below — not a trading board.
+      </p>
+      <div className="mt-10">
         <LiveClient
           initialRows={live.rows}
           initialNeverCommitted={live.never_committed}

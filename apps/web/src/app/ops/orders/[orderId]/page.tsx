@@ -24,12 +24,12 @@ export default async function OpsOrderSheetPage({ params }: Props) {
       active="order"
       bypass={opsDevBypassEnabled()}
     >
-      <p className="mb-6 text-[13px]">
+      <p className="mb-8 text-[13px]">
         <Link
           href="/ops/live"
-          className="text-secondary underline-offset-2 hover:text-ink hover:underline"
+          className="text-secondary underline-offset-2 transition-colors duration-160 ease-out hover:text-ink hover:underline"
         >
-          ← Live flow
+          ← Live
         </Link>
       </p>
       <OrderSheetClient initial={sheet} />

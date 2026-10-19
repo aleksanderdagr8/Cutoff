@@ -10,12 +10,14 @@ type Props = {
 export function HouseholdsClient({ households }: Props) {
   if (households.length === 0) {
     return (
-      <p className="mt-8 text-[15px] text-secondary">No households yet.</p>
+      <p className="mt-10 text-[15px] leading-relaxed text-secondary">
+        No households yet. When a household signs up, it shows here.
+      </p>
     );
   }
 
   return (
-    <ul className="mt-8 border-t border-hairline">
+    <ul className="mt-10 border-t border-hairline">
       {households.map((h, i) => (
         <li
           key={h.household_id}

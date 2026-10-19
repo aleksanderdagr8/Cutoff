@@ -17,11 +17,12 @@ export default async function OpsFulfillersPage() {
       active="fulfillers"
       bypass={opsDevBypassEnabled()}
     >
-      <h1 className="text-[28px] font-semibold tracking-tight text-ink">
+      <h1 className="font-display text-[34px] font-semibold tracking-[-0.03em] text-ink md:text-[40px]">
         Fulfillers
       </h1>
-      <p className="mt-2 max-w-xl text-[15px] text-secondary">
-        Score and strikes from risk events. Suspend writes an audit row.
+      <p className="mt-3 max-w-xl text-[16px] leading-relaxed text-secondary">
+        Score and strikes from risk events. Suspend or resume with a reason —
+        each writes an audit row.
       </p>
       <FulfillersClient initial={fulfillers} />
     </OpsShell>

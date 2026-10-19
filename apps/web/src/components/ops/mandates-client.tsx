@@ -18,16 +18,18 @@ export function MandatesClient({ initial }: Props) {
 
   function lower(m: OpsMandateView) {
     const raw = window.prompt(
-      `Lower ceiling for ${m.household_name} (current ${formatCents(m.ceiling_cents)}). Enter new ceiling in cents:`,
+      `Lower ceiling for ${m.household_name} (current ${formatCents(m.ceiling_cents)}). Enter new ceiling in cents — must be lower:`,
       String(Math.max(0, m.ceiling_cents - 500)),
     );
     if (raw == null) return;
     const ceiling = Number.parseInt(raw, 10);
     if (!Number.isInteger(ceiling)) {
-      setError("Ceiling must be an integer number of cents.");
+      setError("Ceiling must be a whole number of cents.");
       return;
     }
-    const reason = window.prompt("Reason (required for audit):");
+    const reason = window.prompt(
+      "Why are you lowering this ceiling? (saved in Audit)",
+    );
     if (reason == null) return;
 
     setError(null);
@@ -63,13 +65,17 @@ export function MandatesClient({ initial }: Props) {
   }
 
   if (mandates.length === 0) {
-    return <p className="mt-8 text-[15px] text-secondary">No mandates yet.</p>;
+    return (
+      <p className="mt-10 text-[15px] leading-relaxed text-secondary">
+        No mandates yet. Households set these from /home.
+      </p>
+    );
   }
 
   return (
     <div>
       {error ? <p className="mt-4 text-[14px] text-red-600">{error}</p> : null}
-      <ul className="mt-8 border-t border-hairline">
+      <ul className="mt-10 border-t border-hairline">
         {mandates.map((m, i) => (
           <li
             key={m.mandate_id}
@@ -90,7 +96,7 @@ export function MandatesClient({ initial }: Props) {
               type="button"
               disabled={pendingId === m.mandate_id}
               onClick={() => lower(m)}
-              className="text-[14px] text-accent underline-offset-2 hover:underline disabled:opacity-40"
+              className="text-[14px] font-medium text-accent underline-offset-2 transition-opacity duration-160 ease-out hover:underline disabled:opacity-40"
             >
               {pendingId === m.mandate_id ? "Lowering…" : "Lower ceiling"}
             </button>

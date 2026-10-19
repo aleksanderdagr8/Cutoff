@@ -18,7 +18,7 @@ export function FulfillersClient({ initial }: Props) {
   function toggle(f: OpsFulfillerView) {
     const next = !f.suspended;
     const reason = window.prompt(
-      `Reason to ${next ? "suspend" : "resume"} ${f.fulfiller_id}:`,
+      `Why ${next ? "suspend" : "resume"} ${f.fulfiller_id}? (saved in Audit)`,
     );
     if (reason == null) return;
     setError(null);
@@ -50,10 +50,18 @@ export function FulfillersClient({ initial }: Props) {
     });
   }
 
+  if (rows.length === 0) {
+    return (
+      <p className="mt-10 text-[15px] leading-relaxed text-secondary">
+        No fulfillers in the demo store yet.
+      </p>
+    );
+  }
+
   return (
     <div>
       {error ? <p className="mt-4 text-[14px] text-red-600">{error}</p> : null}
-      <ul className="mt-8 border-t border-hairline">
+      <ul className="mt-10 border-t border-hairline">
         {rows.map((f, i) => (
           <li
             key={f.fulfiller_id}
@@ -75,7 +83,7 @@ export function FulfillersClient({ initial }: Props) {
               type="button"
               disabled={pendingId === f.fulfiller_id}
               onClick={() => toggle(f)}
-              className="text-[14px] text-accent underline-offset-2 hover:underline disabled:opacity-40"
+              className="text-[14px] font-medium text-accent underline-offset-2 transition-opacity duration-160 ease-out hover:underline disabled:opacity-40"
             >
               {pendingId === f.fulfiller_id
                 ? "Updating…"
