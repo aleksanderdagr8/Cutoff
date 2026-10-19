@@ -1,0 +1,27 @@
+name: ci
+on:
+  push:
+    branches: [main, "phase-0-*", "cursor/**"]
+  pull_request:
+    branches: [main]
+jobs:
+  u0:
+    name: Unit 0 (fakes)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 9.15.0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: "pnpm"
+      - name: Install
+        run: pnpm install --frozen-lockfile
+      - name: Boundaries
+        run: pnpm run check:boundaries
+      - name: Tests (fakes)
+        run: pnpm run test:u0
+      - name: Typecheck
+        run: pnpm run typecheck
