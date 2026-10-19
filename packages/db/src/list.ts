@@ -4,7 +4,7 @@
  * Unit 13–14: lastOrderedAt / nextDueAt / schedule columns (fixed cadence).
  */
 
-import { applyListLineSkip, computeNextDue } from "@cutoff/domain";
+import { applySkipMode, computeNextDue, type SkipMode } from "@cutoff/domain";
 import type { MaybePromise } from "./types.js";
 import { ulid } from "./ulid.js";
 
@@ -45,6 +45,17 @@ export type UpsertListLineInput = {
   nowUtc: string;
 };
 
+export type ApplyListSkipInput = {
+  lineId: string;
+  mode: SkipMode;
+  until?: string | null;
+  nowUtc: string;
+};
+
+export type ApplyListSkipResult =
+  | { ok: true; line: ListLineRow }
+  | { ok: false; error: "not_found" | "invalid_until" | "no_cadence" };
+
 /** Shared surface for memory + Postgres list repos. */
 export interface ListRepository {
   upsert(input: UpsertListLineInput): MaybePromise<ListLineRow>;
@@ -54,7 +65,10 @@ export interface ListRepository {
     householdId: string,
   ): MaybePromise<ListLineRow | null>;
   listForHousehold(householdId: string): MaybePromise<readonly ListLineRow[]>;
+  /** Unit 11 compat: pause the line. */
   skip(lineId: string): MaybePromise<ListLineRow | null>;
+  /** Unit 15: next | snooze | pause. */
+  applySkip(input: ApplyListSkipInput): MaybePromise<ApplyListSkipResult>;
   recordQuote(lineId: string, quoteId: string): MaybePromise<void>;
   recordOrder(
     lineId: string,
@@ -134,12 +148,31 @@ export class MemoryListRepository implements ListRepository {
   }
 
   skip(lineId: string): ListLineRow | null {
-    const row = this.get(lineId);
-    if (!row) return null;
-    const next = applyListLineSkip(row);
+    const result = this.applySkip({
+      lineId,
+      mode: "pause",
+      nowUtc: new Date().toISOString(),
+    });
+    return result.ok ? result.line : null;
+  }
+
+  applySkip(input: ApplyListSkipInput): ApplyListSkipResult {
+    const row = this.get(input.lineId);
+    if (!row) return { ok: false, error: "not_found" };
+    const next = applySkipMode({
+      mode: input.mode,
+      until: input.until,
+      nowUtc: input.nowUtc,
+      cadenceHintDays: row.cadenceHintDays,
+      nextDueAt: row.nextDueAt,
+      paused: row.paused,
+      snoozedUntil: row.snoozedUntil,
+    });
+    if (!next.ok) return { ok: false, error: next.error };
     row.paused = next.paused;
-    refreshNextDue(row);
-    return row;
+    row.nextDueAt = next.nextDueAt;
+    row.snoozedUntil = next.snoozedUntil;
+    return { ok: true, line: row };
   }
 
   recordQuote(lineId: string, quoteId: string): void {

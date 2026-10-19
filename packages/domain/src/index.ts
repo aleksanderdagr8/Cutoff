@@ -134,6 +134,7 @@ export {
   REORDER_BANNED_FIELD_NAMES,
   hasBannedReorderField,
   applyListLineSkip,
+  applySkipMode,
   stickyFulfillerForReorder,
   computeNextDue,
   isDueWithin,
@@ -142,6 +143,9 @@ export {
 export type {
   ReorderBannedField,
   ListLinePauseState,
+  SkipMode,
+  ApplySkipModeInput,
+  ApplySkipModeResult,
   ComputeNextDueInput,
   ComputeNextDueResult,
 } from "./list.js";

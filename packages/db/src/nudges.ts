@@ -79,6 +79,10 @@ export interface ReorderNudgeRepository {
     status: NudgeStatus,
     opts?: { resolvedOrderId?: string; bumpAttempts?: boolean },
   ): MaybePromise<ReorderNudgeRow | null>;
+  /** Unit 15: mark pending nudges for a line as skipped. */
+  markPendingSkippedForLine(
+    lineId: string,
+  ): MaybePromise<readonly ReorderNudgeRow[]>;
 }
 
 function assertHttpsUrl(url: string | null | undefined): void {
@@ -178,5 +182,16 @@ export class MemoryReorderNudgeRepository implements ReorderNudgeRepository {
       row.attempts += 1;
     }
     return row;
+  }
+
+  markPendingSkippedForLine(lineId: string): readonly ReorderNudgeRow[] {
+    const updated: ReorderNudgeRow[] = [];
+    for (const row of this.rows) {
+      if (row.lineId === lineId && row.status === "pending") {
+        row.status = "skipped";
+        updated.push(row);
+      }
+    }
+    return updated;
   }
 }

@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   applyListLineSkip,
+  applySkipMode,
   computeNextDue,
   hasBannedReorderField,
   isDueWithin,
@@ -79,5 +80,55 @@ describe("Unit 13 computeNextDue (fixed cadence)", () => {
     expect(isDueWithin("2026-10-27T12:00:00.000Z", now, 7)).toBe(false);
     expect(isDueWithin("2026-10-01T12:00:00.000Z", now, 7)).toBe(true);
     expect(isDueWithin(null, now, 7)).toBe(false);
+  });
+});
+
+describe("Unit 15 applySkipMode", () => {
+  const base = {
+    nowUtc: "2026-10-19T12:00:00.000Z",
+    cadenceHintDays: 30,
+    nextDueAt: "2026-10-21T12:00:00.000Z",
+    paused: false,
+    snoozedUntil: null as string | null,
+  };
+
+  it("pause clears due and snooze", () => {
+    expect(applySkipMode({ ...base, mode: "pause" })).toEqual({
+      ok: true,
+      paused: true,
+      nextDueAt: null,
+      snoozedUntil: null,
+    });
+  });
+
+  it("next advances next_due_at by cadence", () => {
+    expect(applySkipMode({ ...base, mode: "next" })).toEqual({
+      ok: true,
+      paused: false,
+      nextDueAt: "2026-11-20T12:00:00.000Z",
+      snoozedUntil: null,
+    });
+  });
+
+  it("snooze requires until in the future", () => {
+    expect(
+      applySkipMode({
+        ...base,
+        mode: "snooze",
+        until: "2026-10-18T12:00:00.000Z",
+      }),
+    ).toEqual({ ok: false, error: "invalid_until" });
+    expect(
+      applySkipMode({
+        ...base,
+        mode: "snooze",
+        until: "2026-10-26T12:00:00.000Z",
+      }),
+    ).toEqual({
+      ok: true,
+      paused: false,
+      nextDueAt: "2026-10-21T12:00:00.000Z",
+      snoozedUntil: "2026-10-26T12:00:00.000Z",
+    });
   });
 });

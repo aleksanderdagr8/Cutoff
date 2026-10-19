@@ -73,6 +73,10 @@ Fixed-cadence due list for agents: `GET /v1/list/due?within_days=7`. `ListLine` 
 
 Reorder schedule persistence: migration `20261020090000_reorder_schedule.sql` (`list_lines` due columns, `household_nudge_settings`, `reorder_nudges` + RLS). Memory + Postgres list/nudge repos; learned cadence columns reserved unused.
 
+## Phase 9 (Unit 15)
+
+`POST /v1/list/skip` modes `next` | `snooze` | `pause` (default pause). Optional `nudge_id` on reorder → acted + `resolved_order_id` on commit. Pending nudges skipped on skip.
+
 ## Agent auth
 
 `Authorization: Bearer ck_live_…`  

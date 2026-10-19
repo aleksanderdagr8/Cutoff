@@ -108,6 +108,12 @@ export async function getDueListHandler(
   const dueLines = [];
 
   for (const line of lines) {
+    if (
+      line.snoozedUntil != null &&
+      Date.parse(line.snoozedUntil) > Date.parse(nowUtc)
+    ) {
+      continue;
+    }
     const due = computeNextDue({
       paused: line.paused,
       lastOrderedAt: line.lastOrderedAt,
@@ -215,6 +221,22 @@ export async function reorderHandler(
     return { error: "mandate_miss" as const, status: 403 as const };
   }
 
+  let linkedNudgeId: string | undefined;
+  if (parsed.data.nudge_id) {
+    const nudge = await bindings.reorderNudges.get(parsed.data.nudge_id);
+    if (
+      !nudge ||
+      nudge.householdId !== auth.agent.householdId ||
+      nudge.lineId !== line.lineId
+    ) {
+      return { error: "mandate_miss" as const, status: 404 as const };
+    }
+    if (nudge.status === "acted" || nudge.status === "skipped") {
+      return { error: "invalid_body" as const, status: 400 as const };
+    }
+    linkedNudgeId = nudge.nudgeId;
+  }
+
   const mandateRow = await bindings.mandates.getForHousehold(
     line.mandateId,
     auth.agent.householdId,
@@ -310,16 +332,24 @@ export async function reorderHandler(
 
   await bindings.list.recordQuote(line.lineId, created.quote.quoteId);
 
+  if (linkedNudgeId) {
+    await bindings.quoteNudgeLinks.set(created.quote.quoteId, linkedNudgeId);
+  }
+
   return {
     list_line_id: line.lineId,
     quote_id: created.quote.quoteId,
     fulfiller_id: created.quote.fulfillerId,
     landed_cents: created.quote.landedCents,
     expires_at: created.quote.expiresAtUtc,
+    ...(linkedNudgeId ? { nudge_id: linkedNudgeId } : {}),
   };
 }
 
-/** Skip: pause the line; do not place. */
+/**
+ * Unit 15 skip: mode next | snooze | pause (default pause).
+ * Pending nudges for the line are marked skipped.
+ */
 export async function skipListLineHandler(
   bindings: ApiBindings,
   body: unknown,
@@ -338,6 +368,11 @@ export async function skipListLineHandler(
     return { error: "invalid_body" as const, status: 400 as const };
   }
 
+  const mode = parsed.data.mode;
+  if (mode === "snooze" && parsed.data.until == null) {
+    return { error: "invalid_body" as const, status: 400 as const };
+  }
+
   const line = await bindings.list.getForHousehold(
     parsed.data.list_line_id,
     auth.agent.householdId,
@@ -346,13 +381,26 @@ export async function skipListLineHandler(
     return { error: "mandate_miss" as const, status: 404 as const };
   }
 
-  const skipped = await bindings.list.skip(line.lineId);
-  if (!skipped) {
-    return { error: "mandate_miss" as const, status: 404 as const };
+  const skipped = await bindings.list.applySkip({
+    lineId: line.lineId,
+    mode,
+    until: parsed.data.until,
+    nowUtc: bindings.nowUtc(),
+  });
+  if (!skipped.ok) {
+    if (skipped.error === "not_found") {
+      return { error: "mandate_miss" as const, status: 404 as const };
+    }
+    return { error: "invalid_body" as const, status: 400 as const };
   }
 
+  await bindings.reorderNudges.markPendingSkippedForLine(line.lineId);
+
   return {
-    line_id: skipped.lineId,
-    paused: true as const,
+    line_id: skipped.line.lineId,
+    mode,
+    paused: skipped.line.paused,
+    next_due_at: skipped.line.nextDueAt,
+    snoozed_until: skipped.line.snoozedUntil,
   };
 }

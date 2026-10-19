@@ -25,6 +25,10 @@ import {
   type ReorderNudgeRepository,
 } from "./nudges.js";
 import {
+  MemoryQuoteNudgeLinkStore,
+  type QuoteNudgeLinkStore,
+} from "./quote-nudge-links.js";
+import {
   MemoryOfferRepository,
   seedBrandFeedTopOffers,
   seedDualFulfillerOffers,
@@ -87,6 +91,7 @@ export type CutoffRepos = {
   list: ListRepository;
   nudgeSettings: HouseholdNudgeSettingsRepository;
   reorderNudges: ReorderNudgeRepository;
+  quoteNudgeLinks: QuoteNudgeLinkStore;
   revocationKv: RevocationKv;
   supabase: CutoffSupabaseClient | null;
 };
@@ -137,6 +142,7 @@ export function createRepos(options: CreateReposOptions): CutoffRepos {
       list: new MemoryListRepository(),
       nudgeSettings: new MemoryHouseholdNudgeSettingsRepository(),
       reorderNudges: new MemoryReorderNudgeRepository(),
+      quoteNudgeLinks: new MemoryQuoteNudgeLinkStore(),
       revocationKv,
       supabase: null,
     };
@@ -171,6 +177,7 @@ export function createRepos(options: CreateReposOptions): CutoffRepos {
     list: new PostgresListRepository(supabase),
     nudgeSettings: new PostgresHouseholdNudgeSettingsRepository(supabase),
     reorderNudges: new PostgresReorderNudgeRepository(supabase),
+    quoteNudgeLinks: new MemoryQuoteNudgeLinkStore(),
     revocationKv,
     supabase,
   };

@@ -157,6 +157,7 @@ export async function commitHandler(
   }
 
   // Unit 11/14: update matching list line last_order + next_due_at.
+  // Unit 15: mark linked reorder nudge acted when present.
   if (result.created && result.order.status !== "failed") {
     const lines = await bindings.list.listForHousehold(
       result.order.householdId,
@@ -170,6 +171,12 @@ export async function commitHandler(
         result.order.orderId,
         nowUtc,
       );
+    }
+    const nudgeId = await bindings.quoteNudgeLinks.take(quote.quoteId);
+    if (nudgeId) {
+      await bindings.reorderNudges.markStatus(nudgeId, "acted", {
+        resolvedOrderId: result.order.orderId,
+      });
     }
   }
 

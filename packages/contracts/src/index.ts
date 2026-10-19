@@ -370,6 +370,8 @@ export const ReorderRequestSchema = z
     list_line_id: z.string().min(1),
     qty: z.number().int().positive().max(99),
     deliver_by: z.string().min(1),
+    /** Unit 15: when commit succeeds, mark this nudge acted. */
+    nudge_id: z.string().min(1).optional(),
   })
   .strict();
 
@@ -381,13 +383,22 @@ export const ReorderResponseSchema = z.object({
   fulfiller_id: z.string().min(1),
   landed_cents: CentsSchema,
   expires_at: UtcIsoSchema,
+  nudge_id: z.string().min(1).optional(),
 });
 
 export type ReorderResponse = z.infer<typeof ReorderResponseSchema>;
 
+/** Unit 15 — skip modes; default pause keeps Unit 11 behavior. */
+export const SkipListLineModeSchema = z.enum(["next", "snooze", "pause"]);
+
+export type SkipListLineMode = z.infer<typeof SkipListLineModeSchema>;
+
 export const SkipListLineRequestSchema = z
   .object({
     list_line_id: z.string().min(1),
+    mode: SkipListLineModeSchema.optional().default("pause"),
+    /** Required when mode is snooze (UTC ISO). */
+    until: UtcIsoSchema.optional(),
   })
   .strict();
 
@@ -395,7 +406,10 @@ export type SkipListLineRequest = z.infer<typeof SkipListLineRequestSchema>;
 
 export const SkipListLineResponseSchema = z.object({
   line_id: z.string().min(1),
-  paused: z.literal(true),
+  mode: SkipListLineModeSchema,
+  paused: z.boolean(),
+  next_due_at: UtcIsoSchema.nullable(),
+  snoozed_until: UtcIsoSchema.nullable(),
 });
 
 export type SkipListLineResponse = z.infer<typeof SkipListLineResponseSchema>;

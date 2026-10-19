@@ -35,6 +35,8 @@ export { MemoryReceiptRepository } from "./receipts.js";
 export type { ReceiptRow } from "./receipts.js";
 export { MemoryListRepository } from "./list.js";
 export type {
+  ApplyListSkipInput,
+  ApplyListSkipResult,
   CadenceSource,
   ListLineRow,
   ListRepository,
@@ -54,6 +56,8 @@ export type {
   ReorderNudgeRow,
   UpsertNudgeSettingsInput,
 } from "./nudges.js";
+export { MemoryQuoteNudgeLinkStore } from "./quote-nudge-links.js";
+export type { QuoteNudgeLinkStore } from "./quote-nudge-links.js";
 export { MemoryHouseholdRepository } from "./households.js";
 export type {
   HouseholdRow,

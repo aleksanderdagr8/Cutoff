@@ -69,4 +69,30 @@ describe("Unit 14 nudge repos (memory)", () => {
     expect(acted?.status).toBe("acted");
     expect(acted?.resolvedOrderId).toBe("ord_1");
   });
+
+  it("markPendingSkippedForLine only touches pending rows", () => {
+    const repo = new MemoryReorderNudgeRepository();
+    const pending = repo.insert({
+      householdId: "hh_1",
+      lineId: "ll_1",
+      dueAt: "2026-10-21T12:00:00.000Z",
+      channel: "agent_webhook",
+      nowUtc: "2026-10-19T12:00:00.000Z",
+    });
+    const sent = repo.insert({
+      householdId: "hh_1",
+      lineId: "ll_1",
+      dueAt: "2026-10-21T12:00:00.000Z",
+      channel: "email",
+      nowUtc: "2026-10-19T12:00:00.000Z",
+    });
+    expect(pending.ok && sent.ok).toBe(true);
+    if (!pending.ok || !sent.ok) return;
+    repo.markStatus(sent.nudge.nudgeId, "sent");
+    const updated = repo.markPendingSkippedForLine("ll_1");
+    expect(updated).toHaveLength(1);
+    expect(updated[0]?.nudgeId).toBe(pending.nudge.nudgeId);
+    expect(repo.get(pending.nudge.nudgeId)?.status).toBe("skipped");
+    expect(repo.get(sent.nudge.nudgeId)?.status).toBe("sent");
+  });
 });

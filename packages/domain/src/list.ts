@@ -44,6 +44,79 @@ export function applyListLineSkip(
   return { paused: true };
 }
 
+export type SkipMode = "next" | "snooze" | "pause";
+
+export type ApplySkipModeInput = {
+  mode: SkipMode;
+  until?: string | null;
+  nowUtc: string;
+  cadenceHintDays: number | null;
+  nextDueAt: string | null;
+  paused: boolean;
+  snoozedUntil: string | null;
+};
+
+export type ApplySkipModeResult =
+  | {
+      ok: true;
+      paused: boolean;
+      nextDueAt: string | null;
+      snoozedUntil: string | null;
+    }
+  | { ok: false; error: "invalid_until" | "no_cadence" };
+
+/**
+ * Unit 15 skip modes (pure):
+ * - pause: indefinite pause (Unit 11)
+ * - next: advance next_due_at by one cadence interval
+ * - snooze: set snoozed_until (requires until > now)
+ */
+export function applySkipMode(input: ApplySkipModeInput): ApplySkipModeResult {
+  if (input.mode === "pause") {
+    return {
+      ok: true,
+      paused: true,
+      nextDueAt: null,
+      snoozedUntil: null,
+    };
+  }
+
+  if (input.mode === "snooze") {
+    if (
+      input.until == null ||
+      Number.isNaN(Date.parse(input.until)) ||
+      Date.parse(input.until) <= Date.parse(input.nowUtc)
+    ) {
+      return { ok: false, error: "invalid_until" };
+    }
+    return {
+      ok: true,
+      paused: false,
+      nextDueAt: input.nextDueAt,
+      snoozedUntil: input.until,
+    };
+  }
+
+  // mode === "next"
+  if (input.cadenceHintDays == null || input.cadenceHintDays < 1) {
+    return { ok: false, error: "no_cadence" };
+  }
+  const baseIso =
+    input.nextDueAt != null && !Number.isNaN(Date.parse(input.nextDueAt))
+      ? input.nextDueAt
+      : input.nowUtc;
+  const advanced = addUtcDays(baseIso, input.cadenceHintDays);
+  if (advanced == null) {
+    return { ok: false, error: "no_cadence" };
+  }
+  return {
+    ok: true,
+    paused: false,
+    nextDueAt: advanced,
+    snoozedUntil: null,
+  };
+}
+
 /**
  * Reorder never reuses a sticky fulfiller id from the last quote.
  * Callers must pass null / omit previous winner into the quote path.
