@@ -10,10 +10,12 @@ import type {
   MemoryCatalogRepository,
   MemoryFulfillmentRepository,
   MemoryHouseholdRepository,
+  MemoryListRepository,
   MemoryMandateRepository,
   MemoryOfferRepository,
   MemoryOrderRepository,
   MemoryQuoteRepository,
+  MemoryReceiptRepository,
   MemoryRevocationKv,
   MemoryRiskRepository,
 } from "@cutoff/db";
@@ -36,6 +38,8 @@ export type ApiBindings = {
   offers: MemoryOfferRepository;
   risk: MemoryRiskRepository;
   fulfillment: MemoryFulfillmentRepository;
+  receipts: MemoryReceiptRepository;
+  list: MemoryListRepository;
   outboundWebhooks: MemoryOutboundWebhookQueue;
   /** Shared secret for signing outbound + verifying inbound (injected). */
   webhookSecret: string;

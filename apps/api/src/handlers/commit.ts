@@ -145,6 +145,27 @@ export async function commitHandler(
     status = result.order.status;
   }
 
+  // Unit 10: receipt token for the cardholder charge-descriptor link.
+  let receiptToken: string | undefined;
+  if (result.order.status !== "failed") {
+    const receipt = bindings.receipts.issue({
+      orderId: result.order.orderId,
+      householdId: result.order.householdId,
+      nowUtc,
+    });
+    receiptToken = receipt.receiptToken;
+  }
+
+  // Unit 11: update matching list line last_order when present.
+  if (result.created && result.order.status !== "failed") {
+    const line = bindings.list
+      .listForHousehold(result.order.householdId)
+      .find((l) => l.canonicalItemId === result.order.canonicalItemId);
+    if (line) {
+      bindings.list.recordOrder(line.lineId, result.order.orderId);
+    }
+  }
+
   return {
     order_id: result.order.orderId,
     household_id: result.order.householdId,
@@ -154,5 +175,6 @@ export async function commitHandler(
     evidence_id: result.evidence.evidenceId,
     ...(jobId ? { job_id: jobId } : {}),
     ...(refundId ? { refund_id: refundId } : {}),
+    ...(receiptToken ? { receipt_token: receiptToken } : {}),
   };
 }

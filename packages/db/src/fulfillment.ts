@@ -36,6 +36,15 @@ export type RefundQueueRow = {
   status: "queued" | "completed";
 };
 
+/** Skip-after-ship opens a return request (Unit 10). No retention flow. */
+export type ReturnRequestRow = {
+  returnId: string;
+  orderId: string;
+  householdId: string;
+  status: "open" | "closed";
+  createdAt: string;
+};
+
 export type InboundShipmentInput = {
   externalEventId: string;
   orderId: string;
@@ -56,6 +65,7 @@ export class MemoryFulfillmentRepository {
   private readonly jobs: FulfillmentJobRow[] = [];
   private readonly shipmentEvents: ShipmentEventRow[] = [];
   private readonly refunds: RefundQueueRow[] = [];
+  private readonly returnRequests: ReturnRequestRow[] = [];
   private readonly seenExternalIds = new Set<string>();
   private readonly byOrder = new Map<string, FulfillmentJobRow>();
 
@@ -168,5 +178,30 @@ export class MemoryFulfillmentRepository {
 
   listJobs(): readonly FulfillmentJobRow[] {
     return this.jobs;
+  }
+
+  openReturnRequest(input: {
+    orderId: string;
+    householdId: string;
+    nowUtc: string;
+  }): ReturnRequestRow {
+    const existing = this.returnRequests.find(
+      (r) => r.orderId === input.orderId && r.status === "open",
+    );
+    if (existing) return existing;
+    const row: ReturnRequestRow = {
+      returnId: ulid(),
+      orderId: input.orderId,
+      householdId: input.householdId,
+      status: "open",
+      createdAt: input.nowUtc,
+    };
+    this.returnRequests.push(row);
+    return row;
+  }
+
+  listReturnRequests(orderId?: string): readonly ReturnRequestRow[] {
+    if (!orderId) return this.returnRequests;
+    return this.returnRequests.filter((r) => r.orderId === orderId);
   }
 }

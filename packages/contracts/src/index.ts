@@ -49,7 +49,7 @@ export const UtcIsoSchema = z.string().datetime({ offset: true });
 export const HealthResponseSchema = z.object({
   ok: z.literal(true),
   service: z.literal("cutoff-api"),
-  phase: z.literal("4"),
+  phase: z.literal("5"),
 });
 
 export type HealthResponse = z.infer<typeof HealthResponseSchema>;
@@ -194,6 +194,8 @@ export const CommitResponseSchema = z.object({
   evidence_id: z.string().min(1).optional(),
   job_id: z.string().min(1).optional(),
   refund_id: z.string().min(1).optional(),
+  /** Unit 10: charge-descriptor receipt link token. */
+  receipt_token: z.string().min(1).optional(),
 });
 
 export type CommitResponse = z.infer<typeof CommitResponseSchema>;
@@ -264,3 +266,115 @@ export const AgentWidenMandateRequestSchema = z
 export type AgentWidenMandateRequest = z.infer<
   typeof AgentWidenMandateRequestSchema
 >;
+
+/** Unit 10 — household receipt (human session). */
+export const ReceiptResponseSchema = z.object({
+  receipt_token: z.string().min(1),
+  order_id: z.string().min(1),
+  household_id: z.string().min(1),
+  item: z.object({
+    canonical_item_id: z.string().min(1),
+    description: z.string(),
+    brand: z.string(),
+  }),
+  landed_cents: CentsSchema,
+  fulfiller_id: z.string().min(1),
+  why_this_seller: z.object({
+    landed_cents: CentsSchema,
+    delivery_date: z.string().min(1),
+    merchant_score: z.number(),
+  }),
+  status: z.enum([
+    "committed",
+    "captured",
+    "failed",
+    "placed",
+    "shipped",
+    "delivered",
+    "refunded",
+  ]),
+  /** Skip is one call — no retention interstitial. */
+  skip_available: z.boolean(),
+});
+
+export type ReceiptResponse = z.infer<typeof ReceiptResponseSchema>;
+
+export const ReceiptSkipResponseSchema = z.object({
+  order_id: z.string().min(1),
+  action: z.enum(["cancel", "return_request"]),
+  status: z.string().min(1),
+  return_id: z.string().min(1).optional(),
+});
+
+export type ReceiptSkipResponse = z.infer<typeof ReceiptSkipResponseSchema>;
+
+/** Unit 11 — household list line. */
+export const ListLineSchema = z.object({
+  line_id: z.string().min(1),
+  canonical_item_id: z.string().min(1),
+  cadence_hint_days: z.number().int().positive().nullable(),
+  never_substitute: z.boolean(),
+  last_quote_id: z.string().min(1).nullable(),
+  last_order_id: z.string().min(1).nullable(),
+  paused: z.boolean(),
+  mandate_id: z.string().min(1),
+});
+
+export type ListLine = z.infer<typeof ListLineSchema>;
+
+export const ListResponseSchema = z.object({
+  household_id: z.string().min(1),
+  lines: z.array(ListLineSchema),
+});
+
+export type ListResponse = z.infer<typeof ListResponseSchema>;
+
+export const UpsertListLineRequestSchema = z
+  .object({
+    mandate_id: z.string().min(1),
+    canonical_item_id: z.string().min(1),
+    cadence_hint_days: z.number().int().positive().nullable().optional(),
+    never_substitute: z.boolean().optional(),
+  })
+  .strict();
+
+export type UpsertListLineRequest = z.infer<typeof UpsertListLineRequestSchema>;
+
+/**
+ * Reorder: fresh quote path. No sticky fulfiller. No sensor/image/weight.
+ * `.strict()` rejects unknown keys including depletion signals.
+ */
+export const ReorderRequestSchema = z
+  .object({
+    list_line_id: z.string().min(1),
+    qty: z.number().int().positive().max(99),
+    deliver_by: z.string().min(1),
+  })
+  .strict();
+
+export type ReorderRequest = z.infer<typeof ReorderRequestSchema>;
+
+export const ReorderResponseSchema = z.object({
+  list_line_id: z.string().min(1),
+  quote_id: z.string().min(1),
+  fulfiller_id: z.string().min(1),
+  landed_cents: CentsSchema,
+  expires_at: UtcIsoSchema,
+});
+
+export type ReorderResponse = z.infer<typeof ReorderResponseSchema>;
+
+export const SkipListLineRequestSchema = z
+  .object({
+    list_line_id: z.string().min(1),
+  })
+  .strict();
+
+export type SkipListLineRequest = z.infer<typeof SkipListLineRequestSchema>;
+
+export const SkipListLineResponseSchema = z.object({
+  line_id: z.string().min(1),
+  paused: z.literal(true),
+});
+
+export type SkipListLineResponse = z.infer<typeof SkipListLineResponseSchema>;

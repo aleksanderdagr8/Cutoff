@@ -19,6 +19,13 @@ import {
   getOrderTrackingHandler,
   inboundFulfillWebhookHandler,
 } from "./handlers/fulfill.js";
+import { getReceiptHandler, skipReceiptHandler } from "./handlers/receipt.js";
+import {
+  getListHandler,
+  reorderHandler,
+  skipListLineHandler,
+  upsertListLineHandler,
+} from "./handlers/list.js";
 import { verifyOutboundWebhook } from "@cutoff/adapters";
 
 export type AppEnv = {
@@ -193,6 +200,88 @@ export function createApp() {
   app.post("/v1/orders/cancel", async (c) => {
     const body = await c.req.json().catch(() => null);
     const result = await cancelOrderHandler(
+      c.env,
+      body,
+      c.req.header("Authorization") ?? undefined,
+    );
+    if ("error" in result) {
+      return c.json({ error: result.error }, result.status as 401);
+    }
+    return c.json(result);
+  });
+
+  /** Unit 10: household receipt (human member session). */
+  app.get("/v1/receipts/:token", async (c) => {
+    const result = await getReceiptHandler(c.env, c.req.param("token"), {
+      memberId: c.req.header("X-Cutoff-Member-Id") ?? undefined,
+      memberHouseholdId:
+        c.req.header("X-Cutoff-Member-Household-Id") ?? undefined,
+    });
+    if ("error" in result) {
+      return c.json({ error: result.error }, result.status as 401);
+    }
+    return c.json(result);
+  });
+
+  app.post("/v1/receipts/:token/skip", async (c) => {
+    const result = await skipReceiptHandler(c.env, c.req.param("token"), {
+      memberId: c.req.header("X-Cutoff-Member-Id") ?? undefined,
+      memberHouseholdId:
+        c.req.header("X-Cutoff-Member-Household-Id") ?? undefined,
+      agentAuthorization: c.req.header("Authorization") ?? undefined,
+    });
+    if ("error" in result) {
+      return c.json({ error: result.error }, result.status as 401);
+    }
+    return c.json(result);
+  });
+
+  /** Unit 11: household list + reorder + skip. */
+  app.get("/v1/list", async (c) => {
+    const result = await getListHandler(
+      c.env,
+      c.req.header("Authorization") ?? undefined,
+    );
+    if ("error" in result) {
+      return c.json({ error: result.error }, result.status as 401);
+    }
+    return c.json(result);
+  });
+
+  app.post("/v1/households/:householdId/list", async (c) => {
+    const body = await c.req.json().catch(() => null);
+    const result = await upsertListLineHandler(
+      c.env,
+      c.req.param("householdId"),
+      body,
+    );
+    if ("error" in result) {
+      return c.json({ error: result.error }, result.status as 400);
+    }
+    return c.json(result, 201);
+  });
+
+  app.post("/v1/list/reorder", async (c) => {
+    const body = await c.req.json().catch(() => null);
+    const result = await reorderHandler(
+      c.env,
+      body,
+      c.req.header("Authorization") ?? undefined,
+    );
+    if ("error" in result) {
+      const err = String(result.error);
+      const payload: { error: string; quote_id?: string } = { error: err };
+      if ("quote_id" in result && typeof result.quote_id === "string") {
+        payload.quote_id = result.quote_id;
+      }
+      return c.json(payload, result.status as 401);
+    }
+    return c.json(result, 201);
+  });
+
+  app.post("/v1/list/skip", async (c) => {
+    const body = await c.req.json().catch(() => null);
+    const result = await skipListLineHandler(
       c.env,
       body,
       c.req.header("Authorization") ?? undefined,

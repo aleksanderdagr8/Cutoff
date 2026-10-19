@@ -9,10 +9,12 @@ import {
   MemoryAgentCredentialRepository,
   MemoryFulfillmentRepository,
   MemoryHouseholdRepository,
+  MemoryListRepository,
   MemoryMandateRepository,
   MemoryOfferRepository,
   MemoryOrderRepository,
   MemoryQuoteRepository,
+  MemoryReceiptRepository,
   MemoryRevocationKv,
   MemoryRiskRepository,
   seedDualFulfillerOffers,
@@ -25,7 +27,7 @@ import type { ApiBindings } from "./bindings.js";
  * Cloudflare Workers entry. Bindings are built once per isolate and injected
  * into handlers as plain deps — handlers never reach for ambient globals.
  *
- * Phase 4 uses memory repos + fake pay/fulfill/notify + risk gate.
+ * Phase 5 uses memory repos + fake pay/fulfill/notify + receipt + list.
  */
 function buildBindings(): ApiBindings {
   const pay = new FakePayAdapter();
@@ -46,6 +48,8 @@ function buildBindings(): ApiBindings {
     offers,
     risk: new MemoryRiskRepository(),
     fulfillment: new MemoryFulfillmentRepository(),
+    receipts: new MemoryReceiptRepository(),
+    list: new MemoryListRepository(),
     outboundWebhooks: new MemoryOutboundWebhookQueue(),
     webhookSecret: "whsec_dev_replace_me",
     webhookTargetUrl: "https://example.invalid/webhooks/cutoff",

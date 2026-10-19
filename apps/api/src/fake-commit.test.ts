@@ -58,7 +58,7 @@ describe("U0 fake commit idempotency", () => {
     expect(await res.json()).toEqual({
       ok: true,
       service: "cutoff-api",
-      phase: "4",
+      phase: "5",
     });
   });
 });
