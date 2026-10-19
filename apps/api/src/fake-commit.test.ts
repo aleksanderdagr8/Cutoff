@@ -47,7 +47,7 @@ describe("U0 fake commit idempotency", () => {
     expect((bindings.pay as FakePayAdapter).charges).toHaveLength(1);
   });
 
-  it("GET /health returns ok for phase 2", async () => {
+  it("GET /health returns ok for phase 3", async () => {
     const bindings = testBindings();
     const app = createApp();
     const res = await app.fetch(
@@ -58,7 +58,7 @@ describe("U0 fake commit idempotency", () => {
     expect(await res.json()).toEqual({
       ok: true,
       service: "cutoff-api",
-      phase: "2",
+      phase: "3",
     });
   });
 });

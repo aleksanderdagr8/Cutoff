@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import { FakePayAdapter } from "@cutoff/adapters";
 import { createApp } from "./app.js";
 import {
+  defaultCommitEvidence,
   seedHouseholdWithMandateAndAgent,
   testBindings,
 } from "./test-helpers.js";
@@ -291,7 +292,10 @@ describe("U3 mandate", () => {
           Authorization: `Bearer ${agent.secret}`,
           "Idempotency-Key": "idem_lower_ceiling",
         },
-        body: JSON.stringify({ quote_id: beforeJson.quote_id }),
+        body: JSON.stringify({
+          quote_id: beforeJson.quote_id,
+          ...defaultCommitEvidence,
+        }),
       }),
       bindings,
     );

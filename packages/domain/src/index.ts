@@ -67,3 +67,18 @@ export type {
   FreshnessResult,
   QuoteAmounts,
 } from "./quote.js";
+
+export {
+  DEFAULT_VELOCITY_CAP_PER_HOUR,
+  evaluateRiskGate,
+  validateEvidenceFields,
+  quoteHashMaterial,
+} from "./risk.js";
+
+export type {
+  RiskFailCode,
+  RiskGateInput,
+  RiskGateResult,
+  EvidenceFields,
+  EvidenceValidation,
+} from "./risk.js";

@@ -3,11 +3,18 @@ export type { ModuleName } from "./tables.js";
 export { MemoryOrderRepository } from "./orders.js";
 export type {
   OrderRow,
+  OrderEventRow,
+  OrderStatusEvent,
+  EvidenceRow,
+  ChargeRow,
   CommitInput,
   CommitResult,
   MandatedCommitInput,
   MandatedCommitResult,
+  EvidencedCommitInput,
+  EvidencedCommitResult,
 } from "./orders.js";
+export { MemoryRiskRepository } from "./risk.js";
 export { MemoryHouseholdRepository } from "./households.js";
 export type {
   HouseholdRow,

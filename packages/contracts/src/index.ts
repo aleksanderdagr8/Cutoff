@@ -49,7 +49,7 @@ export const UtcIsoSchema = z.string().datetime({ offset: true });
 export const HealthResponseSchema = z.object({
   ok: z.literal(true),
   service: z.literal("cutoff-api"),
-  phase: z.literal("2"),
+  phase: z.literal("3"),
 });
 
 export type HealthResponse = z.infer<typeof HealthResponseSchema>;
@@ -166,10 +166,33 @@ export type QuoteResponse = z.infer<typeof QuoteResponseSchema>;
 export const CommitRequestSchema = z
   .object({
     quote_id: z.string().min(1),
+    /** Actor chain for evidence — required on commit (Unit 8). */
+    actor_chain: z.array(z.string().min(1)).min(1),
+    /** Protocol name recorded on the evidence row. */
+    protocol: z.string().min(1).max(64),
   })
   .strict();
 
 export type CommitRequest = z.infer<typeof CommitRequestSchema>;
+
+export const CommitResponseSchema = z.object({
+  order_id: z.string().min(1),
+  household_id: z.string().min(1),
+  amount_cents: CentsSchema,
+  created: z.boolean(),
+  status: z.enum([
+    "committed",
+    "captured",
+    "failed",
+    "placed",
+    "shipped",
+    "delivered",
+    "refunded",
+  ]),
+  evidence_id: z.string().min(1).optional(),
+});
+
+export type CommitResponse = z.infer<typeof CommitResponseSchema>;
 
 /** Agent widen attempts — always rejected. */
 export const AgentWidenMandateRequestSchema = z

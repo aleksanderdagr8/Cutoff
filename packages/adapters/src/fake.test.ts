@@ -4,6 +4,7 @@ import {
   FakeFulfillAdapter,
   FakeTaxAdapter,
   FakeAggregatorOfferAdapter,
+  StripeSandboxPayAdapter,
 } from "./index.js";
 
 describe("FakePayAdapter", () => {
@@ -18,6 +19,39 @@ describe("FakePayAdapter", () => {
       orderId: "ord_1",
       amountCents: 999,
       idempotencyKey: "idem_1",
+    });
+    expect(a.chargeId).toBe(b.chargeId);
+    expect(pay.charges).toHaveLength(1);
+  });
+
+  it("records attempt amount and can fail", async () => {
+    const pay = new FakePayAdapter();
+    pay.failNext = true;
+    await expect(
+      pay.charge({
+        orderId: "ord_x",
+        amountCents: 500,
+        idempotencyKey: "idem_fail",
+      }),
+    ).rejects.toThrow("pay_adapter_error");
+    expect(pay.attempts).toHaveLength(1);
+    expect(pay.attempts[0]?.amountCents).toBe(500);
+    expect(pay.charges).toHaveLength(0);
+  });
+});
+
+describe("StripeSandboxPayAdapter", () => {
+  it("dedupes like the fake (no network in CI)", async () => {
+    const pay = new StripeSandboxPayAdapter();
+    const a = await pay.charge({
+      orderId: "ord_1",
+      amountCents: 100,
+      idempotencyKey: "idem_s",
+    });
+    const b = await pay.charge({
+      orderId: "ord_1",
+      amountCents: 100,
+      idempotencyKey: "idem_s",
     });
     expect(a.chargeId).toBe(b.chargeId);
     expect(pay.charges).toHaveLength(1);

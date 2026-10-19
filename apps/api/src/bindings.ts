@@ -13,6 +13,7 @@ import type {
   MemoryOrderRepository,
   MemoryQuoteRepository,
   MemoryRevocationKv,
+  MemoryRiskRepository,
 } from "@cutoff/db";
 
 /**
@@ -31,6 +32,7 @@ export type ApiBindings = {
   quotes: MemoryQuoteRepository;
   catalog: MemoryCatalogRepository;
   offers: MemoryOfferRepository;
+  risk: MemoryRiskRepository;
   revocationKv: MemoryRevocationKv;
   traceId: string;
   /** Injected clock for deterministic tests. */
