@@ -19,8 +19,20 @@ import {
 } from "@cutoff/db";
 import { canViewReceipt, receiptSkipAction, whyThisSeller } from "@cutoff/domain";
 import type { ReceiptResponse } from "@cutoff/contracts";
-import { homeDevBypassEnabled } from "./config";
 import { ulid } from "@cutoff/db";
+import { homeDevBypassEnabled } from "./config";
+import {
+  liveGetMandateForSession,
+  liveGetNudgeSettingsForSession,
+  liveIssueKeyForSession,
+  liveListKeysForSession,
+  liveListLinesForSession,
+  liveListOrdersForSession,
+  liveRevokeKeyForSession,
+  liveSkipListLineForSession,
+  liveUpsertMandateForSession,
+  liveUpsertNudgeSettingsForSession,
+} from "./live-store";
 import {
   formatStructuredAddress,
   type StructuredAddress,
@@ -66,9 +78,7 @@ export const DEMO_MEMBER_ID = "01DEMOHOMEMEMBER0000000001";
 
 /**
  * Bypass: session must match the in-memory demo household.
- * Live Auth: session was resolved via ensure_home_member (Postgres); list /
- * mandate / keys still use the in-memory store for this slice and may be empty
- * for a newly created household.
+ * Live Auth: keys / mandate / list go through live-store (Postgres RPCs + RLS).
  */
 function sessionAllowed(
   state: HomeStoreState,
@@ -357,6 +367,9 @@ function lineView(state: HomeStoreState, line: ListLineRow): HomeListLineView {
 export async function listLinesForSession(
   session: HomeSession,
 ): Promise<HomeListLineView[]> {
+  if (!homeDevBypassEnabled()) {
+    return liveListLinesForSession(session);
+  }
   const state = await getHomeStore();
   if (!sessionAllowed(state, session)) {
     return [];
@@ -369,11 +382,13 @@ export async function listLinesForSession(
 export async function listOrdersForSession(
   session: HomeSession,
 ): Promise<HomeOrderView[]> {
+  if (!homeDevBypassEnabled()) {
+    return liveListOrdersForSession(session);
+  }
   const state = await getHomeStore();
   if (!sessionAllowed(state, session)) {
     return [];
   }
-  // Live Auth households may not share the in-memory demo id — empty is honest.
   const orders = state.orders.listForHousehold(session.householdId);
   return [...orders]
     .sort((a, b) => (a.createdAt < b.createdAt ? 1 : -1))
@@ -400,6 +415,9 @@ export async function skipListLineForSession(
     until?: string | null;
   } = {},
 ): Promise<HomeListLineView | { error: string; status: number }> {
+  if (!homeDevBypassEnabled()) {
+    return liveSkipListLineForSession(session, lineId, opts);
+  }
   const state = await getHomeStore();
   if (!sessionAllowed(state, session)) {
     return { error: "unauthenticated", status: 401 };
@@ -425,6 +443,9 @@ export async function skipListLineForSession(
 export async function getNudgeSettingsForSession(
   session: HomeSession,
 ): Promise<HomeNudgeSettingsView> {
+  if (!homeDevBypassEnabled()) {
+    return liveGetNudgeSettingsForSession(session);
+  }
   const state = await getHomeStore();
   if (!sessionAllowed(state, session)) {
     return {
@@ -448,6 +469,9 @@ export async function upsertNudgeSettingsForSession(
     email_enabled?: boolean;
   },
 ): Promise<HomeNudgeSettingsView | { error: string; status: number }> {
+  if (!homeDevBypassEnabled()) {
+    return liveUpsertNudgeSettingsForSession(session, input);
+  }
   const state = await getHomeStore();
   if (!sessionAllowed(state, session)) {
     return { error: "unauthenticated", status: 401 };
@@ -741,6 +765,9 @@ export async function updateAddressUnitForSession(
 export async function getMandateForSession(
   session: HomeSession,
 ): Promise<HomeMandateView | null> {
+  if (!homeDevBypassEnabled()) {
+    return liveGetMandateForSession(session);
+  }
   const state = await getHomeStore();
   if (!sessionAllowed(state, session)) {
     return null;
@@ -759,6 +786,9 @@ export async function upsertMandateForSession(
     canonical_item_ids?: string[];
   },
 ): Promise<HomeMandateView | { error: string; status: number }> {
+  if (!homeDevBypassEnabled()) {
+    return liveUpsertMandateForSession(session, input);
+  }
   const state = await getHomeStore();
   if (!sessionAllowed(state, session)) {
     return { error: "unauthenticated", status: 401 };
@@ -829,6 +859,9 @@ function keyView(row: AgentCredentialRow): HomeKeyView {
 export async function listKeysForSession(
   session: HomeSession,
 ): Promise<HomeKeyView[]> {
+  if (!homeDevBypassEnabled()) {
+    return liveListKeysForSession(session);
+  }
   const state = await getHomeStore();
   if (!sessionAllowed(state, session)) {
     return [];
@@ -845,6 +878,9 @@ export async function issueKeyForSession(
   | (HomeKeyView & { secret: string })
   | { error: string; status: number }
 > {
+  if (!homeDevBypassEnabled()) {
+    return liveIssueKeyForSession(session, scopes);
+  }
   const state = await getHomeStore();
   if (!sessionAllowed(state, session)) {
     return { error: "unauthenticated", status: 401 };
@@ -873,6 +909,9 @@ export async function revokeKeyForSession(
   session: HomeSession,
   keyId: string,
 ): Promise<{ key_id: string; revoked: true } | { error: string; status: number }> {
+  if (!homeDevBypassEnabled()) {
+    return liveRevokeKeyForSession(session, keyId);
+  }
   const state = await getHomeStore();
   if (!sessionAllowed(state, session)) {
     return { error: "unauthenticated", status: 401 };
