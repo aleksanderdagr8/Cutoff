@@ -136,6 +136,10 @@ describe("marketing `/` hygiene", () => {
     expect(css).toContain("marketing-reveal-in");
     expect(css).toContain("marketing-brand-settle");
     expect(css).toContain("marketing-headline-settle");
+    expect(css).toContain("marketing-section-rise");
+    // Scroll enter must travel far enough to read while scrolling
+    expect(css).toMatch(/marketing-section-rise[\s\S]*translateY\(44px\)/);
+    expect(css).toMatch(/marketing-section-rise[\s\S]*blur\(10px\)/);
     expect(css).toMatch(
       /prefers-reduced-motion: reduce[\s\S]*marketing-brand-kinetic/,
     );

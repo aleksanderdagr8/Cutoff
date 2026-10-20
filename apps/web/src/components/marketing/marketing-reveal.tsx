@@ -46,7 +46,8 @@ export function MarketingReveal({
           io.disconnect();
         }
       },
-      { rootMargin: "0px 0px -8% 0px", threshold: 0.12 },
+      /* Fire once the block is meaningfully in view so the rise is watched, not already done */
+      { rootMargin: "0px 0px -18% 0px", threshold: 0.18 },
     );
     io.observe(el);
     return () => io.disconnect();
@@ -55,7 +56,7 @@ export function MarketingReveal({
   const classNames = `marketing-reveal ${visible ? "marketing-reveal-in" : ""} ${className}`;
   const style: CSSProperties | undefined =
     delay > 0
-      ? ({ "--marketing-reveal-delay": `${delay * 70}ms` } as CSSProperties)
+      ? ({ "--marketing-reveal-delay": `${delay * 140}ms` } as CSSProperties)
       : undefined;
 
   if (as === "li") {

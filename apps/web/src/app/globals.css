@@ -384,8 +384,8 @@ html[data-home-theme="dark"] .home-atmosphere {
 @keyframes marketing-brand-settle {
   from {
     opacity: 0;
-    letter-spacing: 0.28em;
-    transform: translateY(12px);
+    letter-spacing: 0.36em;
+    transform: translateY(18px);
   }
   to {
     opacity: 1;
@@ -398,9 +398,9 @@ html[data-home-theme="dark"] .home-atmosphere {
 @keyframes marketing-headline-settle {
   from {
     opacity: 0;
-    filter: blur(8px);
-    letter-spacing: 0.03em;
-    transform: translateY(14px);
+    filter: blur(10px);
+    letter-spacing: 0.04em;
+    transform: translateY(20px);
   }
   to {
     opacity: 1;
@@ -413,7 +413,7 @@ html[data-home-theme="dark"] .home-atmosphere {
 @keyframes marketing-sub-rise {
   from {
     opacity: 0;
-    transform: translateY(10px);
+    transform: translateY(16px);
   }
   to {
     opacity: 1;
@@ -424,7 +424,7 @@ html[data-home-theme="dark"] .home-atmosphere {
 @keyframes marketing-cta-in {
   from {
     opacity: 0;
-    transform: translateY(8px) scale(0.97);
+    transform: translateY(14px) scale(0.96);
   }
   to {
     opacity: 1;
@@ -435,59 +435,64 @@ html[data-home-theme="dark"] .home-atmosphere {
 @keyframes marketing-panel-in {
   from {
     opacity: 0;
-    transform: translateY(18px);
+    filter: blur(6px);
+    transform: translateY(28px);
   }
   to {
     opacity: 1;
+    filter: blur(0);
     transform: translateY(0);
   }
 }
 
+/* Scroll enter — unmissable travel + blur settle (landing, not household) */
 @keyframes marketing-section-rise {
   from {
     opacity: 0;
-    transform: translateY(16px);
+    filter: blur(10px);
+    transform: translateY(44px);
   }
   to {
     opacity: 1;
+    filter: blur(0);
     transform: translateY(0);
   }
 }
 
 .marketing-brand-kinetic {
-  animation: marketing-brand-settle 720ms cubic-bezier(0.22, 1, 0.36, 1) both;
+  animation: marketing-brand-settle 900ms cubic-bezier(0.22, 1, 0.36, 1) both;
 }
 
 .marketing-headline-kinetic {
-  animation: marketing-headline-settle 640ms cubic-bezier(0.22, 1, 0.36, 1) both;
-  animation-delay: 220ms;
+  animation: marketing-headline-settle 780ms cubic-bezier(0.22, 1, 0.36, 1) both;
+  animation-delay: 260ms;
 }
 
 .marketing-sub-kinetic {
-  animation: marketing-sub-rise 520ms ease-out both;
-  animation-delay: 420ms;
+  animation: marketing-sub-rise 640ms ease-out both;
+  animation-delay: 480ms;
 }
 
 .marketing-cta-group {
-  animation: marketing-cta-in 480ms ease-out both;
-  animation-delay: 560ms;
+  animation: marketing-cta-in 600ms ease-out both;
+  animation-delay: 640ms;
 }
 
 .marketing-hero-panel {
-  animation: marketing-panel-in 700ms cubic-bezier(0.22, 1, 0.36, 1) both;
-  animation-delay: 280ms;
+  animation: marketing-panel-in 860ms cubic-bezier(0.22, 1, 0.36, 1) both;
+  animation-delay: 320ms;
 }
 
 .marketing-enter {
-  animation: marketing-sub-rise 420ms ease-out both;
+  animation: marketing-sub-rise 520ms ease-out both;
 }
 
 .marketing-enter-delay {
-  animation-delay: 80ms;
+  animation-delay: 100ms;
 }
 
 .marketing-line {
-  animation: home-fade 220ms ease-out both;
+  animation: home-fade 280ms ease-out both;
 }
 
 .marketing-cta {
@@ -505,14 +510,16 @@ html[data-home-theme="dark"] .home-atmosphere {
   transform: translateY(0);
 }
 
-/* Scroll reveals — start hidden; .marketing-reveal-in fires the enter */
+/* Scroll reveals — start well below + blurred; .marketing-reveal-in fires enter */
 .marketing-reveal {
   opacity: 0;
-  transform: translateY(16px);
+  filter: blur(10px);
+  transform: translateY(44px);
+  will-change: opacity, transform, filter;
 }
 
 .marketing-reveal-in {
-  animation: marketing-section-rise 560ms cubic-bezier(0.22, 1, 0.36, 1) both;
+  animation: marketing-section-rise 900ms cubic-bezier(0.16, 1, 0.3, 1) both;
   animation-delay: var(--marketing-reveal-delay, 0ms);
 }
 
@@ -617,7 +624,9 @@ html[data-home-theme="dark"] .home-atmosphere {
 
   .marketing-reveal {
     opacity: 1;
+    filter: none;
     transform: none;
+    will-change: auto;
   }
 
   .home-cta:hover:not(:disabled),
