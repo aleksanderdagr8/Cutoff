@@ -75,6 +75,12 @@ type HomeStoreState = {
 };
 
 const globalKey = "__cutoff_home_store__" as const;
+const seedPromiseKey = "__cutoff_home_store_seed__" as const;
+
+type HomeStoreGlobals = typeof globalThis & {
+  [globalKey]?: HomeStoreState;
+  [seedPromiseKey]?: Promise<HomeStoreState>;
+};
 
 function emptyState(): HomeStoreState {
   const kv = new MemoryRevocationKv();
@@ -102,17 +108,35 @@ function emptyState(): HomeStoreState {
 }
 
 function getState(): HomeStoreState {
-  const g = globalThis as typeof globalThis & {
-    [globalKey]?: HomeStoreState;
-  };
+  const g = globalThis as HomeStoreGlobals;
   if (!g[globalKey]) {
     g[globalKey] = emptyState();
   }
   return g[globalKey];
 }
 
+/**
+ * Single-flight demo seed. `/home` loads lines/mandate/keys via Promise.all;
+ * without a latch, concurrent cold-start callers double-seed the same
+ * household and the second quote.create hits hold_active → throws
+ * home_seed_quote_failed (Next.js digest on callcutoff.com).
+ */
 async function seedIfNeeded(): Promise<HomeStoreState> {
   const state = getState();
+  if (state.seeded) return state;
+
+  const g = globalThis as HomeStoreGlobals;
+  if (!g[seedPromiseKey]) {
+    g[seedPromiseKey] = runDemoSeed(state).catch((err) => {
+      delete g[seedPromiseKey];
+      delete g[globalKey];
+      throw err;
+    });
+  }
+  return g[seedPromiseKey];
+}
+
+async function runDemoSeed(state: HomeStoreState): Promise<HomeStoreState> {
   if (state.seeded) return state;
 
   const nowUtc = "2026-10-19T12:00:00.000Z";
@@ -219,6 +243,13 @@ async function seedIfNeeded(): Promise<HomeStoreState> {
 
 export async function getHomeStore(): Promise<HomeStoreState> {
   return seedIfNeeded();
+}
+
+/** Test-only: drop in-memory demo store + seed latch. */
+export function resetHomeStoreForTests(): void {
+  const g = globalThis as HomeStoreGlobals;
+  delete g[globalKey];
+  delete g[seedPromiseKey];
 }
 
 export async function demoSession(): Promise<HomeSession> {
