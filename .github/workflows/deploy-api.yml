@@ -46,6 +46,20 @@ jobs:
         run: |
           pnpm --filter @cutoff/api exec wrangler queues create cutoff-nudges || true
           pnpm --filter @cutoff/api exec wrangler queues create cutoff-nudges-dlq || true
+      - name: Sync Supabase secrets onto cutoff-api
+        if: steps.gate.outputs.skip == 'false'
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID || '6f016e176bf8507b75cecde460c5689d' }}
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE: ${{ secrets.SUPABASE_SERVICE_ROLE }}
+        run: |
+          if [ -z "${SUPABASE_URL}" ] || [ -z "${SUPABASE_SERVICE_ROLE}" ]; then
+            echo "::warning::Missing GitHub secrets SUPABASE_URL and/or SUPABASE_SERVICE_ROLE — cutoff-api stays in memory mode (quote→commit across HTTP will fail). Put both as repository Secrets, then re-run deploy-api."
+            exit 0
+          fi
+          printf '%s' "$SUPABASE_URL" | pnpm --filter @cutoff/api exec wrangler secret put SUPABASE_URL
+          printf '%s' "$SUPABASE_SERVICE_ROLE" | pnpm --filter @cutoff/api exec wrangler secret put SUPABASE_SERVICE_ROLE
       - name: Deploy cutoff-api Worker
         if: steps.gate.outputs.skip == 'false'
         env:

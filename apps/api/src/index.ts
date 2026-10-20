@@ -50,8 +50,44 @@ class CfNudgeQueue implements NudgeQueue {
  *
  * Repos: memory by default; Postgres when SUPABASE_URL + SUPABASE_SERVICE_ROLE
  * are set (see createRepos / docs).
+ *
+ * Critical: do NOT rebuild memory repos on every fetch — quote then commit
+ * across two HTTP requests would see empty state. Cache per isolate; Postgres
+ * is durable across isolates once secrets are set.
  */
+type IsolateCache = {
+  key: string;
+  bindings: ApiBindings;
+  memoryNudgeQueue: MemoryOutboundWebhookQueue;
+};
+
+let isolateCache: IsolateCache | null = null;
+
+function reposCacheKey(env?: WorkerEnv): string {
+  const mode = resolveReposModeFromEnv({
+    SUPABASE_URL: env?.SUPABASE_URL,
+    SUPABASE_SERVICE_ROLE: env?.SUPABASE_SERVICE_ROLE,
+  });
+  if (mode === "postgres") {
+    return `postgres:${env?.SUPABASE_URL ?? ""}`;
+  }
+  return "memory";
+}
+
 function buildBindings(env?: WorkerEnv): ApiBindings {
+  const key = reposCacheKey(env);
+  if (isolateCache && isolateCache.key === key) {
+    return {
+      ...isolateCache.bindings,
+      // Fresh outbound queue instance name stays shared via nudgeQueue binding.
+      nudgeQueue: env?.NUDGE_QUEUE
+        ? new CfNudgeQueue(env.NUDGE_QUEUE)
+        : isolateCache.bindings.nudgeQueue,
+      traceId: crypto.randomUUID(),
+      nowUtc: () => new Date().toISOString(),
+    };
+  }
+
   const pay = new FakePayAdapter();
   const repos = createRepos({
     mode: resolveReposModeFromEnv({
@@ -65,7 +101,7 @@ function buildBindings(env?: WorkerEnv): ApiBindings {
     },
   });
   const memoryNudgeQueue = new MemoryOutboundWebhookQueue();
-  return {
+  const bindings: ApiBindings = {
     pay,
     fulfill: new FakeFulfillAdapter(),
     tax: new FakeTaxAdapter(),
@@ -97,6 +133,18 @@ function buildBindings(env?: WorkerEnv): ApiBindings {
     traceId: crypto.randomUUID(),
     nowUtc: () => new Date().toISOString(),
   };
+  isolateCache = { key, bindings, memoryNudgeQueue };
+  return bindings;
+}
+
+/** Test-only: drop isolate cache so unit tests stay isolated. */
+export function resetApiIsolateCacheForTests(): void {
+  isolateCache = null;
+}
+
+/** Test-only: build (or reuse) Worker bindings. */
+export function buildWorkerBindingsForTests(env?: WorkerEnv): ApiBindings {
+  return buildBindings(env);
 }
 
 const app = createApp();

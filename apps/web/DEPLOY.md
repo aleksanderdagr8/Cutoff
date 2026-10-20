@@ -35,6 +35,8 @@ Do **not** commit secrets. Set them on the Worker (and Build vars if using Worke
 | `CUTOFF_HOME_DEV_BYPASS` | Wrangler `vars` (`0`) | Off in prod when Supabase public env is set |
 | `CUTOFF_OPS_DEV_BYPASS` | Wrangler `vars` (`1`) | Stays on until operator TOTP |
 
+Live Auth `/home` keys, mandate, and list persist via SECURITY DEFINER RPCs (`home_issue_agent_key`, `home_upsert_mandate`, …) — **no** service role in the web Worker. Agent quote/commit still needs `SUPABASE_*` on `cutoff-api` (see `apps/api/DEPLOY.md`).
+
 CLI (from repo root, with `CLOUDFLARE_API_TOKEN` + account access):
 
 ```bash
