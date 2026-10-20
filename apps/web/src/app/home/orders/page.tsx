@@ -1,5 +1,7 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
+import { HomeEmptyHeadline } from "@/components/home/home-empty-headline";
+import { HomeSectionTitle } from "@/components/home/home-section-title";
 import { HomeShell } from "@/components/home/shell";
 import { homeDevBypassEnabled } from "@/lib/home/config";
 import { formatCents } from "@/lib/home/format";
@@ -25,9 +27,7 @@ export default async function OrdersPage() {
       active="orders"
       bypass={homeDevBypassEnabled()}
     >
-      <h1 className="font-display text-[34px] font-semibold tracking-[-0.03em] text-ink md:text-[40px]">
-        Orders
-      </h1>
+      <HomeSectionTitle>Orders</HomeSectionTitle>
       <p className="mt-3 max-w-xl text-[16px] leading-relaxed text-secondary">
         Receipts for this household. They still work if an agent key was
         revoked.
@@ -35,8 +35,9 @@ export default async function OrdersPage() {
 
       {orders.length === 0 ? (
         <section className="mt-10 border-t border-hairline pt-8">
-          <p className="text-[15px] text-secondary">
-            No orders yet. When an agent commits, the receipt appears here.
+          <HomeEmptyHeadline>No receipts yet</HomeEmptyHeadline>
+          <p className="mt-3 text-[15px] text-secondary">
+            When an agent commits, the receipt appears here.
           </p>
           <Link
             href="/home/list"

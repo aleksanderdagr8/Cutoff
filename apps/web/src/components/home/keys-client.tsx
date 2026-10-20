@@ -7,6 +7,7 @@ import {
   connectClientLabel,
   type ConnectClient,
 } from "@/components/home/connect-snippets";
+import { HomeEmptyHeadline } from "@/components/home/home-empty-headline";
 import type { HomeKeyView, HomeNudgeSettingsView } from "@/lib/home/types";
 
 type Scope = "quote" | "commit" | "read_list";
@@ -228,7 +229,7 @@ export function KeysClient({ initialKeys, initialNudgeSettings }: Props) {
           type="button"
           disabled={pending}
           onClick={issueKey}
-          className="home-cta mt-6 rounded-control bg-accent px-5 py-2.5 text-[15px] font-medium text-white disabled:opacity-40"
+          className="home-cta mt-6 rounded-control bg-accent px-5 py-2.5 text-[15px] font-medium disabled:opacity-40"
         >
           {pending && !issuedSecret ? "…" : "Issue key"}
         </button>
@@ -302,7 +303,7 @@ export function KeysClient({ initialKeys, initialNudgeSettings }: Props) {
           <button
             type="submit"
             disabled={pending}
-            className="home-cta rounded-control bg-accent px-5 py-2.5 text-[15px] font-medium text-white disabled:opacity-40"
+            className="home-cta rounded-control bg-accent px-5 py-2.5 text-[15px] font-medium disabled:opacity-40"
           >
             {pending ? "…" : "Save webhook"}
           </button>
@@ -316,8 +317,11 @@ export function KeysClient({ initialKeys, initialNudgeSettings }: Props) {
         <h2 className="text-[18px] font-medium text-ink">Keys</h2>
         <ul className="mt-6 border-t border-hairline">
           {keys.length === 0 ? (
-            <li className="py-6 text-[15px] text-secondary">
-              No keys yet. Issue one for your buyer agent.
+            <li className="py-6">
+              <HomeEmptyHeadline>No keys yet</HomeEmptyHeadline>
+              <p className="mt-3 text-[15px] text-secondary">
+                Issue one for your buyer agent.
+              </p>
             </li>
           ) : (
             keys.map((key, i) => (

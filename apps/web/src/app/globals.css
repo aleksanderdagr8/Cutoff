@@ -3,17 +3,59 @@
 @tailwind utilities;
 
 :root {
+  /* Channel tokens — Tailwind alpha + theme switches */
+  --color-bg: 245 245 247;
+  --color-surface: 255 255 255;
+  --color-ink: 29 29 31;
+  --color-secondary: 110 110 115;
+  --color-hairline: 210 210 215;
+  --color-accent: 27 58 75;
   --bg: #f5f5f7;
   --surface: #ffffff;
   --ink: #1d1d1f;
   --secondary: #6e6e73;
   --hairline: #d2d2d7;
   --accent: #1b3a4b;
+  --on-accent: #ffffff;
 }
 
 body {
   background: var(--bg);
   color: var(--ink);
+}
+
+/* Household dark — Direction A slate/ink, not purple glow */
+html[data-home-theme="dark"] .home-shell {
+  --color-bg: 14 17 20;
+  --color-surface: 28 33 38;
+  --color-ink: 245 245 247;
+  --color-secondary: 161 161 166;
+  --color-hairline: 52 58 64;
+  /* Mid slate-teal: links readable on ink; fills accept light on-accent text */
+  --color-accent: 106 155 176;
+  --bg: #0e1114;
+  --surface: #1c2126;
+  --ink: #f5f5f7;
+  --secondary: #a1a1a6;
+  --hairline: #343a40;
+  --accent: #6a9bb0;
+  --on-accent: #0e1114;
+  background: var(--bg);
+  color: var(--ink);
+  color-scheme: dark;
+}
+
+html[data-home-theme="light"] .home-shell,
+.home-shell {
+  color-scheme: light;
+}
+
+.home-shell {
+  background: var(--bg);
+  color: var(--ink);
+  transition:
+    background-color 200ms ease-out,
+    color 200ms ease-out;
 }
 
 /* Soft depth + quiet grain — not flat gray, not purple glow */
@@ -32,6 +74,26 @@ body {
     linear-gradient(
       180deg,
       rgba(255, 255, 255, 0.55) 0%,
+      transparent 42%
+    );
+  transition: opacity 200ms ease-out;
+}
+
+html[data-home-theme="dark"] .home-atmosphere {
+  background:
+    radial-gradient(
+      100% 70% at 8% -8%,
+      rgba(106, 155, 176, 0.14),
+      transparent 55%
+    ),
+    radial-gradient(
+      80% 55% at 92% 4%,
+      rgba(245, 245, 247, 0.035),
+      transparent 52%
+    ),
+    linear-gradient(
+      180deg,
+      rgba(28, 33, 38, 0.65) 0%,
       transparent 42%
     );
 }
@@ -76,6 +138,68 @@ body {
   }
 }
 
+@keyframes home-menu-in {
+  from {
+    opacity: 0;
+    transform: translateY(-6px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+/* Kinetic type — only wordmark, section titles, empty headlines */
+@keyframes home-wordmark-settle {
+  from {
+    opacity: 0.35;
+    letter-spacing: 0.12em;
+  }
+  to {
+    opacity: 1;
+    letter-spacing: -0.04em;
+  }
+}
+
+@keyframes home-title-focus {
+  from {
+    opacity: 0;
+    filter: blur(4px);
+    transform: translateY(4px);
+  }
+  to {
+    opacity: 1;
+    filter: blur(0);
+    transform: translateY(0);
+  }
+}
+
+@keyframes home-empty-line {
+  from {
+    opacity: 0;
+    letter-spacing: 0.04em;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    letter-spacing: -0.02em;
+    transform: translateY(0);
+  }
+}
+
+.home-wordmark-enter {
+  animation: home-wordmark-settle 380ms ease-out both;
+}
+
+.home-title-kinetic {
+  animation: home-title-focus 220ms ease-out both;
+}
+
+.home-empty-kinetic {
+  animation: home-empty-line 280ms ease-out both;
+  animation-delay: 40ms;
+}
+
 .home-enter {
   animation: home-rise 160ms ease-out both;
 }
@@ -84,17 +208,35 @@ body {
   animation-delay: 40ms;
 }
 
+.home-section {
+  animation: home-rise 200ms ease-out both;
+}
+
+.home-section-delay {
+  animation-delay: 70ms;
+}
+
 .home-row {
   animation: home-fade 160ms ease-out both;
+  transition:
+    opacity 160ms ease-out,
+    background-color 160ms ease-out,
+    border-color 160ms ease-out;
+}
+
+.home-row-muted {
+  opacity: 0.72;
 }
 
 .home-cta {
   animation: home-cta-settle 200ms ease-out both;
   animation-delay: 80ms;
+  color: var(--on-accent);
   transition:
     transform 160ms ease-out,
     opacity 160ms ease-out,
-    background-color 160ms ease-out;
+    background-color 160ms ease-out,
+    color 160ms ease-out;
 }
 
 .home-cta:hover:not(:disabled) {
@@ -102,13 +244,33 @@ body {
 }
 
 .home-cta:active:not(:disabled) {
-  transform: translateY(0);
+  transform: translateY(0) scale(0.98);
+}
+
+.home-press {
+  transition:
+    transform 120ms ease-out,
+    background-color 160ms ease-out,
+    color 160ms ease-out,
+    opacity 160ms ease-out;
+}
+
+.home-press:active {
+  transform: scale(0.97);
 }
 
 .home-nav-active {
   transition:
     background-color 160ms ease-out,
     color 160ms ease-out;
+}
+
+.home-menu-panel {
+  animation: home-menu-in 160ms ease-out both;
+}
+
+.home-menu-block {
+  animation: home-fade 160ms ease-out both;
 }
 
 /* Operator shell — same craft as /home, separate chrome forever */
@@ -315,7 +477,41 @@ body {
 }
 
 @media (prefers-reduced-motion: reduce) {
+  .home-enter,
+  .home-enter-delay,
+  .home-section,
+  .home-section-delay,
+  .home-row,
+  .home-cta,
+  .home-menu-panel,
+  .home-menu-block,
+  .home-wordmark-enter,
+  .home-title-kinetic,
+  .home-empty-kinetic,
+  .ops-enter,
+  .ops-enter-delay,
+  .ops-row,
+  .ops-cta,
+  .ops-live-dot,
+  .marketing-enter,
+  .marketing-enter-delay,
+  .marketing-line,
+  .marketing-cta,
   .proof-marquee-track {
-    animation: none;
+    animation: none !important;
+  }
+
+  .home-cta:hover:not(:disabled),
+  .home-cta:active:not(:disabled),
+  .home-press:active,
+  .marketing-cta:hover:not(:disabled),
+  .marketing-cta:active:not(:disabled),
+  .ops-cta:hover:not(:disabled),
+  .ops-cta:active:not(:disabled) {
+    transform: none;
+  }
+
+  .home-shell {
+    transition: none;
   }
 }

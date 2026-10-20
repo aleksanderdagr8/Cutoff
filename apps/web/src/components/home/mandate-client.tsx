@@ -119,7 +119,7 @@ export function MandateClient({
       <button
         type="submit"
         disabled={pending}
-        className="home-cta rounded-control bg-accent px-5 py-2.5 text-[15px] font-medium text-white disabled:opacity-40"
+        className="home-cta rounded-control bg-accent px-5 py-2.5 text-[15px] font-medium disabled:opacity-40"
       >
         {pending ? "Saving…" : "Save mandate"}
       </button>

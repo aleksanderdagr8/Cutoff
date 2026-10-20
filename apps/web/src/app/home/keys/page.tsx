@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
+import { HomeSectionTitle } from "@/components/home/home-section-title";
 import { HomeShell } from "@/components/home/shell";
 import { KeysClient } from "@/components/home/keys-client";
 import { homeDevBypassEnabled } from "@/lib/home/config";
@@ -24,9 +25,7 @@ export default async function KeysPage() {
       active="keys"
       bypass={homeDevBypassEnabled()}
     >
-      <h1 className="font-display text-[34px] font-semibold tracking-[-0.03em] text-ink md:text-[40px]">
-        Keys
-      </h1>
+      <HomeSectionTitle>Keys</HomeSectionTitle>
       <p className="mt-3 max-w-xl text-[16px] leading-relaxed text-secondary">
         Connect an assistant with a one-time key. Default scopes are quote and
         read_list — commit is opt-in. Set spending limits on{" "}

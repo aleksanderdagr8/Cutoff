@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
+import { HomeSectionTitle } from "@/components/home/home-section-title";
 import { HomeShell } from "@/components/home/shell";
 import { MandateClient } from "@/components/home/mandate-client";
 import { homeDevBypassEnabled } from "@/lib/home/config";
@@ -25,9 +26,7 @@ export default async function MandatePage() {
       active="mandate"
       bypass={homeDevBypassEnabled()}
     >
-      <h1 className="font-display text-[34px] font-semibold tracking-[-0.03em] text-ink md:text-[40px]">
-        Mandate
-      </h1>
+      <HomeSectionTitle>Mandate</HomeSectionTitle>
       <p className="mt-3 max-w-xl text-[16px] leading-relaxed text-secondary">
         Spending ceiling, never-substitute, address, and expiry. Agent keys
         live on{" "}

@@ -1,4 +1,5 @@
 import { redirect } from "next/navigation";
+import { HomeSectionTitle } from "@/components/home/home-section-title";
 import { HomeShell } from "@/components/home/shell";
 import { ListClient } from "@/components/home/list-client";
 import { homeDevBypassEnabled } from "@/lib/home/config";
@@ -17,9 +18,7 @@ export default async function ListPage() {
       active="list"
       bypass={homeDevBypassEnabled()}
     >
-      <h1 className="font-display text-[34px] font-semibold tracking-[-0.03em] text-ink md:text-[40px]">
-        List
-      </h1>
+      <HomeSectionTitle>List</HomeSectionTitle>
       <p className="mt-3 max-w-xl text-[16px] leading-relaxed text-secondary">
         Things your household replenishes. Next advances one cycle, snooze
         waits a week, pause stops nudges until you resume.
