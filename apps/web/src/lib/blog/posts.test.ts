@@ -1,7 +1,11 @@
-import { describe, expect, it } from "vitest";
+import fs from "node:fs";
+import path from "node:path";
+import { describe, expect, it, vi } from "vitest";
 import { blogSitemapEntries, renderRss } from "./feed";
+import { blogSources } from "./sources.generated";
 import {
   articleJsonLd,
+  blogContentDir,
   formatPostDate,
   getPost,
   isPublished,
@@ -47,6 +51,50 @@ describe("blog posts", () => {
     expect(post!.body).toContain(ftc);
     expect(post!.body).toContain("## What Amazon says about Subscribe & Save pricing");
     expect(post!.body).toContain("## The bottom line");
+  });
+
+  it("resolves production posts from the bundled sources without the filesystem", () => {
+    const exists = vi.spyOn(fs, "existsSync").mockImplementation(() => {
+      throw new Error("existsSync");
+    });
+    const read = vi.spyOn(fs, "readFileSync").mockImplementation(() => {
+      throw new Error("readFileSync");
+    });
+    const readDir = vi.spyOn(fs, "readdirSync").mockImplementation(() => {
+      throw new Error("readdirSync");
+    });
+    try {
+      const post = readAllPosts("production").find(
+        (item) => item.slug === "subscribe-and-save-price-increase",
+      );
+      expect(post?.draft).toBe(false);
+      expect(post?.body).toContain(
+        "https://www.ftc.gov/news-events/news/press-releases/2025/09/ftc-secures-historic-25-billion-settlement-against-amazon",
+      );
+      expect(
+        listPosts("production").some(
+          (item) => item.slug === "subscribe-and-save-price-increase",
+        ),
+      ).toBe(true);
+    } finally {
+      exists.mockRestore();
+      read.mockRestore();
+      readDir.mockRestore();
+    }
+  });
+
+  it("keeps the bundled sources identical to content/blog", () => {
+    const dir = blogContentDir();
+    const names = fs
+      .readdirSync(dir)
+      .filter((name) => name.endsWith(".md") || name.endsWith(".mdx"))
+      .sort();
+    expect(Object.keys(blogSources).sort()).toEqual(names);
+    for (const name of names) {
+      expect(blogSources[name]).toBe(
+        fs.readFileSync(path.join(dir, name), "utf8"),
+      );
+    }
   });
 
   it("includes the published post in production listings, sitemap, and RSS", () => {

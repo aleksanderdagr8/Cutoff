@@ -11,7 +11,10 @@ import {
 } from "@/lib/blog/posts";
 
 export const dynamic = "force-static";
-export const dynamicParams = false;
+// OpenNext's default incremental cache stores nothing, so a request re-renders
+// this page. `dynamicParams: false` makes that miss a root 404 (fallback: false)
+// instead of running the page. Unknown slugs still call notFound().
+export const dynamicParams = true;
 
 type Props = {
   params: Promise<{ slug: string }>;
