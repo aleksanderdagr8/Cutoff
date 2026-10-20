@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 
-export type ConnectClient = "claude" | "chatgpt" | "cursor" | "raw";
+export type ConnectClient = "claude" | "chatgpt" | "cursor" | "grok" | "raw";
 
 const MCP_URL = "https://mcp.callcutoff.com/mcp";
 
@@ -56,6 +56,7 @@ const TABS: { id: ConnectClient; label: string }[] = [
   { id: "claude", label: "Claude" },
   { id: "chatgpt", label: "ChatGPT" },
   { id: "cursor", label: "Cursor" },
+  { id: "grok", label: "Grok" },
   { id: "raw", label: "Raw API" },
 ];
 
@@ -84,6 +85,21 @@ export function ConnectSnippets({ secret, selected, onSelect }: Props) {
       "headers": { "Authorization": "Bearer ${key}" }
     }
   }
+}`;
+
+  const grokCli = `export CK_LIVE="${key}"
+grok mcp add --transport http cutoff ${MCP_URL} \\
+  --header "Authorization: Bearer \${CK_LIVE}"`;
+
+  const grokToml = `[mcp_servers.cutoff]
+url = "${MCP_URL}"
+headers = { Authorization = "Bearer \${CK_LIVE}" }`;
+
+  const grokApi = `{
+  "type": "mcp",
+  "server_url": "${MCP_URL}",
+  "server_label": "cutoff",
+  "authorization": "${key}"
 }`;
 
   const curl = `curl -sS -X POST ${MCP_URL} \\
@@ -162,6 +178,58 @@ export function ConnectSnippets({ secret, selected, onSelect }: Props) {
         </div>
       ) : null}
 
+      {selected === "grok" ? (
+        <div className="mt-5">
+          <p className="text-[15px] leading-relaxed text-ink">
+            Same MCP endpoint as the other assistants. xAI remote MCP sends{" "}
+            <span className="font-mono text-[13px]">Authorization: Bearer …</span>{" "}
+            natively — no{" "}
+            <span className="font-mono text-[13px]">mcp-remote</span> bridge.
+          </p>
+
+          <p className="mt-4 text-[15px] font-medium text-ink">grok.com chat</p>
+          <p className="mt-2 text-[15px] leading-relaxed text-ink">
+            Connectors → New Connector → Custom → URL{" "}
+            <span className="font-mono text-[13px]">{MCP_URL}</span>, then
+            complete authentication. If Grok asks for a token or API key, paste
+            this household key. Cutoff does not offer OAuth yet — if the
+            connector UI only accepts OAuth and will not take a static Bearer,
+            use the CLI or API below (those paths are documented for Bearer
+            today).
+          </p>
+          <SnippetBlock label="Server URL" value={MCP_URL} />
+          <p className="mt-3 text-[13px] text-secondary">
+            Auth:{" "}
+            <span className="font-mono">Authorization: Bearer {key}</span>
+          </p>
+
+          <p className="mt-6 text-[15px] font-medium text-ink">Grok CLI</p>
+          <p className="mt-2 text-[15px] leading-relaxed text-ink">
+            Install the Grok CLI, export the key, then add the server (or paste
+            the TOML into{" "}
+            <span className="font-mono text-[13px]">~/.grok/config.toml</span>
+            ).
+          </p>
+          <SnippetBlock label="grok mcp add" value={grokCli} />
+          <SnippetBlock label="config.toml" value={grokToml} />
+
+          <p className="mt-6 text-[15px] font-medium text-ink">
+            Responses API / SDK
+          </p>
+          <p className="mt-2 text-[15px] leading-relaxed text-ink">
+            Put this tool object in{" "}
+            <span className="font-mono text-[13px]">tools</span> on{" "}
+            <span className="font-mono text-[13px]">
+              POST https://api.x.ai/v1/responses
+            </span>
+            . The{" "}
+            <span className="font-mono text-[13px]">authorization</span> field
+            becomes the Bearer token Cutoff expects.
+          </p>
+          <SnippetBlock label="tools[] entry" value={grokApi} />
+        </div>
+      ) : null}
+
       {selected === "raw" ? (
         <div className="mt-5">
           <p className="text-[15px] leading-relaxed text-ink">
@@ -183,6 +251,8 @@ export function connectClientLabel(client: ConnectClient): string {
       return "ChatGPT";
     case "cursor":
       return "Cursor";
+    case "grok":
+      return "Grok";
     case "raw":
       return "agent";
   }

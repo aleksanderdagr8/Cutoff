@@ -161,7 +161,8 @@ export function MarketingPage() {
             <p className="mt-4 max-w-lg text-[16px] leading-relaxed text-secondary">
               How household outcomes get enforced: Bearer keys, short-lived
               quotes, and an evidence pack on every commit — a shelf, not a
-              scrape. Early access is sandbox-honest — not a live production
+              scrape. One MCP endpoint for Claude, ChatGPT, Cursor, and Grok
+              (xAI). Early access is sandbox-honest — not a live production
               claim.
             </p>
             <p className="mt-4 max-w-2xl text-[15px] leading-relaxed text-secondary">

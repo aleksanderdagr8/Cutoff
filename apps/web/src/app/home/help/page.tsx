@@ -46,9 +46,9 @@ export default async function HelpPage() {
           <h2 className="text-[18px] font-medium text-ink">Keys</h2>
           <p className="mt-2 text-[15px] leading-relaxed text-secondary">
             Connect an assistant from Keys: pick scopes (commit is opt-in),
-            copy an MCP snippet, and watch for Connected ✓ after the first
-            call. The secret is shown once; Cutoff stores a hash. Revoke
-            anytime — receipts still work.
+            copy an MCP snippet for Claude, ChatGPT, Cursor, or Grok, and
+            watch for Connected ✓ after the first call. The secret is shown
+            once; Cutoff stores a hash. Revoke anytime — receipts still work.
           </p>
         </div>
         <div>
