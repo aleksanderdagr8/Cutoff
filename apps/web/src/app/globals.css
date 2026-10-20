@@ -152,8 +152,8 @@ html[data-home-theme="dark"] .home-atmosphere {
 /* Kinetic type — only wordmark, section titles, empty headlines */
 @keyframes home-wordmark-settle {
   from {
-    opacity: 0.35;
-    letter-spacing: 0.12em;
+    opacity: 0.28;
+    letter-spacing: 0.14em;
   }
   to {
     opacity: 1;
@@ -164,8 +164,8 @@ html[data-home-theme="dark"] .home-atmosphere {
 @keyframes home-title-focus {
   from {
     opacity: 0;
-    filter: blur(4px);
-    transform: translateY(4px);
+    filter: blur(5px);
+    transform: translateY(5px);
   }
   to {
     opacity: 1;
@@ -177,8 +177,8 @@ html[data-home-theme="dark"] .home-atmosphere {
 @keyframes home-empty-line {
   from {
     opacity: 0;
-    letter-spacing: 0.04em;
-    transform: translateY(6px);
+    letter-spacing: 0.05em;
+    transform: translateY(7px);
   }
   to {
     opacity: 1;
@@ -188,16 +188,16 @@ html[data-home-theme="dark"] .home-atmosphere {
 }
 
 .home-wordmark-enter {
-  animation: home-wordmark-settle 380ms ease-out both;
+  animation: home-wordmark-settle 480ms ease-out both;
 }
 
 .home-title-kinetic {
-  animation: home-title-focus 220ms ease-out both;
+  animation: home-title-focus 280ms ease-out both;
 }
 
 .home-empty-kinetic {
-  animation: home-empty-line 280ms ease-out both;
-  animation-delay: 40ms;
+  animation: home-empty-line 340ms ease-out both;
+  animation-delay: 50ms;
 }
 
 .home-enter {
@@ -351,7 +351,7 @@ html[data-home-theme="dark"] .home-atmosphere {
   animation: ops-pulse 1.6s ease-in-out infinite;
 }
 
-/* Marketing `/` — same tokens, quiet atmosphere + restrained motion */
+/* Marketing `/` — Direction A tokens; kinetic type is the landing beat */
 .marketing-atmosphere {
   background:
     radial-gradient(
@@ -380,25 +380,126 @@ html[data-home-theme="dark"] .home-atmosphere {
   pointer-events: none;
 }
 
+/* Beat 1 — hero CUTOFF wordmark (letter-spacing settle, clearly readable) */
+@keyframes marketing-brand-settle {
+  from {
+    opacity: 0;
+    letter-spacing: 0.36em;
+    transform: translateY(18px);
+  }
+  to {
+    opacity: 1;
+    letter-spacing: -0.04em;
+    transform: translateY(0);
+  }
+}
+
+/* Beat 2 — headline kinetic settle (blur → sharp + rise) */
+@keyframes marketing-headline-settle {
+  from {
+    opacity: 0;
+    filter: blur(10px);
+    letter-spacing: 0.04em;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    filter: blur(0);
+    letter-spacing: -0.02em;
+    transform: translateY(0);
+  }
+}
+
+@keyframes marketing-sub-rise {
+  from {
+    opacity: 0;
+    transform: translateY(16px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes marketing-cta-in {
+  from {
+    opacity: 0;
+    transform: translateY(14px) scale(0.96);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes marketing-panel-in {
+  from {
+    opacity: 0;
+    filter: blur(6px);
+    transform: translateY(28px);
+  }
+  to {
+    opacity: 1;
+    filter: blur(0);
+    transform: translateY(0);
+  }
+}
+
+/* Scroll enter — unmissable travel + blur settle (landing, not household) */
+@keyframes marketing-section-rise {
+  from {
+    opacity: 0;
+    filter: blur(10px);
+    transform: translateY(44px);
+  }
+  to {
+    opacity: 1;
+    filter: blur(0);
+    transform: translateY(0);
+  }
+}
+
+.marketing-brand-kinetic {
+  animation: marketing-brand-settle 900ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.marketing-headline-kinetic {
+  animation: marketing-headline-settle 780ms cubic-bezier(0.22, 1, 0.36, 1) both;
+  animation-delay: 260ms;
+}
+
+.marketing-sub-kinetic {
+  animation: marketing-sub-rise 640ms ease-out both;
+  animation-delay: 480ms;
+}
+
+.marketing-cta-group {
+  animation: marketing-cta-in 600ms ease-out both;
+  animation-delay: 640ms;
+}
+
+.marketing-hero-panel {
+  animation: marketing-panel-in 860ms cubic-bezier(0.22, 1, 0.36, 1) both;
+  animation-delay: 320ms;
+}
+
 .marketing-enter {
-  animation: home-rise 160ms ease-out both;
+  animation: marketing-sub-rise 520ms ease-out both;
 }
 
 .marketing-enter-delay {
-  animation-delay: 50ms;
+  animation-delay: 100ms;
 }
 
 .marketing-line {
-  animation: home-fade 160ms ease-out both;
+  animation: home-fade 280ms ease-out both;
 }
 
 .marketing-cta {
-  animation: home-cta-settle 200ms ease-out both;
-  animation-delay: 70ms;
   transition:
-    transform 160ms ease-out,
-    opacity 160ms ease-out,
-    background-color 160ms ease-out;
+    transform 180ms ease-out,
+    opacity 180ms ease-out,
+    background-color 180ms ease-out;
 }
 
 .marketing-cta:hover:not(:disabled) {
@@ -407,6 +508,19 @@ html[data-home-theme="dark"] .home-atmosphere {
 
 .marketing-cta:active:not(:disabled) {
   transform: translateY(0);
+}
+
+/* Scroll reveals — start well below + blurred; .marketing-reveal-in fires enter */
+.marketing-reveal {
+  opacity: 0;
+  filter: blur(10px);
+  transform: translateY(44px);
+  will-change: opacity, transform, filter;
+}
+
+.marketing-reveal-in {
+  animation: marketing-section-rise 900ms cubic-bezier(0.16, 1, 0.3, 1) both;
+  animation-delay: var(--marketing-reveal-delay, 0ms);
 }
 
 /* Waitlist FAB — fixed bottom-right; iOS safe-area; not a locked bottom bar */
@@ -493,12 +607,26 @@ html[data-home-theme="dark"] .home-atmosphere {
   .ops-row,
   .ops-cta,
   .ops-live-dot,
+  .marketing-brand-kinetic,
+  .marketing-headline-kinetic,
+  .marketing-sub-kinetic,
+  .marketing-cta-group,
+  .marketing-hero-panel,
   .marketing-enter,
   .marketing-enter-delay,
   .marketing-line,
   .marketing-cta,
+  .marketing-reveal,
+  .marketing-reveal-in,
   .proof-marquee-track {
     animation: none !important;
+  }
+
+  .marketing-reveal {
+    opacity: 1;
+    filter: none;
+    transform: none;
+    will-change: auto;
   }
 
   .home-cta:hover:not(:disabled),
