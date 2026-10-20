@@ -5,6 +5,7 @@ import {
   FakeFulfillAdapter,
   FakePayAdapter,
   FakeTaxAdapter,
+  createStripePayAdapter,
   MemoryOutboundWebhookQueue,
   MemorySecretStore,
   type NudgeQueue,
@@ -31,6 +32,14 @@ type WorkerEnv = {
   SUPABASE_SERVICE_ROLE?: string;
   /** Set to `production` in wrangler.toml. Local `wrangler dev` overrides it. */
   CUTOFF_ENV?: string;
+  /** Test-mode restricted key (rk_test_…) or secret key. Never commit the value. */
+  STRIPE_SECRET_KEY?: string;
+  /** Stripe webhook signing secret (whsec_…). Distinct from WEBHOOK_SECRET. */
+  STRIPE_WEBHOOK_SECRET?: string;
+  /** Price id for the $5/mo household plan (500 cents, usd, monthly). */
+  STRIPE_PRICE_ID?: string;
+  /** Origin for Checkout success and cancel URLs. */
+  STRIPE_APP_URL?: string;
 };
 
 const MISSING_PRODUCTION_DB =
@@ -91,10 +100,12 @@ let isolateCache: IsolateCache | null = null;
 
 function reposCacheKey(env?: WorkerEnv): string {
   const mode = resolveReposModeFromEnv(serviceEnv(env));
+  const pay = env?.STRIPE_SECRET_KEY ? "stripe" : "fake";
+  const hook = env?.STRIPE_WEBHOOK_SECRET ? "wh" : "nowh";
   if (mode === "postgres") {
-    return `postgres:${env?.SUPABASE_URL ?? ""}`;
+    return `postgres:${env?.SUPABASE_URL ?? ""}:${pay}:${hook}`;
   }
-  return "memory";
+  return `memory:${pay}:${hook}`;
 }
 
 function buildBindings(env?: WorkerEnv): ApiBindings {
@@ -111,16 +122,38 @@ function buildBindings(env?: WorkerEnv): ApiBindings {
     };
   }
 
-  const pay = new FakePayAdapter();
+  const householdsRef: {
+    current?: {
+      getStripeCustomerId(
+        householdId: string,
+      ): Promise<string | null> | string | null;
+    };
+  } = {};
+  const stripeKey = env?.STRIPE_SECRET_KEY;
+  const pay = stripeKey
+    ? createStripePayAdapter({
+        secretKey: stripeKey,
+        webhookSecret: env?.STRIPE_WEBHOOK_SECRET ?? "",
+        priceId: env?.STRIPE_PRICE_ID,
+        appUrl: env?.STRIPE_APP_URL,
+        lookupCustomerId: async (householdId) => {
+          const repo = householdsRef.current;
+          if (!repo) return null;
+          return repo.getStripeCustomerId(householdId);
+        },
+      })
+    : new FakePayAdapter();
   const reposMode = resolveReposModeFromEnv(serviceEnv(env));
   const repos = createRepos({
     mode: reposMode,
     pay,
     env: serviceEnv(env),
   });
-  // Pay, fulfill, tax, offer feeds, and email are still fakes.
-  // Production /health stays unhealthy until this is false.
+  householdsRef.current = repos.households;
+  // Fulfill, tax, offer feeds, and email stay fake. Payments are real
+  // only when STRIPE_SECRET_KEY built the Stripe adapter.
   const fakeIntegrations = true;
+  const payments = stripeKey ? "stripe" : "fake";
   const memoryNudgeQueue = new MemoryOutboundWebhookQueue();
   const bindings: ApiBindings = {
     pay,
@@ -156,6 +189,7 @@ function buildBindings(env?: WorkerEnv): ApiBindings {
     production: isProductionEnv(env),
     reposMode,
     fakeIntegrations,
+    payments,
   };
   isolateCache = { key, bindings, memoryNudgeQueue };
   return bindings;

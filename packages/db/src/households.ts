@@ -148,6 +148,18 @@ export class MemoryHouseholdRepository {
     return this.members.find((m) => m.memberId === memberId) ?? null;
   }
 
+  private readonly stripeCustomerIds = new Map<string, string>();
+
+  /** Stripe Customer id only. Not a balance. */
+  getStripeCustomerId(householdId: string): string | null {
+    return this.stripeCustomerIds.get(householdId) ?? null;
+  }
+
+  setStripeCustomerId(householdId: string, customerId: string): void {
+    if (!this.households.some((row) => row.householdId === householdId)) return;
+    this.stripeCustomerIds.set(householdId, customerId);
+  }
+
   /** Operator / service-role index — all households. */
   listHouseholds(): readonly HouseholdRow[] {
     return this.households;

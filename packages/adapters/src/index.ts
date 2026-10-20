@@ -2,9 +2,22 @@ export type {
   ChargeInput,
   ChargeResult,
   ChargeOutcome,
+  CaptureAuthorizedInput,
+  VoidAuthorizationInput,
+  RefundPaymentInput,
+  HouseholdPlanInput,
+  HouseholdPlanSession,
+  PayWebhookEvent,
   PayAdapter,
 } from "./pay.js";
-export { FakePayAdapter, StripeSandboxPayAdapter } from "./pay.js";
+export {
+  HOUSEHOLD_PLAN_AMOUNT_CENTS,
+  PayWebhookSignatureError,
+  FakePayAdapter,
+  StripeSandboxPayAdapter,
+} from "./pay.js";
+export { StripePayAdapter, createStripePayAdapter } from "./stripe-pay.js";
+export type { StripeGateway } from "./stripe-pay.js";
 
 export type {
   PlaceInput,

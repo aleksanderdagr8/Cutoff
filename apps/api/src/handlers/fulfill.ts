@@ -12,9 +12,10 @@ import { authenticateAgent } from "../auth.js";
 import type { ApiBindings } from "../bindings.js";
 
 /**
- * After a successful capture: place via FulfillAdapter.
- * Place failure → enqueue refund; never leave captured with no job and no refund.
- * Outbound webhook is queued after the durable write (not inside pay tx).
+ * Place via FulfillAdapter, then capture when pay is manual.
+ * Immediate capture (fake): place failure enqueues a refund.
+ * Manual capture: place failure voids the authorization (no held funds).
+ * A capture error after the job is recorded is retryable on the order id.
  */
 export async function placeAfterCapture(
   bindings: ApiBindings,
@@ -27,15 +28,24 @@ export async function placeAfterCapture(
   },
 ): Promise<
   | { ok: true; jobId: string }
-  | { ok: false; refundId: string; error: "place_failed" }
+  | { ok: false; refundId?: string; error: "place_failed" }
 > {
   const nowUtc = bindings.nowUtc();
+  const manual = bindings.pay.captureMode === "manual";
+
+  const current = await bindings.orders.get(order.orderId);
+  if (current?.status === "failed") {
+    return { ok: false, error: "place_failed" };
+  }
 
   // Retry keyed on order id: one job, or the same place_failed refund.
   const existingJob = bindings.fulfillment.getJobForOrder(order.orderId);
   if (existingJob) {
-    const current = await bindings.orders.get(order.orderId);
-    if (current?.status === "captured") {
+    if (manual) {
+      await bindings.orders.captureAuthorizedOrder(order.orderId, nowUtc);
+    }
+    const afterCapture = await bindings.orders.get(order.orderId);
+    if (afterCapture?.status === "captured") {
       await bindings.orders.appendStatus(order.orderId, "placed", nowUtc);
     }
     return { ok: true, jobId: existingJob.jobId };
@@ -54,45 +64,25 @@ export async function placeAfterCapture(
   const quote = await bindings.quotes.get(order.quoteId);
   const fulfillerId = quote?.fulfillerId ?? "unknown";
 
+  let placed: { jobId: string };
   try {
-    const placed = await bindings.fulfill.place({
+    placed = await bindings.fulfill.place({
       orderId: order.orderId,
       canonicalItemId: order.canonicalItemId,
       qty: 1,
       fulfillerId,
     });
-    bindings.fulfillment.recordJob({
-      jobId: placed.jobId,
-      orderId: order.orderId,
-      householdId: order.householdId,
-      fulfillerId,
-      nowUtc,
-    });
-    await bindings.orders.appendStatus(order.orderId, "placed", nowUtc);
-
-    const body = JSON.stringify({
-      type: "order.placed",
-      order_id: order.orderId,
-      job_id: placed.jobId,
-      household_id: order.householdId,
-      at: nowUtc,
-    });
-    bindings.outboundWebhooks.enqueue({
-      url: bindings.webhookTargetUrl,
-      eventType: "order.placed",
-      body,
-      createdAtUtc: nowUtc,
-    });
-
-    return { ok: true, jobId: placed.jobId };
   } catch {
+    if (manual) {
+      await bindings.orders.voidAuthorizedOrder(order.orderId, nowUtc);
+      return { ok: false, error: "place_failed" };
+    }
     const refund = bindings.fulfillment.enqueueRefund({
       orderId: order.orderId,
       amountCents: order.amountCents,
       reason: "place_failed",
       nowUtc,
     });
-    // Unit 12: refund events feed merchant_scores (tie-break only).
     bindings.risk.recordScoreEvent({
       fulfillerId,
       kind: "refund",
@@ -102,6 +92,36 @@ export async function placeAfterCapture(
     });
     return { ok: false, refundId: refund.refundId, error: "place_failed" };
   }
+
+  bindings.fulfillment.recordJob({
+    jobId: placed.jobId,
+    orderId: order.orderId,
+    householdId: order.householdId,
+    fulfillerId,
+    nowUtc,
+  });
+  if (manual) {
+    // If this throws, the job is already stored. The next commit retries
+    // capture on the order id and does not void a hold that may have captured.
+    await bindings.orders.captureAuthorizedOrder(order.orderId, nowUtc);
+  }
+  await bindings.orders.appendStatus(order.orderId, "placed", nowUtc);
+
+  const body = JSON.stringify({
+    type: "order.placed",
+    order_id: order.orderId,
+    job_id: placed.jobId,
+    household_id: order.householdId,
+    at: nowUtc,
+  });
+  bindings.outboundWebhooks.enqueue({
+    url: bindings.webhookTargetUrl,
+    eventType: "order.placed",
+    body,
+    createdAtUtc: nowUtc,
+  });
+
+  return { ok: true, jobId: placed.jobId };
 }
 
 /**
@@ -216,6 +236,20 @@ export async function cancelOrderHandler(
     return { error: check.error, status: 403 as const };
   }
 
+  const nowUtc = bindings.nowUtc();
+  if (order.chargeId && bindings.pay.refundPayment) {
+    const charges = await bindings.orders.listCharges();
+    const captured = charges.some((charge) => charge.orderId === order.orderId);
+    if (captured) {
+      await bindings.pay.refundPayment({
+        orderId: order.orderId,
+        paymentIntentId: order.chargeId,
+        amountCents: order.amountCents,
+        idempotencyKey: `${order.orderId}:refund`,
+      });
+    }
+  }
+
   const job = bindings.fulfillment.getJobForOrder(order.orderId);
   if (job) {
     await bindings.fulfill.cancel({
@@ -225,7 +259,6 @@ export async function cancelOrderHandler(
     bindings.fulfillment.markJobCancelled(job.jobId);
   }
 
-  const nowUtc = bindings.nowUtc();
   bindings.fulfillment.enqueueRefund({
     orderId: order.orderId,
     amountCents: order.amountCents,

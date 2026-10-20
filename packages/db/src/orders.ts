@@ -109,8 +109,33 @@ export interface OrderRepository {
    * Payment after the record. Idempotent on order id.
    * No-op unless status is `committed` and charge_id is null.
    * Pay adapter idempotency key is the order id.
+   * Manual capture stores the authorization id and leaves status `committed`.
    */
   captureOrder(orderId: string, atUtc: string): Promise<OrderRow | null>;
+  /** Capture a manual authorization after placement. Idempotent on order id. */
+  captureAuthorizedOrder(
+    orderId: string,
+    atUtc: string,
+  ): Promise<OrderRow | null>;
+  /** Release an uncaptured authorization and mark the order failed. */
+  voidAuthorizedOrder(orderId: string, atUtc: string): Promise<OrderRow | null>;
+  getByChargeId(chargeId: string): MaybePromise<OrderRow | null>;
+  /**
+   * Ledger row for funds actually captured. Does not move a fulfillment
+   * status backwards (placed stays placed).
+   */
+  noteCapturedPayment(input: {
+    orderId: string;
+    chargeId: string;
+    amountCents: number;
+    atUtc: string;
+  }): MaybePromise<OrderRow | null>;
+  /** Failure of an authorization that is still `committed`. */
+  notePaymentFailed(
+    orderId: string,
+    atUtc: string,
+  ): MaybePromise<OrderRow | null>;
+  noteRefunded(orderId: string, atUtc: string): MaybePromise<OrderRow | null>;
   commitWithEvidence(
     input: EvidencedCommitInput,
   ): Promise<EvidencedCommitResult>;
@@ -231,6 +256,10 @@ export class MemoryOrderRepository implements OrderRepository {
     this.seq += 1;
     const orderId = `ord_fake_${this.seq}`;
     const nowUtc = new Date().toISOString();
+
+    if (this.pay.captureMode === "manual") {
+      throw new Error("pay_adapter_error");
+    }
 
     const charge = await this.pay.charge({
       orderId,
@@ -402,8 +431,12 @@ export class MemoryOrderRepository implements OrderRepository {
         orderId: order.orderId,
         amountCents: order.amountCents,
         idempotencyKey: order.orderId,
+        householdId: order.householdId,
       });
       order.chargeId = charge.chargeId;
+      if (this.pay.captureMode === "manual") {
+        return order;
+      }
       this.chargeRows.push({
         chargeId: charge.chargeId,
         orderId: order.orderId,
@@ -417,6 +450,103 @@ export class MemoryOrderRepository implements OrderRepository {
       this.appendEvent(order.orderId, "failed", atUtc);
       order.status = "failed";
     }
+    return order;
+  }
+
+  async captureAuthorizedOrder(
+    orderId: string,
+    atUtc: string,
+  ): Promise<OrderRow | null> {
+    const order = this.get(orderId);
+    if (!order?.chargeId) return order;
+    if (this.chargeRows.some((charge) => charge.orderId === orderId)) {
+      return order;
+    }
+    if (!this.pay.captureAuthorized) {
+      throw new Error("pay_adapter_error");
+    }
+    const captured = await this.pay.captureAuthorized({
+      orderId: order.orderId,
+      authorizationId: order.chargeId,
+      amountCents: order.amountCents,
+      idempotencyKey: `${order.orderId}:capture`,
+    });
+    return this.noteCapturedPayment({
+      orderId,
+      chargeId: captured.chargeId,
+      amountCents: captured.amountCents,
+      atUtc,
+    });
+  }
+
+  async voidAuthorizedOrder(
+    orderId: string,
+    atUtc: string,
+  ): Promise<OrderRow | null> {
+    const order = this.get(orderId);
+    if (!order) return null;
+    if (order.status === "failed") return order;
+    if (this.chargeRows.some((charge) => charge.orderId === orderId)) {
+      return order;
+    }
+    if (order.chargeId && this.pay.voidAuthorization) {
+      await this.pay.voidAuthorization({
+        orderId,
+        authorizationId: order.chargeId,
+        idempotencyKey: `${order.orderId}:void`,
+      });
+    }
+    if (order.status === "committed") {
+      this.appendEvent(orderId, "failed", atUtc);
+      order.status = "failed";
+    }
+    return order;
+  }
+
+  getByChargeId(chargeId: string): OrderRow | null {
+    return this.orders.find((order) => order.chargeId === chargeId) ?? null;
+  }
+
+  noteCapturedPayment(input: {
+    orderId: string;
+    chargeId: string;
+    amountCents: number;
+    atUtc: string;
+  }): OrderRow | null {
+    const order = this.get(input.orderId);
+    if (!order) return null;
+    if (!order.chargeId) order.chargeId = input.chargeId;
+    if (!this.chargeRows.some((charge) => charge.orderId === input.orderId)) {
+      this.chargeRows.push({
+        chargeId: input.chargeId,
+        orderId: input.orderId,
+        amountCents: input.amountCents,
+        idempotencyKey: `${input.orderId}:capture`,
+        createdAt: input.atUtc,
+      });
+    }
+    const previous = order.status;
+    const already = this.events.some(
+      (event) => event.orderId === input.orderId && event.status === "captured",
+    );
+    if (!already) this.appendEvent(input.orderId, "captured", input.atUtc);
+    order.status = previous === "committed" ? "captured" : previous;
+    return order;
+  }
+
+  notePaymentFailed(orderId: string, atUtc: string): OrderRow | null {
+    const order = this.get(orderId);
+    if (!order || order.status !== "committed") return order;
+    this.appendEvent(orderId, "failed", atUtc);
+    order.status = "failed";
+    return order;
+  }
+
+  noteRefunded(orderId: string, atUtc: string): OrderRow | null {
+    const order = this.get(orderId);
+    if (!order || order.status === "refunded") return order;
+    this.appendEvent(orderId, "refunded", atUtc);
+    order.status = "refunded";
     return order;
   }
 
