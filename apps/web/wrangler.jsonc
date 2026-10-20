@@ -33,8 +33,11 @@
   ],
   // Non-secret production defaults. Set Supabase values as Worker secrets /
   // Build vars — never commit them. See apps/web/DEPLOY.md.
+  // NEXT_PUBLIC_GA_MEASUREMENT_ID is public; also pass at build time in
+  // deploy-web.yml so the client bundle inlines the same value.
   "vars": {
     "CUTOFF_HOME_DEV_BYPASS": "0",
-    "CUTOFF_OPS_DEV_BYPASS": "1"
+    "CUTOFF_OPS_DEV_BYPASS": "1",
+    "NEXT_PUBLIC_GA_MEASUREMENT_ID": "G-3K4P4MPMPD"
   }
 }

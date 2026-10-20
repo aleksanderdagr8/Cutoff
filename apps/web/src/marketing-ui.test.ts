@@ -12,6 +12,21 @@ describe("marketing `/` hygiene", () => {
     expect(page).not.toContain("/ops");
   });
 
+  it("root layout mounts Google Analytics gtag via next/script", () => {
+    const layout = readFileSync(
+      join(import.meta.dirname, "app/layout.tsx"),
+      "utf8",
+    );
+    const ga = readFileSync(
+      join(import.meta.dirname, "components/analytics/google-analytics.tsx"),
+      "utf8",
+    );
+    expect(layout).toContain("GoogleAnalytics");
+    expect(ga).toContain('from "next/script"');
+    expect(ga).toContain("googletagmanager.com/gtag/js");
+    expect(ga).toContain("page_path");
+  });
+
   it("marketing copy avoids dropped claims and invented pricing", () => {
     const root = join(import.meta.dirname, "components/marketing");
     const files = [
