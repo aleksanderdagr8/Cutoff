@@ -45,6 +45,8 @@ jobs:
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID || '6f016e176bf8507b75cecde460c5689d' }}
           NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
           NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
+          # Public GA property — build-time inline for the client bundle.
+          NEXT_PUBLIC_GA_MEASUREMENT_ID: G-3K4P4MPMPD
           CUTOFF_HOME_DEV_BYPASS: "0"
           CUTOFF_OPS_DEV_BYPASS: "1"
         run: pnpm --filter @cutoff/web run deploy

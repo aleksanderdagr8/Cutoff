@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { DM_Sans, Syne } from "next/font/google";
+import { GoogleAnalytics } from "@/components/analytics/google-analytics";
 import "./globals.css";
 
 const dmSans = DM_Sans({
@@ -26,7 +27,10 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" className={`${dmSans.variable} ${syne.variable}`}>
-      <body className="min-h-screen font-sans antialiased">{children}</body>
+      <body className="min-h-screen font-sans antialiased">
+        <GoogleAnalytics />
+        {children}
+      </body>
     </html>
   );
 }

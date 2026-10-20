@@ -31,9 +31,18 @@ Do **not** commit secrets. Set them on the Worker (and Build vars if using Worke
 | --- | --- | --- |
 | `NEXT_PUBLIC_SUPABASE_URL` | Worker secret **and** build var | Same Project URL as local |
 | `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Worker secret **and** build var | Anon / publishable only |
+| `NEXT_PUBLIC_GA_MEASUREMENT_ID` | Wrangler `vars` **and** build env | Public gtag Measurement ID. Default / committed prod value: `G-3K4P4MPMPD`. Inlined into the client at **build** time — set in `deploy-web.yml` (or optional GitHub Variable). Not a secret. Empty string disables. |
 | `GOOGLE_PLACES_API_KEY` | Worker secret (runtime) | Places API (New) for `/home/mandate` address typeahead. Server-only — never `NEXT_PUBLIC_`. Until set, UI shows a safe disabled placeholder. |
 | `CUTOFF_HOME_DEV_BYPASS` | Wrangler `vars` (`0`) | Off in prod when Supabase public env is set |
 | `CUTOFF_OPS_DEV_BYPASS` | Wrangler `vars` (`1`) | Stays on until operator TOTP |
+
+### Google Analytics (gtag.js)
+
+- Loads from root layout via `next/script` (`GoogleAnalytics`) on marketing (`/`), blog/docs, and household `/home` (including sign-in).
+- Skips `/ops` (internal operator console).
+- App Router client navigations call `gtag('config', id, { page_path })` so SPA route changes count as page views.
+- No CSP is configured today; if one is added later, allow `script-src` / `connect-src` for `https://www.googletagmanager.com` and `https://www.google-analytics.com` (and `https://*.google-analytics.com` / `https://*.analytics.google.com` as GA4 requires).
+- **Aleks:** nothing required to ship — ID is defaulted in code + `wrangler.jsonc` + deploy workflow. Optional: set GitHub Actions Variable `NEXT_PUBLIC_GA_MEASUREMENT_ID` to override without a code change.
 
 Live Auth `/home` keys, mandate, and list persist via SECURITY DEFINER RPCs (`home_issue_agent_key`, `home_upsert_mandate`, …) — **no** service role in the web Worker. Agent quote/commit still needs `SUPABASE_*` on `cutoff-api` (see `apps/api/DEPLOY.md`).
 
