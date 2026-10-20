@@ -228,6 +228,14 @@ html[data-home-theme="dark"] .home-atmosphere {
   opacity: 0.72;
 }
 
+.auth-error {
+  color: #9b2c2c;
+}
+
+html[data-home-theme="dark"] .auth-error {
+  color: #f3b4b4;
+}
+
 .home-cta {
   animation: home-cta-settle 200ms ease-out both;
   animation-delay: 80ms;

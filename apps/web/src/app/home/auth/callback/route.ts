@@ -1,26 +1,20 @@
 import { NextResponse } from "next/server";
-import { ensureHomeMember } from "@/lib/home/member";
+import { finishEmailLink } from "@/lib/home/auth-flow";
+import { householdAuthClient } from "@/lib/home/auth-client";
 import { createHomeServerClient } from "@/lib/home/supabase/server";
 
 /**
- * Supabase email-confirm / OAuth-style code exchange for /home.
- * Password sign-in usually skips this; keep for confirm-email redirects.
+ * PKCE / code exchange for confirm and recovery links.
+ * A confirmation does not open the household: the session is signed out
+ * so the next step is password, then the email code.
  */
 export async function GET(request: Request) {
   const url = new URL(request.url);
-  const code = url.searchParams.get("code");
-  const next = url.searchParams.get("next") ?? "/home";
-
-  if (code) {
-    const supabase = await createHomeServerClient();
-    const { error } = await supabase.auth.exchangeCodeForSession(code);
-    if (!error) {
-      await ensureHomeMember(supabase);
-      return NextResponse.redirect(new URL(next, url.origin));
-    }
-  }
-
-  return NextResponse.redirect(
-    new URL("/home/sign-in?error=auth_callback", url.origin),
-  );
+  const supabase = await createHomeServerClient();
+  const result = await finishEmailLink(householdAuthClient(supabase), {
+    type: url.searchParams.get("type"),
+    next: url.searchParams.get("next"),
+    code: url.searchParams.get("code"),
+  });
+  return NextResponse.redirect(new URL(result.redirect, url.origin));
 }

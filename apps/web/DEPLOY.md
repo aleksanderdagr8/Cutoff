@@ -75,11 +75,9 @@ Put Access in front before anyone needs the console (Cloudflare dashboard, not t
 6. `workers_dev` is still true, so `*.workers.dev` can skip the custom-domain policy. Add that hostname with the same paths, or turn **workers.dev** off for `cutoff-web`.
 7. Leave `CUTOFF_OPS_DEV_BYPASS` at `0`. Do not set it as a Worker secret.
 
-**Aleks — Supabase Dashboard → Authentication → URL configuration**
+**Aleks — household Auth, SMTP, and the welcome email**
 
-1. Site URL → `https://callcutoff.com`
-2. Redirect URLs → add `https://callcutoff.com/home/auth/callback` (keep localhost for local)
-3. Leave Confirm email off for pilot if already configured that way
+See `docs/household-auth-setup.md`. Apply the email-code migration before this Worker. Confirm email stays on. Custom SMTP is `smtp.resend.com:465`, user `resend`, from `noreply@callcutoff.com`.
 
 ## Deploy (CLI)
 
