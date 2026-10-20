@@ -50,9 +50,7 @@ export default async function TodayPage() {
         <p className="text-[13px] font-medium uppercase tracking-[0.1em] text-secondary">
           {session.householdName}
         </p>
-        <h1 className="mt-3 font-display text-[40px] font-semibold leading-[1.05] tracking-[-0.04em] text-ink md:text-[52px]">
-          CUTOFF
-        </h1>
+        <p className="mt-1 text-[14px] text-secondary">{session.email}</p>
         <p className="mt-4 max-w-md text-[17px] leading-relaxed text-secondary">
           Your replenishment shelf. Agents buy within the mandate — you skip,
           pause, or check a receipt when you need to.
@@ -69,7 +67,7 @@ export default async function TodayPage() {
       </div>
 
       <section className="home-section home-section-delay mt-14 border-t border-hairline pt-8">
-        <HomeSectionTitle as="h2">Today</HomeSectionTitle>
+        <HomeSectionTitle size="today">Today</HomeSectionTitle>
         <p className="mt-2 max-w-lg text-[15px] text-secondary">
           Status of your list — not a live ops board.
         </p>
