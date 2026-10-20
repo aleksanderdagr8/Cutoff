@@ -21,3 +21,8 @@ queue = "cutoff-nudges"
 queue = "cutoff-nudges"
 max_retries = 5
 dead_letter_queue = "cutoff-nudges-dlq"
+
+# Custom domain. Deploy creates DNS and the certificate on the zone.
+[[routes]]
+pattern = "api.callcutoff.com"
+custom_domain = true

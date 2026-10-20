@@ -1,6 +1,7 @@
 # Deploy `cutoff-api`
 
 Worker name: `cutoff-api`  
+Public URL: `https://api.callcutoff.com`  
 Account: `6f016e176bf8507b75cecde460c5689d`
 
 ## Deploy
@@ -10,6 +11,8 @@ pnpm --filter @cutoff/api run deploy
 ```
 
 GitHub Actions: `.github/workflows/deploy-api.yml` (secret `CLOUDFLARE_API_TOKEN`).
+
+DNS and the certificate for `api.callcutoff.com` are created when this Worker deploys (`[[routes]]` with `custom_domain = true`). `workers_dev` stays enabled as a fallback.
 
 ## Secrets (buy path)
 
