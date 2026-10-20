@@ -47,9 +47,12 @@ export const CentsSchema = z.number().int().nonnegative();
 export const UtcIsoSchema = z.string().datetime({ offset: true });
 
 export const HealthResponseSchema = z.object({
-  ok: z.literal(true),
+  ok: z.boolean(),
   service: z.literal("cutoff-api"),
   phase: z.literal("6"),
+  repos: z.enum(["memory", "postgres"]).optional(),
+  integrations: z.enum(["fake", "live"]).optional(),
+  reasons: z.array(z.string()).optional(),
 });
 
 export type HealthResponse = z.infer<typeof HealthResponseSchema>;

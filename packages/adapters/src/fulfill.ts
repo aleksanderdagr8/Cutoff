@@ -49,12 +49,15 @@ export class FakeFulfillAdapter implements FulfillAdapter {
   /** When true, next place call throws. */
   failNextPlace = false;
   private seq = 0;
+  private readonly byOrder = new Map<string, PlaceResult>();
   private readonly byJob = new Map<
     string,
     { orderId: string; status: TrackResult["status"]; trackingNumber: string | null }
   >();
 
   async place(input: PlaceInput): Promise<PlaceResult> {
+    const prior = this.byOrder.get(input.orderId);
+    if (prior) return prior;
     if (this.failNextPlace) {
       this.failNextPlace = false;
       throw new Error("fulfill_adapter_error");
@@ -64,6 +67,7 @@ export class FakeFulfillAdapter implements FulfillAdapter {
       jobId: `ff_fake_${this.seq}`,
       status: "accepted",
     };
+    this.byOrder.set(input.orderId, result);
     this.byJob.set(result.jobId, {
       orderId: input.orderId,
       status: "accepted",

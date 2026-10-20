@@ -4,7 +4,7 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "wrangler dev src/index.ts",
+    "dev": "wrangler dev src/index.ts --var CUTOFF_ENV:development",
     "deploy": "wrangler deploy",
     "typecheck": "tsc --noEmit",
     "build": "tsc --noEmit",

@@ -54,6 +54,7 @@ export function testBindings(
   overrides: Partial<Pick<ApiBindings, "nowUtc" | "fulfill">> = {},
 ): TestBindings {
   const pay = new FakePayAdapter();
+  const quotes = new MemoryQuoteRepository();
   const revocationKv = new MemoryRevocationKv();
   const catalog = seedFixtureCatalog();
   const offers = seedDualFulfillerOffers(new MemoryOfferRepository(), {
@@ -69,11 +70,11 @@ export function testBindings(
     tax: new FakeTaxAdapter(),
     offerFeed: new FakeAggregatorOfferAdapter(),
     brandOfferFeed: new FakeBrandFeedOfferAdapter(),
-    orders: new MemoryOrderRepository(pay),
+    orders: new MemoryOrderRepository(pay, quotes),
     households: new MemoryHouseholdRepository(),
     agents: new MemoryAgentCredentialRepository(revocationKv),
     mandates: new MemoryMandateRepository(),
-    quotes: new MemoryQuoteRepository(),
+    quotes,
     catalog,
     offers,
     risk: new MemoryRiskRepository(),
@@ -92,6 +93,9 @@ export function testBindings(
     revocationKv,
     traceId: "trace_test",
     nowUtc: overrides.nowUtc ?? (() => "2026-10-19T12:00:00.000Z"),
+    production: false,
+    reposMode: "memory",
+    fakeIntegrations: true,
   };
 }
 

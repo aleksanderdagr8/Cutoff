@@ -48,5 +48,5 @@ jobs:
           # Public GA property — build-time inline for the client bundle.
           NEXT_PUBLIC_GA_MEASUREMENT_ID: G-3K4P4MPMPD
           CUTOFF_HOME_DEV_BYPASS: "0"
-          CUTOFF_OPS_DEV_BYPASS: "1"
+          CUTOFF_OPS_DEV_BYPASS: "0"
         run: pnpm --filter @cutoff/web run deploy

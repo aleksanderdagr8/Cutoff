@@ -32,7 +32,7 @@ Or paste the SQL files in order in the Supabase SQL Editor. Full steps: [docs/su
 
 **`/home` Auth:** with `NEXT_PUBLIC_SUPABASE_URL` + `NEXT_PUBLIC_SUPABASE_ANON_KEY` set and `CUTOFF_HOME_DEV_BYPASS` unset/0 → Supabase email+password; first sign-in runs `ensure_home_member` (links `auth.users` → `members.auth_user_id`). Escape hatch: `CUTOFF_HOME_DEV_BYPASS=1` (cookie demo). If public Supabase env is missing, bypass stays on automatically.
 
-**`/ops`:** still uses `CUTOFF_OPS_DEV_BYPASS` until operator TOTP lands.
+**`/ops`:** local `next dev` can use `CUTOFF_OPS_DEV_BYPASS=1`. Production ignores that flag. Gate `/ops` with Cloudflare Access (`apps/web/DEPLOY.md`).
 
 ```bash
 pnpm install

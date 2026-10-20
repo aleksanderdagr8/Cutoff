@@ -1,7 +1,7 @@
 import { redirect } from "next/navigation";
 import { OpsShell } from "@/components/ops/shell";
 import { SignInForm } from "@/components/ops/sign-in-form";
-import { opsDevBypassEnabled, supabaseConfigured } from "@/lib/ops/config";
+import { opsDevBypassEnabled } from "@/lib/ops/config";
 import { readOpsSession } from "@/lib/ops/session";
 
 export default async function OpsSignInPage() {
@@ -9,7 +9,6 @@ export default async function OpsSignInPage() {
   if (session) redirect("/ops/live");
 
   const bypass = opsDevBypassEnabled();
-  const configured = supabaseConfigured();
 
   return (
     <OpsShell session={null} active="sign-in" bypass={bypass}>
@@ -23,7 +22,7 @@ export default async function OpsSignInPage() {
         Watch live order flow. Act on stuck hold, kill switch, revoke, refund,
         and cancel-before-ship — each with a reason and an audit row.
       </p>
-      <SignInForm bypass={bypass} supabaseConfigured={configured} />
+      <SignInForm bypass={bypass} />
     </OpsShell>
   );
 }

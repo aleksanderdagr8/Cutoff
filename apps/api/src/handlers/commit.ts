@@ -120,11 +120,11 @@ export async function commitHandler(
     await bindings.quotes.markCommitted(quote.quoteId, nowUtc);
   }
 
-  // Phase 4: place after capture. Failure enqueues refund (no bare captured).
+  // Place after capture. Retries are keyed on order id (same job or same refund).
   let status = result.order.status;
   let jobId: string | undefined;
   let refundId: string | undefined;
-  if (result.created && result.order.status === "captured") {
+  if (result.order.status === "captured") {
     const placed = await placeAfterCapture(bindings, {
       orderId: result.order.orderId,
       householdId: result.order.householdId,
@@ -139,7 +139,12 @@ export async function commitHandler(
       refundId = placed.refundId;
       // Stay captured but refund queued — not a silent stranded capture.
     }
-  } else if (!result.created && result.order.status === "placed") {
+  } else if (
+    result.order.status === "placed" ||
+    result.order.status === "shipped" ||
+    result.order.status === "delivered" ||
+    result.order.status === "refunded"
+  ) {
     const job = bindings.fulfillment.getJobForOrder(result.order.orderId);
     jobId = job?.jobId;
     status = result.order.status;

@@ -4,19 +4,20 @@ import {
   validateEvidenceFields,
 } from "@cutoff/domain";
 import { sha256Hex } from "../hash.js";
-import type {
-  ChargeRow,
-  CommitInput,
-  CommitResult,
-  EvidenceRow,
-  EvidencedCommitInput,
-  EvidencedCommitResult,
-  MandatedCommitInput,
-  MandatedCommitResult,
-  OrderEventRow,
-  OrderRepository,
-  OrderRow,
-  OrderStatusEvent,
+import {
+  commitEvidenceThenCapture,
+  type ChargeRow,
+  type CommitInput,
+  type CommitResult,
+  type EvidenceRow,
+  type EvidencedCommitInput,
+  type EvidencedCommitResult,
+  type MandatedCommitInput,
+  type MandatedCommitResult,
+  type OrderEventRow,
+  type OrderRepository,
+  type OrderRow,
+  type OrderStatusEvent,
 } from "../orders.js";
 import type { CutoffSupabaseClient } from "../supabase-client.js";
 import { ulid } from "../ulid.js";
@@ -32,10 +33,20 @@ import {
   type DbOrderEvent,
 } from "./mappers.js";
 
+function isUniqueViolation(
+  error: { message: string; code?: string } | null,
+): boolean {
+  if (!error) return false;
+  return (
+    error.code === "23505" || error.message.toLowerCase().includes("duplicate")
+  );
+}
+
 /**
  * Thin Postgres order / ledger / evidence / charge store.
- * Writes are sequential over the Data API (not a single SQL transaction).
- * Idempotency relies on unique (household_id, idempotency_key).
+ * The commit record (order + evidence + idempotency key + quote used) is one
+ * `commit_order_record` transaction. Capture and place run after that and
+ * retry on order id.
  */
 export class PostgresOrderRepository implements OrderRepository {
   constructor(
@@ -58,6 +69,17 @@ export class PostgresOrderRepository implements OrderRepository {
     return mapOrder(data as DbOrder);
   }
 
+  private async findByQuoteId(quoteId: string): Promise<OrderRow | null> {
+    const { data, error } = await this.db
+      .from("orders")
+      .select("*")
+      .eq("quote_id", quoteId)
+      .maybeSingle();
+    throwOnError(error, "orders.findByQuoteId");
+    if (!data) return null;
+    return mapOrder(data as DbOrder);
+  }
+
   private async insertEvent(
     orderId: string,
     status: OrderStatusEvent,
@@ -75,10 +97,11 @@ export class PostgresOrderRepository implements OrderRepository {
   }
 
   async commit(input: CommitInput): Promise<CommitResult> {
-    const existing = await this.findByIdempotency(
-      input.householdId,
-      input.idempotencyKey,
-    );
+    const existing =
+      (await this.findByIdempotency(
+        input.householdId,
+        input.idempotencyKey,
+      )) ?? (await this.findByQuoteId(input.quoteId));
     if (existing) {
       return { order: existing, created: false };
     }
@@ -103,15 +126,12 @@ export class PostgresOrderRepository implements OrderRepository {
       status: "captured",
       created_at: nowUtc,
     });
-    if (
-      error &&
-      (error.message.includes("duplicate") ||
-        ("code" in error && error.code === "23505"))
-    ) {
-      const raced = await this.findByIdempotency(
-        input.householdId,
-        input.idempotencyKey,
-      );
+    if (isUniqueViolation(error)) {
+      const raced =
+        (await this.findByIdempotency(
+          input.householdId,
+          input.idempotencyKey,
+        )) ?? (await this.findByQuoteId(input.quoteId));
       if (raced) return { order: raced, created: false };
     }
     throwOnError(error, "orders.insert");
@@ -158,24 +178,18 @@ export class PostgresOrderRepository implements OrderRepository {
     return { ok: true, order: result.order, created: result.created };
   }
 
-  async commitWithEvidence(
+  async recordEvidencedCommit(
     input: EvidencedCommitInput,
   ): Promise<EvidencedCommitResult> {
-    const existing = await this.findByIdempotency(
-      input.householdId,
-      input.idempotencyKey,
-    );
+    const existing =
+      (await this.findByIdempotency(
+        input.householdId,
+        input.idempotencyKey,
+      )) ?? (await this.findByQuoteId(input.quoteId));
     if (existing) {
       const evidence = await this.getEvidence(existing.orderId);
-      if (!evidence) {
-        return { ok: false, error: "mandate_miss" };
-      }
-      return {
-        ok: true,
-        order: existing,
-        created: false,
-        evidence,
-      };
+      if (!evidence) return { ok: false, error: "mandate_miss" };
+      return { ok: true, order: existing, created: false, evidence };
     }
 
     const mandateCheck = checkMandateForCommit({
@@ -204,112 +218,108 @@ export class PostgresOrderRepository implements OrderRepository {
     }
 
     const orderId = `ord_${ulid()}`;
-    const nowUtc = input.nowUtc;
     const evidenceId = ulid();
-
-    // Insert order first (status committed), then evidence + event, then pay.
-    const { error: orderError } = await this.db.from("orders").insert({
-      order_id: orderId,
-      household_id: input.householdId,
-      canonical_item_id: input.canonicalItemId,
-      quote_id: input.quoteId,
-      amount_cents: input.amountCents,
-      charge_id: null,
-      idempotency_key: input.idempotencyKey,
-      status: "committed",
-      created_at: nowUtc,
+    const eventId = ulid();
+    const { data, error } = await this.db.rpc("commit_order_record", {
+      p_order_id: orderId,
+      p_household_id: input.householdId,
+      p_canonical_item_id: input.canonicalItemId,
+      p_quote_id: input.quoteId,
+      p_amount_cents: input.amountCents,
+      p_idempotency_key: input.idempotencyKey,
+      p_now: input.nowUtc,
+      p_event_id: eventId,
+      p_evidence_id: evidenceId,
+      p_actor_chain: [...input.actorChain],
+      p_protocol: input.protocol,
+      p_agent_key_id: input.agentKeyId,
+      p_mandate_id: input.mandateId,
+      p_quote_hash: quoteHash,
+      p_address_id: input.addressId,
     });
-    if (
-      orderError &&
-      (orderError.message.includes("duplicate") ||
-        ("code" in orderError && orderError.code === "23505"))
-    ) {
-      const raced = await this.findByIdempotency(
-        input.householdId,
-        input.idempotencyKey,
-      );
-      if (raced) {
-        const evidence = await this.getEvidence(raced.orderId);
-        if (!evidence) return { ok: false, error: "mandate_miss" };
-        return {
-          ok: true,
-          order: raced,
-          created: false,
-          evidence,
-        };
-      }
+    throwOnError(error, "commit_order_record");
+
+    const payload = data as { created?: boolean; order_id?: string } | null;
+    const storedId = payload?.order_id;
+    if (!storedId || typeof payload?.created !== "boolean") {
+      throw new Error("commit_order_record: missing order_id");
     }
-    throwOnError(orderError, "orders.insert");
 
-    const evidence: EvidenceRow = {
-      evidenceId,
-      orderId,
-      actorChain: [...input.actorChain],
-      protocol: input.protocol,
-      agentKeyId: input.agentKeyId,
-      mandateId: input.mandateId,
-      quoteHash,
-      addressId: input.addressId,
-      amountCents: input.amountCents,
-      createdAt: nowUtc,
+    const order = await this.get(storedId);
+    if (!order) throw new Error("commit_order_record: row missing after rpc");
+    const evidence = await this.getEvidence(order.orderId);
+    if (!evidence) {
+      return { ok: false, error: "mandate_miss" };
+    }
+    return {
+      ok: true,
+      order,
+      created: payload.created,
+      evidence,
     };
-    const { error: evidenceError } = await this.db.from("evidence").insert({
-      evidence_id: evidence.evidenceId,
-      order_id: evidence.orderId,
-      actor_chain: evidence.actorChain,
-      protocol: evidence.protocol,
-      agent_key_id: evidence.agentKeyId,
-      mandate_id: evidence.mandateId,
-      quote_hash: evidence.quoteHash,
-      address_id: evidence.addressId,
-      amount_cents: evidence.amountCents,
-      created_at: evidence.createdAt,
-    });
-    throwOnError(evidenceError, "evidence.insert");
-    await this.insertEvent(orderId, "committed", nowUtc);
+  }
 
-    let chargeId: string | null = null;
-    let status: OrderStatusEvent = "committed";
+  /**
+   * Charge keyed on order id. Unique charges.order_id plus the pay adapter
+   * key keep a retry from writing a second charge.
+   */
+  async captureOrder(orderId: string, atUtc: string): Promise<OrderRow | null> {
+    const order = await this.get(orderId);
+    if (!order) return null;
+    if (order.chargeId || order.status !== "committed") return order;
 
+    let chargeId: string;
+    let amountCents: number;
     try {
       const charge = await this.pay.charge({
-        orderId,
-        amountCents: input.amountCents,
-        idempotencyKey: input.idempotencyKey,
+        orderId: order.orderId,
+        amountCents: order.amountCents,
+        idempotencyKey: order.orderId,
       });
       chargeId = charge.chargeId;
-      const { error: chargeError } = await this.db.from("charges").insert({
-        charge_id: charge.chargeId,
-        order_id: orderId,
-        amount_cents: charge.amountCents,
-        idempotency_key: input.idempotencyKey,
-        created_at: nowUtc,
-      });
-      throwOnError(chargeError, "charges.insert");
-      await this.insertEvent(orderId, "captured", nowUtc);
-      status = "captured";
+      amountCents = charge.amountCents;
     } catch {
-      await this.insertEvent(orderId, "failed", nowUtc);
-      status = "failed";
+      const { data: failed, error: failError } = await this.db
+        .from("orders")
+        .update({ status: "failed", charge_id: null })
+        .eq("order_id", orderId)
+        .eq("status", "committed")
+        .select("order_id");
+      throwOnError(failError, "orders.captureFailed");
+      if (Array.isArray(failed) && failed.length > 0) {
+        await this.insertEvent(orderId, "failed", atUtc);
+      }
+      return this.get(orderId);
     }
 
-    const { error: statusError } = await this.db
-      .from("orders")
-      .update({ charge_id: chargeId, status })
-      .eq("order_id", orderId);
-    throwOnError(statusError, "orders.updateStatus");
-
-    const { error: edgeError } = await this.db.from("idempotency_keys").insert({
-      household_id: input.householdId,
-      idempotency_key: input.idempotencyKey,
+    const { error: chargeError } = await this.db.from("charges").insert({
+      charge_id: chargeId,
       order_id: orderId,
-      created_at: nowUtc,
+      amount_cents: amountCents,
+      idempotency_key: orderId,
+      created_at: atUtc,
     });
-    throwOnError(edgeError, "idempotency_keys.insert");
+    if (!isUniqueViolation(chargeError)) {
+      throwOnError(chargeError, "charges.insert");
+    }
 
-    const order = await this.get(orderId);
-    if (!order) throw new Error("orders.insert: row missing after insert");
-    return { ok: true, order, created: true, evidence };
+    const { data: updated, error: statusError } = await this.db
+      .from("orders")
+      .update({ charge_id: chargeId, status: "captured" })
+      .eq("order_id", orderId)
+      .eq("status", "committed")
+      .select("order_id");
+    throwOnError(statusError, "orders.capture");
+    if (Array.isArray(updated) && updated.length > 0) {
+      await this.insertEvent(orderId, "captured", atUtc);
+    }
+    return this.get(orderId);
+  }
+
+  async commitWithEvidence(
+    input: EvidencedCommitInput,
+  ): Promise<EvidencedCommitResult> {
+    return commitEvidenceThenCapture(this, input);
   }
 
   async list(): Promise<readonly OrderRow[]> {

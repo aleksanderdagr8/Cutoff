@@ -5,10 +5,9 @@ import { useState, useTransition } from "react";
 
 type Props = {
   bypass: boolean;
-  supabaseConfigured: boolean;
 };
 
-export function SignInForm({ bypass, supabaseConfigured }: Props) {
+export function SignInForm({ bypass }: Props) {
   const router = useRouter();
   const [email, setEmail] = useState("ops@cutoff.local");
   const [error, setError] = useState<string | null>(null);
@@ -29,7 +28,7 @@ export function SignInForm({ bypass, supabaseConfigured }: Props) {
         } | null;
         setError(
           body?.message ??
-            "Operator sign-in is not available. Enable CUTOFF_OPS_DEV_BYPASS=1 for local.",
+            "Operator sign-in is closed. Production /ops requires Cloudflare Access.",
         );
         return;
       }
@@ -54,19 +53,13 @@ export function SignInForm({ bypass, supabaseConfigured }: Props) {
 
       {bypass ? (
         <p className="text-[13px] text-secondary">
-          Local demo uses an operator cookie. Live Auth + TOTP are not required
-          yet.
-        </p>
-      ) : supabaseConfigured ? (
-        <p className="text-[13px] text-secondary">
-          Supabase keys are present, but operator Auth + TOTP are not wired.
-          Set{" "}
-          <span className="font-mono text-ink">CUTOFF_OPS_DEV_BYPASS=1</span>{" "}
-          to continue locally.
+          Local demo uses an operator cookie. This bypass is off in production.
         </p>
       ) : (
         <p className="text-[13px] text-secondary">
-          Add Supabase secrets or enable{" "}
+          Operator sign-in is closed. Production /ops must sit behind
+          Cloudflare Access. Local demo only: run{" "}
+          <span className="font-mono text-ink">next dev</span> with{" "}
           <span className="font-mono text-ink">CUTOFF_OPS_DEV_BYPASS=1</span>.
         </p>
       )}
@@ -75,7 +68,7 @@ export function SignInForm({ bypass, supabaseConfigured }: Props) {
 
       <button
         type="submit"
-        disabled={pending || (!bypass && !supabaseConfigured)}
+        disabled={pending || !bypass}
         className="ops-cta rounded-control bg-accent px-5 py-2.5 text-[15px] font-medium text-white disabled:opacity-40"
       >
         {pending ? "Signing in…" : "Sign in"}

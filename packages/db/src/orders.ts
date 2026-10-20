@@ -5,6 +5,7 @@ import {
   type MandateSnapshot,
 } from "@cutoff/domain";
 import { sha256Hex } from "./hash.js";
+import type { QuoteRepository } from "./quotes.js";
 import type { MaybePromise } from "./types.js";
 import { ulid } from "./ulid.js";
 
@@ -97,6 +98,19 @@ export type EvidencedCommitResult =
 export interface OrderRepository {
   commit(input: CommitInput): Promise<CommitResult>;
   commitWithMandate(input: MandatedCommitInput): Promise<MandatedCommitResult>;
+  /**
+   * Durable record only: one order per quote, idempotency key, evidence,
+   * committed event, and the quote marked used. No charge.
+   */
+  recordEvidencedCommit(
+    input: EvidencedCommitInput,
+  ): Promise<EvidencedCommitResult>;
+  /**
+   * Payment after the record. Idempotent on order id.
+   * No-op unless status is `committed` and charge_id is null.
+   * Pay adapter idempotency key is the order id.
+   */
+  captureOrder(orderId: string, atUtc: string): Promise<OrderRow | null>;
   commitWithEvidence(
     input: EvidencedCommitInput,
   ): Promise<EvidencedCommitResult>;
@@ -120,18 +134,67 @@ export interface OrderRepository {
 }
 
 /**
+ * Record then capture. Capture retries while the order is still `committed`
+ * with no charge (process died after the record). A terminal `failed` capture
+ * is not charged again.
+ */
+export async function commitEvidenceThenCapture(
+  repo: OrderRepository,
+  input: EvidencedCommitInput,
+): Promise<EvidencedCommitResult> {
+  const recorded = await repo.recordEvidencedCommit(input);
+  if (!recorded.ok) return recorded;
+  if (recorded.order.status === "committed" && recorded.order.chargeId == null) {
+    const order = await repo.captureOrder(recorded.order.orderId, input.nowUtc);
+    if (!order) return recorded;
+    return {
+      ok: true,
+      order,
+      created: recorded.created,
+      evidence: recorded.evidence,
+    };
+  }
+  return recorded;
+}
+
+/**
  * Order repository. Owns orders + append-only order_events + evidence + charges.
- * Unique (household_id, idempotency_key). Pay adapter injected — never Stripe SDK.
+ * Unique (household_id, idempotency_key) and one order per quote_id.
+ * Pay adapter injected — never Stripe SDK. Charge idempotency key is the order id.
  */
 export class MemoryOrderRepository implements OrderRepository {
   private readonly orders: OrderRow[] = [];
   private readonly byIdempotency = new Map<string, OrderRow>();
+  private readonly byQuoteId = new Map<string, OrderRow>();
   private readonly events: OrderEventRow[] = [];
   private readonly evidenceRows: EvidenceRow[] = [];
   private readonly chargeRows: ChargeRow[] = [];
   private seq = 0;
 
-  constructor(private readonly pay: PayAdapter) {}
+  constructor(
+    private readonly pay: PayAdapter,
+    private readonly quotes?: QuoteRepository,
+  ) {}
+
+  private remember(order: OrderRow): void {
+    this.byIdempotency.set(
+      this.lockKey(order.householdId, order.idempotencyKey),
+      order,
+    );
+    this.byQuoteId.set(order.quoteId, order);
+    this.orders.push(order);
+  }
+
+  private existingOrder(
+    householdId: string,
+    idempotencyKey: string,
+    quoteId: string,
+  ): OrderRow | undefined {
+    return (
+      this.byIdempotency.get(this.lockKey(householdId, idempotencyKey)) ??
+      this.byQuoteId.get(quoteId)
+    );
+  }
 
   private lockKey(householdId: string, idempotencyKey: string): string {
     return `${householdId}::${idempotencyKey}`;
@@ -156,8 +219,11 @@ export class MemoryOrderRepository implements OrderRepository {
    * Phase 0 path: charge + one order row. No evidence (pre–Unit 8).
    */
   async commit(input: CommitInput): Promise<CommitResult> {
-    const key = this.lockKey(input.householdId, input.idempotencyKey);
-    const existing = this.byIdempotency.get(key);
+    const existing = this.existingOrder(
+      input.householdId,
+      input.idempotencyKey,
+      input.quoteId,
+    );
     if (existing) {
       return { order: existing, created: false };
     }
@@ -194,8 +260,7 @@ export class MemoryOrderRepository implements OrderRepository {
       createdAt: nowUtc,
     });
 
-    this.byIdempotency.set(key, order);
-    this.orders.push(order);
+    this.remember(order);
     return { order, created: true };
   }
 
@@ -221,15 +286,17 @@ export class MemoryOrderRepository implements OrderRepository {
   }
 
   /**
-   * Phase 3 / Unit 8: evidence in the same transaction as `committed`.
-   * Pay amount is always input.amountCents (quote landed). Adapter error →
-   * `failed` event, no `captured`, no charge row.
+   * Phase 3 / Unit 8 record: evidence + committed event + quote used.
+   * No charge. One quote id can only produce one order.
    */
-  async commitWithEvidence(
+  async recordEvidencedCommit(
     input: EvidencedCommitInput,
   ): Promise<EvidencedCommitResult> {
-    const key = this.lockKey(input.householdId, input.idempotencyKey);
-    const existing = this.byIdempotency.get(key);
+    const existing = this.existingOrder(
+      input.householdId,
+      input.idempotencyKey,
+      input.quoteId,
+    );
     if (existing) {
       const evidence =
         this.evidenceRows.find((e) => e.orderId === existing.orderId) ?? null;
@@ -272,8 +339,9 @@ export class MemoryOrderRepository implements OrderRepository {
     this.seq += 1;
     const orderId = `ord_fake_${this.seq}`;
     const nowUtc = input.nowUtc;
+    const eventStart = this.events.length;
+    const evidenceStart = this.evidenceRows.length;
 
-    // Same-transaction: evidence + committed event first (before pay).
     const evidence: EvidenceRow = {
       evidenceId: ulid(),
       orderId,
@@ -289,45 +357,73 @@ export class MemoryOrderRepository implements OrderRepository {
     this.evidenceRows.push(evidence);
     this.appendEvent(orderId, "committed", nowUtc);
 
-    let chargeId: string | null = null;
-    let status: OrderStatusEvent = "committed";
-
-    try {
-      const charge = await this.pay.charge({
-        orderId,
-        amountCents: input.amountCents,
-        idempotencyKey: input.idempotencyKey,
-      });
-      chargeId = charge.chargeId;
-      this.chargeRows.push({
-        chargeId: charge.chargeId,
-        orderId,
-        amountCents: charge.amountCents,
-        idempotencyKey: input.idempotencyKey,
-        createdAt: nowUtc,
-      });
-      this.appendEvent(orderId, "captured", nowUtc);
-      status = "captured";
-    } catch {
-      this.appendEvent(orderId, "failed", nowUtc);
-      status = "failed";
-    }
-
     const order: OrderRow = {
       orderId,
       householdId: input.householdId,
       canonicalItemId: input.canonicalItemId,
       quoteId: input.quoteId,
       amountCents: input.amountCents,
-      chargeId,
+      chargeId: null,
       idempotencyKey: input.idempotencyKey,
       createdAt: nowUtc,
-      status,
+      status: "committed",
     };
+    this.remember(order);
 
-    this.byIdempotency.set(key, order);
-    this.orders.push(order);
+    try {
+      if (this.quotes) {
+        await this.quotes.markCommitted(order.quoteId, nowUtc);
+      }
+    } catch (error) {
+      this.events.length = eventStart;
+      this.evidenceRows.length = evidenceStart;
+      this.orders.pop();
+      this.byIdempotency.delete(
+        this.lockKey(order.householdId, order.idempotencyKey),
+      );
+      this.byQuoteId.delete(order.quoteId);
+      throw error;
+    }
+
     return { ok: true, order, created: true, evidence };
+  }
+
+  /**
+   * Charge keyed on order id. A second call does not charge again.
+   * Adapter failure appends `failed` and writes no charge row.
+   */
+  async captureOrder(orderId: string, atUtc: string): Promise<OrderRow | null> {
+    const order = this.get(orderId);
+    if (!order) return null;
+    if (order.chargeId || order.status !== "committed") return order;
+
+    try {
+      const charge = await this.pay.charge({
+        orderId: order.orderId,
+        amountCents: order.amountCents,
+        idempotencyKey: order.orderId,
+      });
+      order.chargeId = charge.chargeId;
+      this.chargeRows.push({
+        chargeId: charge.chargeId,
+        orderId: order.orderId,
+        amountCents: charge.amountCents,
+        idempotencyKey: order.orderId,
+        createdAt: atUtc,
+      });
+      this.appendEvent(order.orderId, "captured", atUtc);
+      order.status = "captured";
+    } catch {
+      this.appendEvent(order.orderId, "failed", atUtc);
+      order.status = "failed";
+    }
+    return order;
+  }
+
+  async commitWithEvidence(
+    input: EvidencedCommitInput,
+  ): Promise<EvidencedCommitResult> {
+    return commitEvidenceThenCapture(this, input);
   }
 
   list(): readonly OrderRow[] {
