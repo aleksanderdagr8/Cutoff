@@ -18,13 +18,13 @@ describe("blog posts", () => {
     expect(isPublished({ draft: false }, "test")).toBe(true);
   });
 
-  it("loads the first post as a draft with the required frontmatter", () => {
+  it("loads the first post as published with the required frontmatter", () => {
     const all = readAllPosts();
     const post = all.find(
       (item) => item.slug === "subscribe-and-save-price-increase",
     );
     expect(post).toBeTruthy();
-    expect(post?.draft).toBe(true);
+    expect(post?.draft).toBe(false);
     expect(post?.title).toBe(
       "Subscribe & Save Prices Went Up? Here's What's Happening and What You Can Do",
     );
@@ -33,51 +33,47 @@ describe("blog posts", () => {
     expect(formatPostDate(post!.date)).toBe("October 20, 2026");
   });
 
-  it("marks the unsourced FTC line with a visible TODO and does not invent a citation", () => {
+  it("cites the FTC Prime line and does not leave a TODO", () => {
     const post = readAllPosts().find(
       (item) => item.slug === "subscribe-and-save-price-increase",
     );
     expect(post).toBeTruthy();
-    const sentence =
-      "The FTC's case against Amazon over Prime enrollment and cancellation is the best-known example, and it's a separate issue from Subscribe & Save.";
-    expect(post!.body).toContain(sentence);
+    const ftc =
+      "https://www.ftc.gov/news-events/news/press-releases/2025/09/ftc-secures-historic-25-billion-settlement-against-amazon";
     expect(post!.body).toContain(
-      "> **TODO:** The line above references the FTC case against Amazon over Prime enrollment and cancellation and has no source. Add a citation before publishing.",
+      `The [FTC's case against Amazon over Prime enrollment and cancellation](${ftc}) is the best-known example, and it's a separate issue from Subscribe & Save.`,
     );
-    const withoutTodo = post!.body.replace(
-      /\n> \*\*TODO:\*\* The line above references the FTC case against Amazon over Prime enrollment and cancellation and has no source\. Add a citation before publishing\.\n/,
-      "\n",
-    );
-    expect(withoutTodo).not.toContain("TODO");
-    expect(withoutTodo).toContain(sentence);
-    expect(post!.body).not.toMatch(/ftc\.gov/i);
+    expect(post!.body).not.toContain("TODO");
+    expect(post!.body).toContain(ftc);
     expect(post!.body).toContain("## What Amazon says about Subscribe & Save pricing");
     expect(post!.body).toContain("## The bottom line");
   });
 
-  it("omits the draft from production listings, sitemap, and RSS", () => {
+  it("includes the published post in production listings, sitemap, and RSS", () => {
     expect(
       listPosts("production").some(
         (post) => post.slug === "subscribe-and-save-price-increase",
       ),
-    ).toBe(false);
+    ).toBe(true);
     expect(
       listPosts("development").some(
         (post) => post.slug === "subscribe-and-save-price-increase",
       ),
     ).toBe(true);
     expect(
-      getPost("subscribe-and-save-price-increase", "production"),
-    ).toBeNull();
+      getPost("subscribe-and-save-price-increase", "production")?.draft,
+    ).toBe(false);
     expect(
       getPost("subscribe-and-save-price-increase", "development")?.draft,
-    ).toBe(true);
+    ).toBe(false);
 
     const published = listPosts("production");
     const rss = renderRss(published);
-    expect(rss).not.toContain("subscribe-and-save-price-increase");
+    expect(rss).toContain("subscribe-and-save-price-increase");
     expect(rss).toContain("<channel>");
-    expect(blogSitemapEntries(published)).toEqual([]);
+    expect(blogSitemapEntries(published).map((entry) => entry.url)).toContain(
+      "https://callcutoff.com/blog/subscribe-and-save-price-increase",
+    );
 
     const preview = listPosts("development");
     const previewRss = renderRss(preview);

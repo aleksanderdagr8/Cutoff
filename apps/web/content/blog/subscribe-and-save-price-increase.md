@@ -3,7 +3,7 @@ title: "Subscribe & Save Prices Went Up? Here's What's Happening and What You Ca
 description: "Amazon's Subscribe & Save discount isn't a price lock. What the terms say, what a 2026 lawsuit alleges, and how to catch a quiet price increase."
 date: "2026-10-20"
 slug: subscribe-and-save-price-increase
-draft: true
+draft: false
 target_keyword: subscribe and save price increase
 ---
 
@@ -52,9 +52,7 @@ None of this requires anyone to do something sneaky. It follows from how the pro
 3. **The default is "ship."** If you do nothing, the order goes out at the new price.
 4. **The notice comes from the seller.** The email that tells you about an increase is from the same company that benefits if you don't read it.
 
-When defaults favor the seller and your only protection is noticing an email in time, prices will drift up for anyone who's busy. Regulators have been paying attention to subscription design generally. The FTC's case against Amazon over Prime enrollment and cancellation is the best-known example, and it's a separate issue from Subscribe & Save.
-
-> **TODO:** The line above references the FTC case against Amazon over Prime enrollment and cancellation and has no source. Add a citation before publishing.
+When defaults favor the seller and your only protection is noticing an email in time, prices will drift up for anyone who's busy. Regulators have been paying attention to subscription design generally. The [FTC's case against Amazon over Prime enrollment and cancellation](https://www.ftc.gov/news-events/news/press-releases/2025/09/ftc-secures-historic-25-billion-settlement-against-amazon) is the best-known example, and it's a separate issue from Subscribe & Save.
 
 ## What you can do today (no new tools needed)
 
@@ -90,4 +88,4 @@ To be clear about where we are: Cutoff is in early access and runs in a sandbox.
 
 Subscribe & Save isn't a price lock, and Amazon's own help page and terms say so. Whether the way prices drift amounts to "bait and switch" is now for a court to decide. In the meantime, the practical takeaway doesn't depend on how that case turns out: **if your recurring purchases ship by default, someone has to check every price, every time.** You can do that yourself with the steps above. Or you can set rules once and use tools that refuse to buy outside them.
 
-*Sources: [Amazon Subscribe & Save help](https://www.amazon.com/b?ie=UTF8&node=15283820011) · [OregonLive, May 2026](https://www.oregonlive.com/retail/2026/05/amazon-lured-customers-into-enrolling-in-subscribe-save-then-quietly-jacked-up-the-prices-lawsuit-alleges.html) · [Stritmatter case page](https://www.stritmatter.com/amazon-subscribe-save-class-action/) · [r/amazonprime thread](https://www.reddit.com/r/amazonprime/comments/1iuvxzt/bait_and_switch_with_subscribe_and_save/) · [Slickdeals](https://daily.slickdeals.net/shopping/amazon-subscribe-and-save-price-changes/)*
+*Sources: [Amazon Subscribe & Save help](https://www.amazon.com/b?ie=UTF8&node=15283820011) · [OregonLive, May 2026](https://www.oregonlive.com/retail/2026/05/amazon-lured-customers-into-enrolling-in-subscribe-save-then-quietly-jacked-up-the-prices-lawsuit-alleges.html) · [Stritmatter case page](https://www.stritmatter.com/amazon-subscribe-save-class-action/) · [r/amazonprime thread](https://www.reddit.com/r/amazonprime/comments/1iuvxzt/bait_and_switch_with_subscribe_and_save/) · [Slickdeals](https://daily.slickdeals.net/shopping/amazon-subscribe-and-save-price-changes/) · [FTC, Sept 25, 2025](https://www.ftc.gov/news-events/news/press-releases/2025/09/ftc-secures-historic-25-billion-settlement-against-amazon)*
