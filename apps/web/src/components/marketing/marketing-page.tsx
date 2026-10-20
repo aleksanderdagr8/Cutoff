@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { BuildersPanel } from "./builders-panel";
 import { HeroTerminal } from "./hero-terminal";
+import { MarketingHeader } from "./marketing-header";
 import { ProofStrip } from "./proof-strip";
 import { WaitlistForm } from "./waitlist-form";
 
@@ -47,51 +48,13 @@ export function MarketingPage() {
     <div className="marketing-shell relative min-h-screen">
       <div className="marketing-atmosphere pointer-events-none absolute inset-x-0 top-0 h-[640px]" />
 
-      <header className="sticky top-0 z-30 border-b border-hairline/80 bg-bg/85 backdrop-blur-md">
-        <div className="mx-auto flex max-w-[1120px] items-center justify-between gap-4 px-6 py-3.5 md:px-8">
-          <a
-            href="#top"
-            className="font-display text-[18px] font-semibold tracking-[-0.03em] text-ink"
-          >
-            CUTOFF
-          </a>
-          <nav className="hidden items-center gap-7 text-[14px] text-secondary md:flex">
-            <a href="#why" className="hover:text-ink">
-              Why care
-            </a>
-            <a href="#enforced" className="hover:text-ink">
-              How it works
-            </a>
-            <a href="#proof" className="hover:text-ink">
-              Proof
-            </a>
-            <a href="#builders" className="hover:text-ink">
-              For builders
-            </a>
-            <a href="#early-access" className="hover:text-ink">
-              Early access
-            </a>
-            <Link href="/home" className="hover:text-ink">
-              Household
-            </Link>
-          </nav>
-          <a
-            href="#early-access"
-            className="marketing-cta rounded-control bg-accent px-3.5 py-2 text-[13px] font-medium text-white hover:opacity-90 md:text-[14px]"
-          >
-            Join waitlist
-          </a>
-        </div>
-      </header>
+      <MarketingHeader />
 
       <main id="top" className="relative">
-        {/* Hero — one composition: brand + outcome + proof */}
-        <section className="mx-auto grid max-w-[1120px] gap-12 px-6 pb-20 pt-14 md:grid-cols-2 md:items-center md:gap-16 md:px-8 md:pb-28 md:pt-20">
+        {/* Hero — nav brand is primary; headline + CTAs + terminal */}
+        <section className="mx-auto grid max-w-[1120px] gap-12 px-6 pb-24 pt-14 md:grid-cols-2 md:items-center md:gap-16 md:px-8 md:pb-28 md:pt-20">
           <div className="marketing-enter">
-            <p className="font-display text-[48px] font-semibold leading-[0.95] tracking-[-0.045em] text-ink md:text-[64px]">
-              CUTOFF
-            </p>
-            <h1 className="mt-5 max-w-lg text-[22px] font-medium leading-snug tracking-[-0.02em] text-ink md:text-[26px]">
+            <h1 className="max-w-lg text-[22px] font-medium leading-snug tracking-[-0.02em] text-ink md:text-[26px]">
               Your agent should work for you — not the shelf that wants you
               stuck.
             </h1>
