@@ -62,7 +62,7 @@ export default async function BlogPostPage({ params }: Props) {
   const jsonLd = JSON.stringify(articleJsonLd(post)).replaceAll("<", "\\u003c");
 
   return (
-    <main className="mx-auto w-full max-w-[42rem] px-6 py-12 md:px-8 md:py-16">
+    <main className="mx-auto w-full max-w-[720px] px-6 py-14 md:px-8 md:py-20">
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: jsonLd }}
@@ -70,15 +70,15 @@ export default async function BlogPostPage({ params }: Props) {
       <p className="text-[14px]">
         <Link
           href="/blog"
-          className="font-medium text-[#1B3A4B] underline decoration-[#E8743B] decoration-2 underline-offset-[3px]"
+          className="font-medium text-accent underline-offset-4 hover:underline"
         >
           Blog
         </Link>
       </p>
-      <p className="mt-6 flex flex-wrap items-center gap-x-3 gap-y-1 text-[13px] font-medium tracking-[0.04em] text-[#9A3D12]">
+      <p className="mt-6 flex flex-wrap items-center gap-x-3 gap-y-1 text-[13px] font-medium text-secondary">
         <time dateTime={post.date}>{formatPostDate(post.date)}</time>
         {post.draft ? (
-          <span className="rounded-full border border-[#E8743B] px-2 py-0.5 text-[11px] font-semibold uppercase tracking-[0.08em] text-[#9A3D12]">
+          <span className="rounded-full border border-accent/40 px-2 py-0.5 text-[11px] font-medium uppercase tracking-[0.08em] text-accent">
             Draft
           </span>
         ) : null}

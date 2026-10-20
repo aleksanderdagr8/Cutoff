@@ -1,13 +1,6 @@
 import type { Metadata } from "next";
-import { Outfit } from "next/font/google";
 import { BlogFooter, BlogHeader } from "@/components/blog/blog-chrome";
 import { SITE_URL } from "@/lib/blog/posts";
-
-const outfit = Outfit({
-  subsets: ["latin"],
-  display: "swap",
-  variable: "--font-outfit",
-});
 
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
@@ -37,11 +30,10 @@ export default function BlogLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <div
-      className={`${outfit.variable} blog-shell flex min-h-screen flex-col`}
-    >
+    <div className="marketing-shell relative flex min-h-screen flex-col">
+      <div className="marketing-atmosphere pointer-events-none absolute inset-x-0 top-0 h-[420px]" />
       <BlogHeader />
-      {children}
+      <div className="relative flex flex-1 flex-col">{children}</div>
       <BlogFooter />
     </div>
   );

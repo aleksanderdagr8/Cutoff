@@ -34,25 +34,25 @@ export default function BlogIndexPage() {
   const posts = listPosts();
 
   return (
-    <main className="mx-auto w-full max-w-[42rem] px-6 py-14 md:px-8 md:py-20">
-      <p className="text-[13px] font-semibold uppercase tracking-[0.14em] text-[#9A3D12]">
+    <main className="mx-auto w-full max-w-[720px] px-6 py-14 md:px-8 md:py-20">
+      <p className="text-[13px] font-medium uppercase tracking-[0.1em] text-secondary">
         Blog
       </p>
-      <h1 className="mt-3 text-[2.25rem] font-semibold leading-[1.15] tracking-[-0.03em] text-[#1B3A4B] md:text-[2.75rem]">
+      <h1 className="mt-3 font-display text-[32px] font-semibold tracking-[-0.03em] text-ink md:text-[40px]">
         Notes from Cutoff
       </h1>
-      <p className="mt-4 text-[17px] leading-relaxed text-[#1B3A4B]/80">
+      <p className="mt-4 text-[16px] leading-relaxed text-secondary">
         {description}{" "}
         <a
           href="/blog/rss.xml"
-          className="font-medium text-[#1B3A4B] underline decoration-[#E8743B] decoration-2 underline-offset-[3px]"
+          className="font-medium text-accent underline-offset-4 hover:underline"
         >
           RSS
         </a>
       </p>
 
       {posts.length === 0 ? (
-        <p className="mt-12 rounded-card border border-[#1B3A4B]/10 bg-white px-6 py-8 text-[16px] leading-relaxed text-[#1B3A4B]/80">
+        <p className="mt-12 rounded-card border border-hairline bg-surface px-6 py-8 text-[16px] leading-relaxed text-secondary">
           No posts yet.
         </p>
       ) : (
@@ -62,20 +62,20 @@ export default function BlogIndexPage() {
               <article>
                 <Link
                   href={`/blog/${post.slug}`}
-                  className="block rounded-card border border-[#1B3A4B]/10 bg-white px-6 py-5 transition-colors hover:border-[#E8743B]"
+                  className="block rounded-card border border-hairline bg-surface px-6 py-5 hover:border-accent"
                 >
-                  <p className="flex flex-wrap items-center gap-x-3 gap-y-1 text-[13px] font-medium text-[#9A3D12]">
+                  <p className="flex flex-wrap items-center gap-x-3 gap-y-1 text-[13px] font-medium text-secondary">
                     <time dateTime={post.date}>{formatPostDate(post.date)}</time>
                     {post.draft ? (
-                      <span className="rounded-full border border-[#E8743B] px-2 py-0.5 text-[11px] font-semibold uppercase tracking-[0.08em] text-[#9A3D12]">
+                      <span className="rounded-full border border-accent/40 px-2 py-0.5 text-[11px] font-medium uppercase tracking-[0.08em] text-accent">
                         Draft
                       </span>
                     ) : null}
                   </p>
-                  <h2 className="mt-2 text-[1.35rem] font-semibold leading-snug tracking-[-0.02em] text-[#1B3A4B]">
+                  <h2 className="mt-2 font-display text-[22px] font-semibold tracking-[-0.02em] text-ink">
                     {post.title}
                   </h2>
-                  <p className="mt-2 text-[15px] leading-relaxed text-[#1B3A4B]/75">
+                  <p className="mt-2 text-[15px] leading-relaxed text-secondary">
                     {post.description}
                   </p>
                 </Link>
