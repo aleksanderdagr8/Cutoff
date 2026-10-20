@@ -247,6 +247,12 @@ body {
   transform: translateY(0);
 }
 
+/* Waitlist FAB — fixed bottom-right; iOS safe-area; not a locked bottom bar */
+.marketing-waitlist-fab {
+  right: max(1rem, env(safe-area-inset-right, 0px));
+  bottom: max(1rem, calc(env(safe-area-inset-bottom, 0px) + 0.75rem));
+}
+
 /* Proof strip — slow horizontal marquee; pause on hover/focus */
 .proof-marquee {
   overflow: hidden;
