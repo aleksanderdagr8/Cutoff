@@ -74,6 +74,7 @@ describe("marketing `/` hygiene", () => {
     expect(page).toMatch(/alleges/i);
     expect(page).toMatch(/Perplexity/);
     expect(page).toMatch(/Cloudflare/);
+    expect(page).toMatch(/Grok/);
     expect(builders).toMatch(/Why scrape fails/);
     expect(builders).toMatch(/shelf, not a storefront/i);
   });

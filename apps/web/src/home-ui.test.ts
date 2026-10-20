@@ -46,7 +46,7 @@ describe("household /home UI hygiene", () => {
     expect(src).not.toMatch(/regenerat/i);
   });
 
-  it("connect snippets cover Claude, ChatGPT, Cursor, and raw MCP", () => {
+  it("connect snippets cover Claude, ChatGPT, Cursor, Grok, and raw MCP", () => {
     const src = readFileSync(
       join(import.meta.dirname, "components/home/connect-snippets.tsx"),
       "utf8",
@@ -55,6 +55,10 @@ describe("household /home UI hygiene", () => {
     expect(src).toContain("mcp-remote");
     expect(src).toContain("mcp.json");
     expect(src).toContain("ChatGPT");
+    expect(src).toContain("Grok");
+    expect(src).toContain("grok mcp add");
+    expect(src).toContain('"type": "mcp"');
+    expect(src).toContain("authorization");
     expect(src).toContain("tools/list");
     expect(src).not.toContain("localStorage");
   });
