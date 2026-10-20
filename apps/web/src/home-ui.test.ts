@@ -98,12 +98,13 @@ describe("household /home UI hygiene", () => {
     expect(src).toContain('href: "/home/orders"');
     expect(src).toContain('href: "/home/mandate"');
     expect(src).toContain('href: "/home/keys"');
-    expect(src).toContain("/home/help");
     expect(src).toContain("home-bottom-nav");
     // One bottom nav only; header wordmark slightly larger than the old 22px mark.
     expect(src.match(/home-bottom-nav/g)?.length).toBe(1);
-    expect(src).toContain('text-[28px]');
-    expect(src).not.toContain('text-[22px]');
+    expect(src).toContain("text-[28px]");
+    expect(src).not.toContain("text-[22px]");
+    expect(src).toContain("HouseholdMenu");
+    expect(src).toContain("HomeThemeProvider");
   });
 
   it("Today and sign-in do not duplicate the CUTOFF wordmark as a page title", () => {
@@ -119,6 +120,79 @@ describe("household /home UI hygiene", () => {
     expect(signIn).not.toMatch(/<h1[^>]*>\s*CUTOFF\s*<\/h1>/);
     expect(today).toContain("session.email");
     expect(today).toContain("Today");
+  });
+
+  it("household menu hosts dark mode toggle (not header chrome icon)", () => {
+    const menu = readFileSync(
+      join(import.meta.dirname, "components/home/household-menu.tsx"),
+      "utf8",
+    );
+    expect(menu).toContain('aria-label="Dark mode"');
+    expect(menu).toContain('role="switch"');
+    expect(menu).toContain('variant: "desktop" | "mobile"');
+    expect(menu).toContain("Open menu");
+    expect(menu).toContain("Match system");
+    expect(menu).toContain("/home/help");
+    expect(menu).not.toContain("localStorage");
+    expect(menu).not.toContain("sessionStorage");
+
+    const theme = readFileSync(
+      join(import.meta.dirname, "lib/home/theme.ts"),
+      "utf8",
+    );
+    expect(theme).toContain("cutoff-home-theme");
+    expect(theme).toContain("localStorage");
+    expect(theme).toContain('"system"');
+  });
+
+  it("home motion uses CSS enter/stagger/press without a heavy animation lib", () => {
+    const css = readFileSync(
+      join(import.meta.dirname, "app/globals.css"),
+      "utf8",
+    );
+    expect(css).toContain("home-section");
+    expect(css).toContain("home-press");
+    expect(css).toContain("home-row-muted");
+    expect(css).toContain("home-wordmark-enter");
+    expect(css).toContain("home-title-kinetic");
+    expect(css).toContain("home-empty-kinetic");
+    expect(css).toContain('html[data-home-theme="dark"] .home-shell');
+    expect(css).toContain("prefers-reduced-motion");
+
+    const pkg = readFileSync(
+      join(import.meta.dirname, "../package.json"),
+      "utf8",
+    );
+    expect(pkg).not.toContain("framer-motion");
+  });
+
+  it("kinetic type is limited to wordmark, section titles, and empty headlines", () => {
+    const wordmark = readFileSync(
+      join(import.meta.dirname, "components/home/home-wordmark.tsx"),
+      "utf8",
+    );
+    expect(wordmark).toContain("home-wordmark-enter");
+    expect(wordmark).toContain("peekHomeWordmarkEnter");
+    expect(wordmark).not.toContain("sessionStorage");
+
+    const motion = readFileSync(
+      join(import.meta.dirname, "lib/home/motion.ts"),
+      "utf8",
+    );
+    expect(motion).toContain("sessionStorage");
+    expect(motion).toContain("cutoff-home-wordmark-enter");
+
+    const title = readFileSync(
+      join(import.meta.dirname, "components/home/home-section-title.tsx"),
+      "utf8",
+    );
+    expect(title).toContain("home-title-kinetic");
+
+    const empty = readFileSync(
+      join(import.meta.dirname, "components/home/home-empty-headline.tsx"),
+      "utf8",
+    );
+    expect(empty).toContain("home-empty-kinetic");
   });
 
   it("home routes exist for Adopted areas", () => {

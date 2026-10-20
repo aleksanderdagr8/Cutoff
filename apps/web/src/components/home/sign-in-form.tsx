@@ -137,7 +137,7 @@ export function SignInForm({ bypass, supabaseConfigured }: Props) {
       <button
         type="submit"
         disabled={pending || !canSubmit}
-        className="home-cta rounded-control bg-accent px-5 py-2.5 text-[15px] font-medium text-white disabled:opacity-40"
+        className="home-cta rounded-control bg-accent px-5 py-2.5 text-[15px] font-medium disabled:opacity-40"
       >
         {pending
           ? "Signing in…"

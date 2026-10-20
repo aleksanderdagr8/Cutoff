@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
+import { HomeEmptyHeadline } from "@/components/home/home-empty-headline";
 import { formatCents, formatDueAt } from "@/lib/home/format";
 import type { HomeListLineView } from "@/lib/home/types";
 
@@ -62,7 +63,8 @@ export function ListClient({ initialLines }: Props) {
   if (lines.length === 0) {
     return (
       <section className="border-t border-hairline pt-8">
-        <p className="text-[15px] text-secondary">
+        <HomeEmptyHeadline>Your list is waiting</HomeEmptyHeadline>
+        <p className="mt-3 text-[15px] text-secondary">
           No replenishment lines yet. After a mandate is set, your agent can
           add items here.
         </p>
@@ -90,7 +92,9 @@ export function ListClient({ initialLines }: Props) {
           return (
             <li
               key={line.line_id}
-              className="home-row flex flex-wrap items-baseline justify-between gap-4 border-b border-hairline py-5"
+              className={`home-row flex flex-wrap items-baseline justify-between gap-4 border-b border-hairline py-5 ${
+                line.paused || snoozed ? "home-row-muted" : ""
+              }`}
               style={{ animationDelay: `${i * 40}ms` }}
             >
               <div className="min-w-0 flex-1">
@@ -129,7 +133,7 @@ export function ListClient({ initialLines }: Props) {
                       type="button"
                       disabled={pendingId === line.line_id}
                       onClick={() => void skip(line.line_id, "next")}
-                      className="rounded-control px-2.5 py-1.5 text-[14px] font-medium text-accent transition-opacity duration-[160ms] ease-out hover:bg-accent/[0.08] disabled:opacity-40"
+                      className="home-press rounded-control px-2.5 py-1.5 text-[14px] font-medium text-accent hover:bg-accent/[0.08] disabled:opacity-40"
                     >
                       {pendingId === line.line_id ? "…" : "Next"}
                     </button>
@@ -137,7 +141,7 @@ export function ListClient({ initialLines }: Props) {
                       type="button"
                       disabled={pendingId === line.line_id}
                       onClick={() => void skip(line.line_id, "snooze")}
-                      className="rounded-control px-2.5 py-1.5 text-[14px] text-secondary transition-opacity duration-[160ms] ease-out hover:bg-black/[0.04] hover:text-ink disabled:opacity-40"
+                      className="home-press rounded-control px-2.5 py-1.5 text-[14px] text-secondary hover:bg-ink/[0.04] hover:text-ink disabled:opacity-40"
                     >
                       Snooze 1 wk
                     </button>
@@ -145,7 +149,7 @@ export function ListClient({ initialLines }: Props) {
                       type="button"
                       disabled={pendingId === line.line_id}
                       onClick={() => void skip(line.line_id, "pause")}
-                      className="rounded-control px-2.5 py-1.5 text-[14px] text-secondary transition-opacity duration-[160ms] ease-out hover:bg-black/[0.04] hover:text-ink disabled:opacity-40"
+                      className="home-press rounded-control px-2.5 py-1.5 text-[14px] text-secondary hover:bg-ink/[0.04] hover:text-ink disabled:opacity-40"
                     >
                       Pause
                     </button>

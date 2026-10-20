@@ -5,12 +5,12 @@ const config: Config = {
   theme: {
     extend: {
       colors: {
-        bg: "#F5F5F7",
-        surface: "#FFFFFF",
-        ink: "#1D1D1F",
-        secondary: "#6E6E73",
-        hairline: "#D2D2D7",
-        accent: "#1B3A4B",
+        bg: "rgb(var(--color-bg) / <alpha-value>)",
+        surface: "rgb(var(--color-surface) / <alpha-value>)",
+        ink: "rgb(var(--color-ink) / <alpha-value>)",
+        secondary: "rgb(var(--color-secondary) / <alpha-value>)",
+        hairline: "rgb(var(--color-hairline) / <alpha-value>)",
+        accent: "rgb(var(--color-accent) / <alpha-value>)",
       },
       fontFamily: {
         sans: [

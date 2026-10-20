@@ -1,5 +1,7 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
+import { HomeEmptyHeadline } from "@/components/home/home-empty-headline";
+import { HomeSectionTitle } from "@/components/home/home-section-title";
 import { HomeShell } from "@/components/home/shell";
 import { homeDevBypassEnabled } from "@/lib/home/config";
 import { formatCents } from "@/lib/home/format";
@@ -44,43 +46,46 @@ export default async function TodayPage() {
       active="today"
       bypass={homeDevBypassEnabled()}
     >
-      <p className="text-[13px] font-medium uppercase tracking-[0.1em] text-secondary">
-        {session.householdName}
-      </p>
-      <p className="mt-1 text-[14px] text-secondary">{session.email}</p>
-      <p className="mt-4 max-w-md text-[17px] leading-relaxed text-secondary">
-        Your replenishment shelf. Agents buy within the mandate — you skip,
-        pause, or check a receipt when you need to.
-      </p>
+      <div className="home-section">
+        <p className="text-[13px] font-medium uppercase tracking-[0.1em] text-secondary">
+          {session.householdName}
+        </p>
+        <p className="mt-1 text-[14px] text-secondary">{session.email}</p>
+        <p className="mt-4 max-w-md text-[17px] leading-relaxed text-secondary">
+          Your replenishment shelf. Agents buy within the mandate — you skip,
+          pause, or check a receipt when you need to.
+        </p>
 
-      <div className="mt-10">
-        <Link
-          href={primaryHref}
-          className="home-cta inline-flex rounded-control bg-accent px-6 py-3 text-[15px] font-medium text-white"
-        >
-          {primaryLabel}
-        </Link>
+        <div className="mt-10">
+          <Link
+            href={primaryHref}
+            className="home-cta inline-flex rounded-control bg-accent px-6 py-3 text-[15px] font-medium"
+          >
+            {primaryLabel}
+          </Link>
+        </div>
       </div>
 
-      <section className="mt-14 border-t border-hairline pt-8">
-        <h1 className="font-display text-[22px] font-semibold tracking-[-0.02em] text-ink">
-          Today
-        </h1>
+      <section className="home-section home-section-delay mt-14 border-t border-hairline pt-8">
+        <HomeSectionTitle size="today">Today</HomeSectionTitle>
         <p className="mt-2 max-w-lg text-[15px] text-secondary">
           Status of your list — not a live ops board.
         </p>
 
         {lines.length === 0 ? (
-          <p className="mt-8 text-[15px] text-secondary">
-            No replenishment lines yet.{" "}
-            <Link
-              href="/home/mandate"
-              className="text-accent underline-offset-2 hover:underline"
-            >
-              Set a mandate
-            </Link>{" "}
-            so an agent can start the list.
-          </p>
+          <div className="mt-8">
+            <HomeEmptyHeadline>Nothing on the shelf</HomeEmptyHeadline>
+            <p className="mt-3 text-[15px] text-secondary">
+              No replenishment lines yet.{" "}
+              <Link
+                href="/home/mandate"
+                className="text-accent underline-offset-2 hover:underline"
+              >
+                Set a mandate
+              </Link>{" "}
+              so an agent can start the list.
+            </p>
+          </div>
         ) : (
           <ul className="mt-8 space-y-0">
             {active.slice(0, 4).map((line, i) => (

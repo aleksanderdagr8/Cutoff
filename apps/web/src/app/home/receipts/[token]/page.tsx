@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
+import { HomeSectionTitle } from "@/components/home/home-section-title";
 import { HomeShell } from "@/components/home/shell";
 import { ReceiptActions } from "@/components/home/receipt-actions";
 import { homeDevBypassEnabled } from "@/lib/home/config";
@@ -37,9 +38,7 @@ export default async function ReceiptPage({ params }: Props) {
         <span className="mx-2">/</span>
         Receipt
       </p>
-      <h1 className="mt-3 font-display text-[34px] font-semibold tracking-[-0.03em] text-ink md:text-[40px]">
-        Receipt
-      </h1>
+      <HomeSectionTitle className="mt-3">Receipt</HomeSectionTitle>
       <p className="mt-3 max-w-xl text-[16px] leading-relaxed text-secondary">
         Charge details for your household. Works even if the agent key was
         revoked.

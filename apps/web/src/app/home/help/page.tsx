@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
+import { HomeSectionTitle } from "@/components/home/home-section-title";
 import { HomeShell } from "@/components/home/shell";
 import { homeDevBypassEnabled } from "@/lib/home/config";
 import { readHomeSession } from "@/lib/home/session";
@@ -14,9 +15,7 @@ export default async function HelpPage() {
       active="help"
       bypass={homeDevBypassEnabled()}
     >
-      <h1 className="font-display text-[34px] font-semibold tracking-[-0.03em] text-ink md:text-[40px]">
-        Help
-      </h1>
+      <HomeSectionTitle>Help</HomeSectionTitle>
       <p className="mt-3 max-w-xl text-[16px] leading-relaxed text-secondary">
         What Cutoff is doing for your household — in plain language.
       </p>
