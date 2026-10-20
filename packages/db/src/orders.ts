@@ -5,6 +5,7 @@ import {
   type MandateSnapshot,
 } from "@cutoff/domain";
 import { sha256Hex } from "./hash.js";
+import { commitLanes, KeyedMutex } from "./keyed-mutex.js";
 import type { QuoteRepository } from "./quotes.js";
 import type { MaybePromise } from "./types.js";
 import { ulid } from "./ulid.js";
@@ -170,6 +171,8 @@ export class MemoryOrderRepository implements OrderRepository {
   private readonly evidenceRows: EvidenceRow[] = [];
   private readonly chargeRows: ChargeRow[] = [];
   private seq = 0;
+  /** Serializes commit and capture the way commit_order_record locks a quote. */
+  private readonly gates = new KeyedMutex();
 
   constructor(
     private readonly pay: PayAdapter,
@@ -217,14 +220,22 @@ export class MemoryOrderRepository implements OrderRepository {
 
   /**
    * Phase 0 path: charge + one order row. No evidence (pre–Unit 8).
+   * The whole body runs under the quote + idempotency lock.
    */
   async commit(input: CommitInput): Promise<CommitResult> {
+    return this.gates.run(commitLanes(input), () => this.commitUnlocked(input));
+  }
+
+  private async commitUnlocked(input: CommitInput): Promise<CommitResult> {
     const existing = this.existingOrder(
       input.householdId,
       input.idempotencyKey,
       input.quoteId,
     );
     if (existing) {
+      if (existing.householdId !== input.householdId) {
+        throw new Error("quote_mismatch");
+      }
       return { order: existing, created: false };
     }
 
@@ -292,12 +303,23 @@ export class MemoryOrderRepository implements OrderRepository {
   async recordEvidencedCommit(
     input: EvidencedCommitInput,
   ): Promise<EvidencedCommitResult> {
+    return this.gates.run(commitLanes(input), () =>
+      this.recordEvidencedCommitUnlocked(input),
+    );
+  }
+
+  private async recordEvidencedCommitUnlocked(
+    input: EvidencedCommitInput,
+  ): Promise<EvidencedCommitResult> {
     const existing = this.existingOrder(
       input.householdId,
       input.idempotencyKey,
       input.quoteId,
     );
     if (existing) {
+      if (existing.householdId !== input.householdId) {
+        throw new Error("quote_mismatch");
+      }
       const evidence =
         this.evidenceRows.find((e) => e.orderId === existing.orderId) ?? null;
       if (!evidence) {
@@ -393,6 +415,18 @@ export class MemoryOrderRepository implements OrderRepository {
    * Adapter failure appends `failed` and writes no charge row.
    */
   async captureOrder(orderId: string, atUtc: string): Promise<OrderRow | null> {
+    const peek = this.get(orderId);
+    if (!peek) return null;
+    return this.gates.run(
+      [`order:${orderId}`, `quote:${peek.quoteId}`],
+      () => this.captureOrderUnlocked(orderId, atUtc),
+    );
+  }
+
+  private async captureOrderUnlocked(
+    orderId: string,
+    atUtc: string,
+  ): Promise<OrderRow | null> {
     const order = this.get(orderId);
     if (!order) return null;
     if (order.chargeId || order.status !== "committed") return order;

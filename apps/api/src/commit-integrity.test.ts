@@ -92,6 +92,52 @@ describe("commit integrity", () => {
     expect(quoteRow?.committedAtUtc).toBeTruthy();
   });
 
+  it("concurrent commits of one quote produce one order and one charge", async () => {
+    const bindings = testBindings();
+    const app = createApp();
+    const { mandate, agent } = await seedHouseholdWithMandateAndAgent(bindings);
+    const pay = bindings.pay as FakePayAdapter;
+    const quoted = await quote(app, bindings, {
+      mandateId: mandate.mandateId,
+      secret: agent.secret,
+    });
+
+    const responses = await Promise.all(
+      ["idem_c1", "idem_c2", "idem_c3", "idem_c4"].map((key) =>
+        app.fetch(commitRequest(agent.secret, quoted.quote_id, key), bindings),
+      ),
+    );
+    const bodies = await Promise.all(
+      responses.map(
+        async (res) =>
+          (await res.json()) as {
+            order_id: string;
+            created: boolean;
+            evidence_id: string;
+            job_id?: string;
+          },
+      ),
+    );
+    expect(responses.every((res) => res.status === 200 || res.status === 201)).toBe(
+      true,
+    );
+    const orderIds = new Set(bodies.map((body) => body.order_id));
+    expect(orderIds.size).toBe(1);
+    expect(new Set(bodies.map((body) => body.evidence_id)).size).toBe(1);
+    expect(bodies.filter((body) => body.created)).toHaveLength(1);
+    expect(await bindings.orders.count()).toBe(1);
+    expect(pay.charges).toHaveLength(1);
+    expect(bindings.fulfillment.listJobs()).toHaveLength(1);
+    const orderId = bodies[0]!.order_id;
+    const evidence = await bindings.orders.getEvidence(orderId);
+    expect(evidence?.evidenceId).toBe(bodies[0]!.evidence_id);
+    expect(
+      (await bindings.orders.listEvents(orderId)).filter(
+        (event) => event.status === "committed",
+      ),
+    ).toHaveLength(1);
+  });
+
   it("placing the same order twice keeps one job", async () => {
     const bindings = testBindings();
     const app = createApp();

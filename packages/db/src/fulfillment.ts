@@ -76,6 +76,8 @@ export class MemoryFulfillmentRepository {
     fulfillerId: string;
     nowUtc: string;
   }): FulfillmentJobRow {
+    const existing = this.byOrder.get(input.orderId);
+    if (existing) return existing;
     const row: FulfillmentJobRow = {
       jobId: input.jobId,
       orderId: input.orderId,
