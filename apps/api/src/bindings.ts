@@ -77,6 +77,8 @@ export type ApiBindings = {
   /** True only on the production Worker (`CUTOFF_ENV=production`). */
   production: boolean;
   reposMode: ReposMode;
-  /** True while index.ts still constructs Fake* adapters. */
+  /** True while fulfill/tax/offer/email are still fake adapters. */
   fakeIntegrations: boolean;
+  /** `stripe` when STRIPE_SECRET_KEY built a StripePayAdapter. */
+  payments: "stripe" | "fake";
 };

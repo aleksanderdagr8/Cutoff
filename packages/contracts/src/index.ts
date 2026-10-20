@@ -52,6 +52,8 @@ export const HealthResponseSchema = z.object({
   phase: z.literal("6"),
   repos: z.enum(["memory", "postgres"]).optional(),
   integrations: z.enum(["fake", "live"]).optional(),
+  /** Set when production health is unhealthy and Stripe pay is configured. */
+  payments: z.enum(["stripe", "fake"]).optional(),
   reasons: z.array(z.string()).optional(),
 });
 
@@ -90,6 +92,15 @@ export const CreateHouseholdRequestSchema = z
 export type CreateHouseholdRequest = z.infer<
   typeof CreateHouseholdRequestSchema
 >;
+
+/** Email for the $5/mo Checkout session. The Price lives in Stripe. */
+export const HouseholdPlanRequestSchema = z
+  .object({
+    email: z.string().email(),
+  })
+  .strict();
+
+export type HouseholdPlanRequest = z.infer<typeof HouseholdPlanRequestSchema>;
 
 export const CreateMandateRequestSchema = z
   .object({

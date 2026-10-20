@@ -106,6 +106,10 @@ export class PostgresOrderRepository implements OrderRepository {
       return { order: existing, created: false };
     }
 
+    if (this.pay.captureMode === "manual") {
+      throw new Error("pay_adapter_error");
+    }
+
     const orderId = `ord_${ulid()}`;
     const nowUtc = new Date().toISOString();
 
@@ -275,6 +279,7 @@ export class PostgresOrderRepository implements OrderRepository {
         orderId: order.orderId,
         amountCents: order.amountCents,
         idempotencyKey: order.orderId,
+        householdId: order.householdId,
       });
       chargeId = charge.chargeId;
       amountCents = charge.amountCents;
@@ -289,6 +294,16 @@ export class PostgresOrderRepository implements OrderRepository {
       if (Array.isArray(failed) && failed.length > 0) {
         await this.insertEvent(orderId, "failed", atUtc);
       }
+      return this.get(orderId);
+    }
+
+    if (this.pay.captureMode === "manual") {
+      const { error: authError } = await this.db
+        .from("orders")
+        .update({ charge_id: chargeId })
+        .eq("order_id", orderId)
+        .eq("status", "committed");
+      throwOnError(authError, "orders.authorize");
       return this.get(orderId);
     }
 
@@ -396,6 +411,147 @@ export class PostgresOrderRepository implements OrderRepository {
       .select("*", { count: "exact", head: true });
     throwOnError(error, "charges.count");
     return count ?? 0;
+  }
+
+  async captureAuthorizedOrder(
+    orderId: string,
+    atUtc: string,
+  ): Promise<OrderRow | null> {
+    const order = await this.get(orderId);
+    if (!order?.chargeId) return order;
+    if (await this.hasCharge(orderId)) return order;
+    if (!this.pay.captureAuthorized) {
+      throw new Error("pay_adapter_error");
+    }
+    const captured = await this.pay.captureAuthorized({
+      orderId: order.orderId,
+      authorizationId: order.chargeId,
+      amountCents: order.amountCents,
+      idempotencyKey: `${order.orderId}:capture`,
+    });
+    return this.noteCapturedPayment({
+      orderId,
+      chargeId: captured.chargeId,
+      amountCents: captured.amountCents,
+      atUtc,
+    });
+  }
+
+  async voidAuthorizedOrder(
+    orderId: string,
+    atUtc: string,
+  ): Promise<OrderRow | null> {
+    const order = await this.get(orderId);
+    if (!order) return null;
+    if (order.status === "failed") return order;
+    if (await this.hasCharge(orderId)) return order;
+    if (order.chargeId && this.pay.voidAuthorization) {
+      await this.pay.voidAuthorization({
+        orderId,
+        authorizationId: order.chargeId,
+        idempotencyKey: `${order.orderId}:void`,
+      });
+    }
+    if (order.status === "committed") {
+      const { data, error } = await this.db
+        .from("orders")
+        .update({ status: "failed" })
+        .eq("order_id", orderId)
+        .eq("status", "committed")
+        .select("order_id");
+      throwOnError(error, "orders.void");
+      if (Array.isArray(data) && data.length > 0) {
+        await this.insertEvent(orderId, "failed", atUtc);
+      }
+    }
+    return this.get(orderId);
+  }
+
+  async getByChargeId(chargeId: string): Promise<OrderRow | null> {
+    const { data, error } = await this.db
+      .from("orders")
+      .select("*")
+      .eq("charge_id", chargeId)
+      .maybeSingle();
+    throwOnError(error, "orders.getByChargeId");
+    if (!data) return null;
+    return mapOrder(data as DbOrder);
+  }
+
+  async noteCapturedPayment(input: {
+    orderId: string;
+    chargeId: string;
+    amountCents: number;
+    atUtc: string;
+  }): Promise<OrderRow | null> {
+    const order = await this.get(input.orderId);
+    if (!order) return null;
+    if (!order.chargeId) {
+      const { error } = await this.db
+        .from("orders")
+        .update({ charge_id: input.chargeId })
+        .eq("order_id", input.orderId);
+      throwOnError(error, "orders.noteAuthorization");
+    }
+    const { error: chargeError } = await this.db.from("charges").insert({
+      charge_id: input.chargeId,
+      order_id: input.orderId,
+      amount_cents: input.amountCents,
+      idempotency_key: `${input.orderId}:capture`,
+      created_at: input.atUtc,
+    });
+    if (!isUniqueViolation(chargeError)) {
+      throwOnError(chargeError, "charges.insert");
+    }
+    const events = await this.listEvents(input.orderId);
+    if (!events.some((event) => event.status === "captured")) {
+      await this.insertEvent(input.orderId, "captured", input.atUtc);
+    }
+    if (order.status === "committed") {
+      const { error } = await this.db
+        .from("orders")
+        .update({ status: "captured" })
+        .eq("order_id", input.orderId)
+        .eq("status", "committed");
+      throwOnError(error, "orders.noteCaptured");
+    }
+    return this.get(input.orderId);
+  }
+
+  async notePaymentFailed(
+    orderId: string,
+    atUtc: string,
+  ): Promise<OrderRow | null> {
+    const order = await this.get(orderId);
+    if (!order || order.status !== "committed") return order;
+    const { data, error } = await this.db
+      .from("orders")
+      .update({ status: "failed" })
+      .eq("order_id", orderId)
+      .eq("status", "committed")
+      .select("order_id");
+    throwOnError(error, "orders.notePaymentFailed");
+    if (Array.isArray(data) && data.length > 0) {
+      await this.insertEvent(orderId, "failed", atUtc);
+    }
+    return this.get(orderId);
+  }
+
+  async noteRefunded(orderId: string, atUtc: string): Promise<OrderRow | null> {
+    const order = await this.get(orderId);
+    if (!order || order.status === "refunded") return order;
+    await this.appendStatus(orderId, "refunded", atUtc);
+    return this.get(orderId);
+  }
+
+  private async hasCharge(orderId: string): Promise<boolean> {
+    const { data, error } = await this.db
+      .from("charges")
+      .select("charge_id")
+      .eq("order_id", orderId)
+      .maybeSingle();
+    throwOnError(error, "charges.getByOrder");
+    return Boolean(data);
   }
 
   async appendStatus(

@@ -120,11 +120,16 @@ export async function commitHandler(
     await bindings.quotes.markCommitted(quote.quoteId, nowUtc);
   }
 
-  // Place after capture. Retries are keyed on order id (same job or same refund).
+  // Immediate pay places after capture. Manual pay authorizes first and
+  // captures inside place, after the fulfiller accepts the order.
   let status = result.order.status;
   let jobId: string | undefined;
   let refundId: string | undefined;
-  if (result.order.status === "captured") {
+  const authorized =
+    bindings.pay.captureMode === "manual" &&
+    result.order.status === "committed" &&
+    result.order.chargeId != null;
+  if (result.order.status === "captured" || authorized) {
     const placed = await placeAfterCapture(bindings, {
       orderId: result.order.orderId,
       householdId: result.order.householdId,

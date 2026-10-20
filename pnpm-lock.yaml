@@ -154,6 +154,10 @@ importers:
         version: 4.151.2(@cloudflare/workers-types@5.20261019.1)(@types/node@22.20.5)
 
   packages/adapters:
+    dependencies:
+      stripe:
+        specifier: 23.0.0
+        version: 23.0.0(@types/node@22.20.5)
     devDependencies:
       typescript:
         specifier: ^5.7.2
@@ -2789,6 +2793,15 @@ packages:
   strip-bom-string@1.0.0:
     resolution: {integrity: sha512-uCC2VHvQRYu+lMh4My/sFNmF2klFymLX1wHJeXnbEJERpV/ZsVuonzerjfrGpIGF7LBVa1O7i9kjiWvJiFck8g==}
     engines: {node: '>=0.10.0'}
+
+  stripe@23.0.0:
+    resolution: {integrity: sha512-MDE2A5ZVVluYURORaZEVghSmnLJc3w6aHAlZSxDQMsOjOb3V0O6ro/CiaeFlJS4N7uIVmsg98ocRsPmUK6YfyA==}
+    engines: {node: '>=20'}
+    peerDependencies:
+      '@types/node': '>=20'
+    peerDependenciesMeta:
+      '@types/node':
+        optional: true
 
   style-to-js@1.1.21:
     resolution: {integrity: sha512-RjQetxJrrUJLQPHbLku6U/ocGtzyjbJMP9lCNK7Ag0CNh690nSH8woqWH9u16nMjYBAok+i7JO1NP2pOy8IsPQ==}
@@ -6164,6 +6177,10 @@ snapshots:
       ansi-regex: 6.4.0
 
   strip-bom-string@1.0.0: {}
+
+  stripe@23.0.0(@types/node@22.20.5):
+    optionalDependencies:
+      '@types/node': 22.20.5
 
   style-to-js@1.1.21:
     dependencies:

@@ -23,7 +23,9 @@ import {
   getOrderTrackingHandler,
   inboundFulfillWebhookHandler,
 } from "./handlers/fulfill.js";
+import { startHouseholdPlanHandler } from "./handlers/household-plan.js";
 import { getReceiptHandler, skipReceiptHandler } from "./handlers/receipt.js";
+import { stripeWebhookHandler } from "./handlers/stripe-webhook.js";
 import {
   getDueListHandler,
   getListHandler,
@@ -46,6 +48,7 @@ export function createApp() {
       production: c.env.production,
       reposMode: c.env.reposMode,
       fakeIntegrations: c.env.fakeIntegrations,
+      payments: c.env.payments,
     });
     return c.json(body, body.ok ? 200 : 503);
   });
@@ -345,6 +348,40 @@ export function createApp() {
       return c.json({ error: result.error }, result.status as 401);
     }
     return c.json(result);
+  });
+
+  /** $5/mo plan. Checkout is separate from per-order charges. */
+  app.post("/v1/households/:householdId/plan", async (c) => {
+    const body = await c.req.json().catch(() => null);
+    const result = await startHouseholdPlanHandler(
+      c.env,
+      c.req.param("householdId"),
+      body,
+      {
+        authorization: c.req.header("Authorization") ?? undefined,
+        memberId: c.req.header("X-Cutoff-Member-Id") ?? undefined,
+        memberHouseholdId:
+          c.req.header("X-Cutoff-Member-Household-Id") ?? undefined,
+      },
+    );
+    if ("error" in result) {
+      return c.json({ error: result.error }, result.status as 400);
+    }
+    return c.json(result, 201);
+  });
+
+  /**
+   * Stripe webhooks. The raw body is verified before it is parsed.
+   * Fulfill inbound stays on /v1/webhooks/fulfill with its own secret.
+   */
+  app.post("/v1/webhooks/stripe", async (c) => {
+    const raw = await c.req.text();
+    const result = await stripeWebhookHandler(
+      c.env,
+      raw,
+      c.req.header("stripe-signature") ?? undefined,
+    );
+    return c.json(result.body, result.status);
   });
 
   /** Inbound fulfiller webhook — signature required. */

@@ -4,8 +4,10 @@ export type HealthInput = {
   /** Production worker (`CUTOFF_ENV=production`). Local and tests are not. */
   production?: boolean;
   reposMode?: "memory" | "postgres";
-  /** True while pay/fulfill/tax/offer/email are fake adapters. */
+  /** True while fulfill/tax/offer/email are fake adapters. */
   fakeIntegrations?: boolean;
+  /** Stripe when the pay adapter is the real one. */
+  payments?: "stripe" | "fake";
 };
 
 /**
@@ -16,6 +18,7 @@ export function healthHandler(input: HealthInput = {}): HealthResponse {
   const production = input.production === true;
   const reposMode = input.reposMode ?? "memory";
   const fakeIntegrations = input.fakeIntegrations !== false;
+  const payments = input.payments ?? "fake";
   const reasons: string[] = [];
   if (production && reposMode !== "postgres") {
     reasons.push("memory_repos");
@@ -36,6 +39,7 @@ export function healthHandler(input: HealthInput = {}): HealthResponse {
     phase: "6",
     repos: reposMode,
     integrations: fakeIntegrations ? "fake" : "live",
+    ...(payments === "stripe" ? { payments: "stripe" as const } : {}),
     reasons,
   };
 }

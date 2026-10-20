@@ -69,11 +69,39 @@ describe("Worker isolate bindings cache", () => {
       {} as ExecutionContext,
     );
     expect(health.status).toBe(503);
-    expect(await health.json()).toMatchObject({
+    const body = await health.json();
+    expect(body).toMatchObject({
       ok: false,
       repos: "postgres",
       integrations: "fake",
       reasons: ["fake_integrations"],
     });
+    expect(body).not.toHaveProperty("payments");
+  });
+
+  it("counts payments as real when the Stripe adapter is configured", async () => {
+    const env = {
+      CUTOFF_ENV: "production",
+      SUPABASE_URL: "https://example.supabase.co",
+      SUPABASE_SERVICE_ROLE: "service-role-test",
+      STRIPE_SECRET_KEY: "rk_test_placeholder",
+      STRIPE_WEBHOOK_SECRET: "whsec_placeholder",
+    };
+    const health = await worker.fetch(
+      new Request("http://localhost/health"),
+      env,
+      {} as ExecutionContext,
+    );
+    expect(health.status).toBe(503);
+    expect(await health.json()).toMatchObject({
+      ok: false,
+      repos: "postgres",
+      integrations: "fake",
+      payments: "stripe",
+      reasons: ["fake_integrations"],
+    });
+    const bindings = buildWorkerBindingsForTests(env);
+    expect(bindings.payments).toBe("stripe");
+    expect(bindings.pay.captureMode).toBe("manual");
   });
 });

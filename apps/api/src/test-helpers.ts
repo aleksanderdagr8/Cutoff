@@ -51,9 +51,9 @@ export type TestBindings = Omit<
 };
 
 export function testBindings(
-  overrides: Partial<Pick<ApiBindings, "nowUtc" | "fulfill">> = {},
+  overrides: Partial<Pick<ApiBindings, "nowUtc" | "fulfill" | "pay">> = {},
 ): TestBindings {
-  const pay = new FakePayAdapter();
+  const pay = overrides.pay ?? new FakePayAdapter();
   const quotes = new MemoryQuoteRepository();
   const revocationKv = new MemoryRevocationKv();
   const catalog = seedFixtureCatalog();
@@ -96,6 +96,7 @@ export function testBindings(
     production: false,
     reposMode: "memory",
     fakeIntegrations: true,
+    payments: "fake",
   };
 }
 

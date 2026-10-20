@@ -128,6 +128,29 @@ export class PostgresHouseholdRepository {
     return member?.householdId === householdId;
   }
 
+  async getStripeCustomerId(householdId: string): Promise<string | null> {
+    const { data, error } = await this.db
+      .from("households")
+      .select("stripe_customer_id")
+      .eq("household_id", householdId)
+      .maybeSingle();
+    throwOnError(error, "households.stripeCustomer");
+    if (!data) return null;
+    const id = (data as { stripe_customer_id?: string | null }).stripe_customer_id;
+    return id ?? null;
+  }
+
+  async setStripeCustomerId(
+    householdId: string,
+    customerId: string,
+  ): Promise<void> {
+    const { error } = await this.db
+      .from("households")
+      .update({ stripe_customer_id: customerId })
+      .eq("household_id", householdId);
+    throwOnError(error, "households.setStripeCustomer");
+  }
+
   async listHouseholds(): Promise<readonly HouseholdRow[]> {
     const { data, error } = await this.db.from("households").select("*");
     throwOnError(error, "households.list");
