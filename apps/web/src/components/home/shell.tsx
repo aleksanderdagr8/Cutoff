@@ -42,7 +42,7 @@ export function HomeShell({ session, active, children, bypass }: Props) {
       <div className="relative mx-auto flex min-h-screen max-w-[1120px] gap-12 px-6 py-8 md:px-8">
         <aside className="home-enter hidden w-[220px] shrink-0 flex-col pt-1 md:flex">
           <Link href={session ? "/home" : "/home/sign-in"} className="block">
-            <p className="font-display text-[26px] font-semibold tracking-[-0.04em] text-ink">
+            <p className="font-display text-[28px] font-semibold tracking-[-0.04em] text-ink">
               CUTOFF
             </p>
           </Link>
@@ -105,7 +105,7 @@ export function HomeShell({ session, active, children, bypass }: Props) {
         <div className="min-w-0 flex-1">
           <header className="mb-8 flex items-center justify-between gap-4 md:hidden">
             <Link href={session ? "/home" : "/home/sign-in"}>
-              <p className="font-display text-[22px] font-semibold tracking-[-0.04em] text-ink">
+              <p className="font-display text-[28px] font-semibold tracking-[-0.04em] text-ink">
                 CUTOFF
               </p>
             </Link>

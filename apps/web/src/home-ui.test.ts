@@ -100,6 +100,25 @@ describe("household /home UI hygiene", () => {
     expect(src).toContain('href: "/home/keys"');
     expect(src).toContain("/home/help");
     expect(src).toContain("home-bottom-nav");
+    // One bottom nav only; header wordmark slightly larger than the old 22px mark.
+    expect(src.match(/home-bottom-nav/g)?.length).toBe(1);
+    expect(src).toContain('text-[28px]');
+    expect(src).not.toContain('text-[22px]');
+  });
+
+  it("Today and sign-in do not duplicate the CUTOFF wordmark as a page title", () => {
+    const today = readFileSync(
+      join(import.meta.dirname, "app/home/page.tsx"),
+      "utf8",
+    );
+    const signIn = readFileSync(
+      join(import.meta.dirname, "app/home/sign-in/page.tsx"),
+      "utf8",
+    );
+    expect(today).not.toMatch(/<h1[^>]*>\s*CUTOFF\s*<\/h1>/);
+    expect(signIn).not.toMatch(/<h1[^>]*>\s*CUTOFF\s*<\/h1>/);
+    expect(today).toContain("session.email");
+    expect(today).toContain("Today");
   });
 
   it("home routes exist for Adopted areas", () => {
