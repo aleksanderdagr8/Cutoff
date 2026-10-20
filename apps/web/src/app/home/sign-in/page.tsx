@@ -16,8 +16,8 @@ export default async function SignInPage() {
       <p className="text-[13px] font-medium uppercase tracking-[0.1em] text-secondary">
         Household
       </p>
-      <h1 className="mt-3 font-display text-[44px] font-semibold tracking-[-0.04em] text-ink md:text-[56px]">
-        CUTOFF
+      <h1 className="mt-3 font-display text-[34px] font-semibold tracking-[-0.03em] text-ink md:text-[40px]">
+        Sign in
       </h1>
       <p className="mt-4 max-w-md text-[17px] leading-relaxed text-secondary">
         Sign in to set your mandate, issue an agent key, and watch the list —
