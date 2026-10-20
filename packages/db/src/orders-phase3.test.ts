@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { FakePayAdapter } from "@cutoff/adapters";
 import { MemoryOrderRepository } from "./orders.js";
+import { MemoryQuoteRepository } from "./quotes.js";
 
 const mandate = {
   ceilingCents: 5000,
@@ -94,5 +95,84 @@ describe("MemoryOrderRepository evidence commit (U8)", () => {
     expect(result).toEqual({ ok: false, error: "mandate_miss" });
     expect(pay.charges).toHaveLength(0);
     expect(repo.count()).toBe(0);
+  });
+
+  it("one quote records one order; capture retries on order id without a second charge", async () => {
+    const pay = new FakePayAdapter();
+    const quotes = new MemoryQuoteRepository();
+    const repo = new MemoryOrderRepository(pay, quotes);
+    const created = await quotes.create({
+      householdId: "hh_1",
+      mandateId: "man_1",
+      agentKeyId: "key_1",
+      canonicalItemId: "item_towels_12",
+      qty: 1,
+      landedCents: 1299,
+      taxCents: 0,
+      unitPriceCents: 1299,
+      deliveryDateUtc: "2026-10-22T00:00:00.000Z",
+      fulfillerId: "f_a",
+      offerId: "off_1",
+      scoreInputs: {
+        landedCents: 1299,
+        deliveryDateUtc: "2026-10-22T00:00:00.000Z",
+        merchantScore: 1,
+      },
+      addressId: "addr_home",
+      ceilingCents: 5000,
+      nowUtc: "2026-10-19T12:00:00.000Z",
+    });
+    expect(created.ok).toBe(true);
+    if (!created.ok) return;
+
+    const input = {
+      householdId: "hh_1",
+      canonicalItemId: "item_towels_12",
+      quoteId: created.quote.quoteId,
+      amountCents: 1299,
+      idempotencyKey: "idem_once",
+      mandate,
+      addressId: "addr_home",
+      nowUtc: "2026-10-19T12:00:00.000Z",
+      actorChain: ["agent"],
+      protocol: "cutoff.v1",
+      agentKeyId: "key_1",
+      mandateId: "man_1",
+      quoteHashMaterial: "qt|1299|0|f_a|item_towels_12|2026-10-22",
+    };
+
+    const recorded = await repo.recordEvidencedCommit(input);
+    expect(recorded.ok).toBe(true);
+    if (!recorded.ok) return;
+    expect(recorded.created).toBe(true);
+    expect(recorded.order.status).toBe("committed");
+    expect(recorded.order.chargeId).toBeNull();
+    expect(pay.charges).toHaveLength(0);
+    expect(pay.attempts).toHaveLength(0);
+    expect((await quotes.get(created.quote.quoteId))?.committedAtUtc).toBe(
+      input.nowUtc,
+    );
+    expect(repo.count()).toBe(1);
+
+    const captured = await repo.captureOrder(
+      recorded.order.orderId,
+      input.nowUtc,
+    );
+    const retried = await repo.captureOrder(recorded.order.orderId, input.nowUtc);
+    expect(captured?.status).toBe("captured");
+    expect(retried?.chargeId).toBe(captured?.chargeId);
+    expect(pay.charges).toHaveLength(1);
+    expect(pay.attempts[0]?.idempotencyKey).toBe(recorded.order.orderId);
+
+    const otherKey = await repo.commitWithEvidence({
+      ...input,
+      idempotencyKey: "idem_other_key",
+    });
+    expect(otherKey.ok).toBe(true);
+    if (!otherKey.ok) return;
+    expect(otherKey.created).toBe(false);
+    expect(otherKey.order.orderId).toBe(recorded.order.orderId);
+    expect(repo.count()).toBe(1);
+    expect(pay.charges).toHaveLength(1);
   });
 });

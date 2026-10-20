@@ -12,11 +12,7 @@ export async function GET() {
   return NextResponse.json({
     session,
     auth: {
-      mode: opsDevBypassEnabled()
-        ? "dev_bypass"
-        : supabaseConfigured()
-          ? "supabase_pending"
-          : "dev_bypass",
+      mode: opsDevBypassEnabled() ? "dev_bypass" : "closed",
       supabase_configured: supabaseConfigured(),
       dev_bypass: opsDevBypassEnabled(),
       totp: "parked",
@@ -35,7 +31,7 @@ export async function POST(request: Request) {
       {
         error: "auth_not_configured",
         message:
-          "Operator Auth + TOTP is not wired yet. Set CUTOFF_OPS_DEV_BYPASS=1 for local, or complete live operator login (see docs/user-tasks).",
+          "Operator sign-in is closed. Production /ops requires Cloudflare Access. The dev bypass is only available in local next dev.",
       },
       { status: 503 },
     );

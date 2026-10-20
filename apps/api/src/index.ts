@@ -13,10 +13,12 @@ import {
 } from "@cutoff/adapters";
 import {
   createRepos,
+  hasSupabaseServiceEnv,
   resolveReposModeFromEnv,
 } from "@cutoff/db";
 import { createApp } from "./app.js";
 import type { ApiBindings } from "./bindings.js";
+import { healthHandler } from "./handlers/health.js";
 import { runNudgeCron } from "./handlers/nudge-cron.js";
 import { deliverNudgeJob, processPendingNudges } from "./handlers/nudge-deliver.js";
 
@@ -27,7 +29,31 @@ type WorkerEnv = {
   WEBHOOK_SECRET?: string;
   SUPABASE_URL?: string;
   SUPABASE_SERVICE_ROLE?: string;
+  /** Set to `production` in wrangler.toml. Local `wrangler dev` overrides it. */
+  CUTOFF_ENV?: string;
 };
+
+const MISSING_PRODUCTION_DB =
+  "cutoff-api production requires SUPABASE_URL and SUPABASE_SERVICE_ROLE; refusing in-memory stores";
+
+function serviceEnv(env?: WorkerEnv): Record<string, string | undefined> {
+  return {
+    SUPABASE_URL: env?.SUPABASE_URL,
+    SUPABASE_SERVICE_ROLE: env?.SUPABASE_SERVICE_ROLE,
+  };
+}
+
+export function isProductionEnv(env?: WorkerEnv): boolean {
+  return env?.CUTOFF_ENV === "production";
+}
+
+/** Throws when a production isolate would otherwise fall back to memory repos. */
+export function assertProductionDatabase(env?: WorkerEnv): void {
+  if (!isProductionEnv(env)) return;
+  if (!hasSupabaseServiceEnv(serviceEnv(env))) {
+    throw new Error(MISSING_PRODUCTION_DB);
+  }
+}
 
 class CfNudgeQueue implements NudgeQueue {
   constructor(private readonly queue: { send(body: unknown): Promise<void> }) {}
@@ -64,10 +90,7 @@ type IsolateCache = {
 let isolateCache: IsolateCache | null = null;
 
 function reposCacheKey(env?: WorkerEnv): string {
-  const mode = resolveReposModeFromEnv({
-    SUPABASE_URL: env?.SUPABASE_URL,
-    SUPABASE_SERVICE_ROLE: env?.SUPABASE_SERVICE_ROLE,
-  });
+  const mode = resolveReposModeFromEnv(serviceEnv(env));
   if (mode === "postgres") {
     return `postgres:${env?.SUPABASE_URL ?? ""}`;
   }
@@ -89,17 +112,15 @@ function buildBindings(env?: WorkerEnv): ApiBindings {
   }
 
   const pay = new FakePayAdapter();
+  const reposMode = resolveReposModeFromEnv(serviceEnv(env));
   const repos = createRepos({
-    mode: resolveReposModeFromEnv({
-      SUPABASE_URL: env?.SUPABASE_URL,
-      SUPABASE_SERVICE_ROLE: env?.SUPABASE_SERVICE_ROLE,
-    }),
+    mode: reposMode,
     pay,
-    env: {
-      SUPABASE_URL: env?.SUPABASE_URL,
-      SUPABASE_SERVICE_ROLE: env?.SUPABASE_SERVICE_ROLE,
-    },
+    env: serviceEnv(env),
   });
+  // Pay, fulfill, tax, offer feeds, and email are still fakes.
+  // Production /health stays unhealthy until this is false.
+  const fakeIntegrations = true;
   const memoryNudgeQueue = new MemoryOutboundWebhookQueue();
   const bindings: ApiBindings = {
     pay,
@@ -132,6 +153,9 @@ function buildBindings(env?: WorkerEnv): ApiBindings {
     revocationKv: repos.revocationKv,
     traceId: crypto.randomUUID(),
     nowUtc: () => new Date().toISOString(),
+    production: isProductionEnv(env),
+    reposMode,
+    fakeIntegrations,
   };
   isolateCache = { key, bindings, memoryNudgeQueue };
   return bindings;
@@ -149,12 +173,28 @@ export function buildWorkerBindingsForTests(env?: WorkerEnv): ApiBindings {
 
 const app = createApp();
 
+function productionMemoryHealth(): Response {
+  return Response.json(
+    healthHandler({
+      production: true,
+      reposMode: "memory",
+      fakeIntegrations: true,
+    }),
+    { status: 503 },
+  );
+}
+
 export default {
   async fetch(
     request: Request,
     env: WorkerEnv,
     _ctx: ExecutionContext,
   ): Promise<Response> {
+    if (isProductionEnv(env) && !hasSupabaseServiceEnv(serviceEnv(env))) {
+      const path = new URL(request.url).pathname;
+      if (path === "/health") return productionMemoryHealth();
+      assertProductionDatabase(env);
+    }
     return app.fetch(request, buildBindings(env));
   },
 
@@ -164,6 +204,7 @@ export default {
     env: WorkerEnv,
     _ctx: ExecutionContext,
   ): Promise<void> {
+    assertProductionDatabase(env);
     const bindings = buildBindings(env);
     await runNudgeCron(bindings);
     // Memory path (no CF Queue binding): deliver in-process. Unit 21 CF consumer otherwise.
@@ -178,6 +219,7 @@ export default {
     env: WorkerEnv,
     _ctx: ExecutionContext,
   ): Promise<void> {
+    assertProductionDatabase(env);
     const bindings = buildBindings(env);
     for (const msg of batch.messages) {
       const job = msg.body;

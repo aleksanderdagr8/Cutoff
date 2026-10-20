@@ -30,6 +30,27 @@ export async function placeAfterCapture(
   | { ok: false; refundId: string; error: "place_failed" }
 > {
   const nowUtc = bindings.nowUtc();
+
+  // Retry keyed on order id: one job, or the same place_failed refund.
+  const existingJob = bindings.fulfillment.getJobForOrder(order.orderId);
+  if (existingJob) {
+    const current = await bindings.orders.get(order.orderId);
+    if (current?.status === "captured") {
+      await bindings.orders.appendStatus(order.orderId, "placed", nowUtc);
+    }
+    return { ok: true, jobId: existingJob.jobId };
+  }
+  const priorRefund = bindings.fulfillment
+    .listRefunds(order.orderId)
+    .find((refund) => refund.reason === "place_failed");
+  if (priorRefund) {
+    return {
+      ok: false,
+      refundId: priorRefund.refundId,
+      error: "place_failed",
+    };
+  }
+
   const quote = await bindings.quotes.get(order.quoteId);
   const fulfillerId = quote?.fulfillerId ?? "unknown";
 

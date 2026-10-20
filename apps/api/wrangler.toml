@@ -4,6 +4,10 @@ compatibility_date = "2024-12-01"
 account_id = "6f016e176bf8507b75cecde460c5689d"
 workers_dev = true
 
+# Production isolate. `pnpm dev` overrides this so local wrangler can use memory.
+[vars]
+CUTOFF_ENV = "production"
+
 # Unit 20: reorder nudge cron (every 15 minutes).
 [triggers]
 crons = ["*/15 * * * *"]

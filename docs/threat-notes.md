@@ -32,7 +32,7 @@ What the agent is allowed to do in this build (and what it is not).
 - `POST /v1/households/:id/agents/:keyId/revoke` — revoke + KV fan-out.
 - `POST /v1/quotes` — agent Bearer; mandate + ceiling check (stub amount until catalog).
 - `POST /v1/commits` — agent Bearer; mandate re-check; fake pay; idempotent.
-- `POST /v1/_phase0/commits` — unauthenticated fake commit retained for U0 idempotency proof.
+- `POST /v1/_phase0/commits` — local/CI idempotency proof only. Production (`CUTOFF_ENV=production`) responds 404.
 
 ## Trust
 

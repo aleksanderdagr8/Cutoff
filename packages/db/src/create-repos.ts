@@ -131,10 +131,11 @@ export function createRepos(options: CreateReposOptions): CutoffRepos {
   }
 
   if (mode === "memory") {
+    const quotes = new MemoryQuoteRepository();
     return {
       mode,
-      orders: new MemoryOrderRepository(options.pay),
-      quotes: new MemoryQuoteRepository(),
+      orders: new MemoryOrderRepository(options.pay, quotes),
+      quotes,
       mandates: new MemoryMandateRepository(),
       agents: new MemoryAgentCredentialRepository(revocationKv),
       households: new MemoryHouseholdRepository(),

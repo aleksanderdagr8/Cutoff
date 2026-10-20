@@ -34,7 +34,7 @@ Do **not** commit secrets. Set them on the Worker (and Build vars if using Worke
 | `NEXT_PUBLIC_GA_MEASUREMENT_ID` | Wrangler `vars` **and** build env | Public gtag Measurement ID. Default / committed prod value: `G-3K4P4MPMPD`. Inlined into the client at **build** time — set in `deploy-web.yml` (or optional GitHub Variable). Not a secret. Empty string disables. |
 | `GOOGLE_PLACES_API_KEY` | Worker secret (runtime) | Places API (New) for `/home/mandate` address typeahead. Server-only — never `NEXT_PUBLIC_`. Until set, UI shows a safe disabled placeholder. |
 | `CUTOFF_HOME_DEV_BYPASS` | Wrangler `vars` (`0`) | Off in prod when Supabase public env is set |
-| `CUTOFF_OPS_DEV_BYPASS` | Wrangler `vars` (`1`) | Stays on until operator TOTP |
+| `CUTOFF_OPS_DEV_BYPASS` | Wrangler `vars` (`0`) | Ignored when `NODE_ENV=production`. Local `next dev` only |
 
 ### Google Analytics (gtag.js)
 
@@ -56,6 +56,24 @@ printf '%s' "$GOOGLE_PLACES_API_KEY" | pnpm exec wrangler secret put GOOGLE_PLAC
 ```
 
 **GitHub Actions** (`deploy-web.yml`): store `CLOUDFLARE_API_TOKEN`, `NEXT_PUBLIC_SUPABASE_URL`, and `NEXT_PUBLIC_SUPABASE_ANON_KEY` as repository **Secrets** (not Variables). Optional: `CLOUDFLARE_ACCOUNT_ID` (defaults in workflow). `GOOGLE_PLACES_API_KEY` is a **Worker runtime** secret (set via Wrangler above) — not required as a GitHub build secret unless you add it to the deploy workflow for a first-time put.
+
+## Operator `/ops` — Cloudflare Access
+
+Production does not mint a demo operator cookie. `CUTOFF_OPS_DEV_BYPASS=1` is ignored when `NODE_ENV` is `production`, and `wrangler.jsonc` sets it to `0`. `GET /api/ops/session` reports `dev_bypass: false`. `POST /api/ops/session` returns 503. Existing demo cookies are not accepted.
+
+The app does not yet turn an Access identity into an operator session, so after Access is on, signed-in operators still see a closed sign-in. That is fail-closed: `/ops` data is the in-memory demo, and the public bypass is the bug this closes. Do not flip the var back on to "fix" sign-in.
+
+Put Access in front before anyone needs the console (Cloudflare dashboard, not this repo):
+
+1. Zero Trust → **Access controls** → **Applications** → **Add an application** → **Self-hosted**.
+2. Name: `cutoff-ops`. Session duration: 24 hours is enough for a pilot.
+3. Public hostnames (path is a prefix):
+   - Domain `callcutoff.com`, path `/ops`
+   - Domain `callcutoff.com`, path `/api/ops`
+4. Policy: **Allow**, Include → **Emails** → the operator addresses. Everyone else stays denied.
+5. `www` redirects to the apex before the app, so the apex policy is the one that matters.
+6. `workers_dev` is still true, so `*.workers.dev` can skip the custom-domain policy. Add that hostname with the same paths, or turn **workers.dev** off for `cutoff-web`.
+7. Leave `CUTOFF_OPS_DEV_BYPASS` at `0`. Do not set it as a Worker secret.
 
 **Aleks — Supabase Dashboard → Authentication → URL configuration**
 

@@ -10,6 +10,8 @@ supabase/migrations/
   20261019150100_rls_household_tables.sql    # RLS sketches + helper
   20261019160000_ensure_home_member.sql      # Auth bootstrap RPC for /home
   20261020090000_reorder_schedule.sql        # Unit 14 schedule + nudges + RLS
+  20261020093000_home_durable_mutations.sql  # /home SECURITY DEFINER RPCs
+  20261020193151_lock_down_commit_and_rpc_execute.sql  # anon EXECUTE revoke, quote unique, atomic commit, FK indexes
 ```
 
 Ownership map (do not cross-read from other packages):
@@ -65,7 +67,9 @@ npx supabase db push
 2. Paste and run each file in `supabase/migrations/` in timestamp order
    (schema → RLS → `ensure_home_member` → `reorder_schedule`).
 
-Run in order. Do not commit service role keys, DB passwords, or `.env`.
+Run in order, including `20261020193151_lock_down_commit_and_rpc_execute.sql` last. Do not commit service role keys, DB passwords, or `.env`.
+
+That last migration is **not** applied by deploy or by CI. Apply it yourself (`npx supabase db push` after `npx supabase link --project-ref <CUTOFF_PROJECT_REF>`, or paste the file into the SQL editor) **before** `cutoff-api` serves postgres commits. It revokes anon execute on the SECURITY DEFINER RPCs, stops `home_upsert_list_line_internal` from writing another household, sets `search_path` on `home_new_id`, adds `orders_quote_id_uidx`, creates `commit_order_record` (service role only), and indexes the unindexed foreign keys.
 
 ## After apply
 

@@ -24,6 +24,7 @@ import type {
   QuoteNudgeLinkStore,
   QuoteRepository,
   ReorderNudgeRepository,
+  ReposMode,
   RevocationKv,
 } from "@cutoff/db";
 
@@ -73,4 +74,9 @@ export type ApiBindings = {
   traceId: string;
   /** Injected clock for deterministic tests. */
   nowUtc: () => string;
+  /** True only on the production Worker (`CUTOFF_ENV=production`). */
+  production: boolean;
+  reposMode: ReposMode;
+  /** True while index.ts still constructs Fake* adapters. */
+  fakeIntegrations: boolean;
 };

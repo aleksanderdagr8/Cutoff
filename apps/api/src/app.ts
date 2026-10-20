@@ -42,11 +42,22 @@ export function createApp() {
   const app = new Hono<AppEnv>();
 
   app.get("/health", (c) => {
-    return c.json(healthHandler());
+    const body = healthHandler({
+      production: c.env.production,
+      reposMode: c.env.reposMode,
+      fakeIntegrations: c.env.fakeIntegrations,
+    });
+    return c.json(body, body.ok ? 200 : 503);
   });
 
-  /** Phase 0 only — proves double-submit → one row against fakes. */
+  /**
+   * Phase 0 only — local/CI idempotency proof.
+   * Not mounted for production callers: the handler 404s when production is set.
+   */
   app.post("/v1/_phase0/commits", async (c) => {
+    if (c.env.production) {
+      return c.notFound();
+    }
     const body = await c.req.json().catch(() => null);
     const result = await fakeCommitHandler(c.env, body, {
       idempotencyKey: c.req.header("Idempotency-Key") ?? undefined,

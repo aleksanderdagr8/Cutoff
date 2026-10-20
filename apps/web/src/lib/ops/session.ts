@@ -10,6 +10,8 @@ export type OpsSession = {
 };
 
 export async function readOpsSession(): Promise<OpsSession | null> {
+  // Production ignores any previously minted demo cookie.
+  if (!opsDevBypassEnabled()) return null;
   const jar = await cookies();
   const raw = jar.get(OPS_SESSION_COOKIE)?.value;
   if (!raw) return null;
