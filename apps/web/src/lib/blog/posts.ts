@@ -3,6 +3,7 @@ import "server-only";
 import fs from "node:fs";
 import path from "node:path";
 import matter from "gray-matter";
+import { blogSources } from "./sources.generated";
 
 export const SITE_URL = "https://callcutoff.com";
 
@@ -65,8 +66,28 @@ function normalizeDraft(value: unknown, file: string): boolean {
   throw new Error(`${file}: frontmatter "draft" must be true or false`);
 }
 
-function readPostFile(dir: string, name: string): BlogPost {
-  const raw = fs.readFileSync(path.join(dir, name), "utf8");
+function readDiskSources(): Record<string, string> {
+  const dir = blogContentDir();
+  if (!fs.existsSync(dir)) return {};
+  const sources: Record<string, string> = {};
+  for (const name of fs.readdirSync(dir)) {
+    if (!name.endsWith(".md") && !name.endsWith(".mdx")) continue;
+    sources[name] = fs.readFileSync(path.join(dir, name), "utf8");
+  }
+  return sources;
+}
+
+/**
+ * Production reads the module written by scripts/generate-blog-sources.mjs.
+ * The Cloudflare Worker re-renders blog routes and has no content directory.
+ * Dev and tests keep reading the files so adding a post is still adding a file.
+ */
+function sourcesFor(nodeEnv: string | undefined): Record<string, string> {
+  if (nodeEnv === "production") return blogSources;
+  return readDiskSources();
+}
+
+function readPostFile(name: string, raw: string): BlogPost {
   const parsed = matter(raw);
   const data: Record<string, unknown> = parsed.data;
   const title = requireString(data.title, "title", name);
@@ -92,13 +113,12 @@ function readPostFile(dir: string, name: string): BlogPost {
   };
 }
 
-export function readAllPosts(): BlogPost[] {
-  const dir = blogContentDir();
-  if (!fs.existsSync(dir)) return [];
-  const names = fs
-    .readdirSync(dir)
-    .filter((name) => name.endsWith(".md") || name.endsWith(".mdx"));
-  const posts = names.map((name) => readPostFile(dir, name));
+export function readAllPosts(
+  nodeEnv: string | undefined = process.env.NODE_ENV,
+): BlogPost[] {
+  const posts = Object.entries(sourcesFor(nodeEnv)).map(([name, raw]) =>
+    readPostFile(name, raw),
+  );
   const seen = new Set<string>();
   for (const post of posts) {
     if (seen.has(post.slug)) {
@@ -116,14 +136,14 @@ export function readAllPosts(): BlogPost[] {
 export function listPosts(
   nodeEnv: string | undefined = process.env.NODE_ENV,
 ): BlogPost[] {
-  return readAllPosts().filter((post) => isPublished(post, nodeEnv));
+  return readAllPosts(nodeEnv).filter((post) => isPublished(post, nodeEnv));
 }
 
 export function getPost(
   slug: string,
   nodeEnv: string | undefined = process.env.NODE_ENV,
 ): BlogPost | null {
-  const post = readAllPosts().find((item) => item.slug === slug);
+  const post = readAllPosts(nodeEnv).find((item) => item.slug === slug);
   if (!post || !isPublished(post, nodeEnv)) return null;
   return post;
 }

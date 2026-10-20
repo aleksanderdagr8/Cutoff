@@ -11,7 +11,7 @@
     "upload": "opennextjs-cloudflare build && opennextjs-cloudflare upload",
     "cf-typegen": "wrangler types --env-interface CloudflareEnv cloudflare-env.d.ts",
     "typecheck": "tsc --noEmit",
-    "test": "vitest run"
+    "test": "node scripts/generate-blog-sources.mjs && vitest run"
   },
   "dependencies": {
     "@cutoff/adapters": "workspace:*",
