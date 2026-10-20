@@ -1,11 +1,10 @@
 import { NextResponse } from "next/server";
+import { endHouseholdAuth, startPasswordSignIn, startSignUp } from "@/lib/home/auth-flow";
+import type { AuthFlowResult } from "@/lib/home/auth-flow";
+import { householdAuthClient } from "@/lib/home/auth-client";
+import { requestOrigin } from "@/lib/home/email-otp";
 import { homeDevBypassEnabled, supabaseConfigured } from "@/lib/home/config";
-import { ensureHomeMember } from "@/lib/home/member";
-import {
-  clearHomeSession,
-  readHomeSession,
-  writeHomeSession,
-} from "@/lib/home/session";
+import { readHomeAuthGate, clearHomeSession, writeHomeSession } from "@/lib/home/session";
 import { demoSession } from "@/lib/home/store";
 import { createHomeServerClient } from "@/lib/home/supabase/server";
 
@@ -19,11 +18,27 @@ function authMeta() {
   };
 }
 
+function jsonResult(result: AuthFlowResult) {
+  if (result.ok) return NextResponse.json({ ...result.body, auth: authMeta() });
+  return NextResponse.json(
+    { ...result.body, auth: authMeta() },
+    { status: result.status },
+  );
+}
+
 export async function GET() {
-  const session = await readHomeSession();
+  const gate = await readHomeAuthGate();
+  const email2fa =
+    homeDevBypassEnabled()
+      ? "skipped"
+      : gate.state === "member"
+        ? "granted"
+        : gate.state === "needs_email_code"
+          ? "pending"
+          : "none";
   return NextResponse.json({
-    session,
-    auth: authMeta(),
+    session: gate.state === "member" ? gate.session : null,
+    auth: { ...authMeta(), email_2fa: email2fa },
   });
 }
 
@@ -36,7 +51,7 @@ type AuthBody = {
 /**
  * Sign in.
  * - Dev bypass: provisions demo household cookie (no agent secret stored).
- * - Live Auth: email + password via Supabase; links members.auth_user_id.
+ * - Live Auth: password, then an emailed 6-digit code before the household opens.
  */
 export async function POST(request: Request) {
   if (homeDevBypassEnabled()) {
@@ -80,77 +95,32 @@ export async function POST(request: Request) {
     );
   }
 
-  const email = body.email?.trim().toLowerCase() ?? "";
+  const email = body.email ?? "";
   const password = body.password ?? "";
-  const intent = body.intent === "sign_up" ? "sign_up" : "sign_in";
-
-  if (!email || !password || password.length < 8) {
-    return NextResponse.json(
-      {
-        error: "invalid_body",
-        message: "Email and password (at least 8 characters) are required.",
-      },
-      { status: 400 },
-    );
-  }
-
   const supabase = await createHomeServerClient();
+  const client = householdAuthClient(supabase);
 
-  if (intent === "sign_up") {
-    const { data, error } = await supabase.auth.signUp({
-      email,
-      password,
-    });
-    if (error) {
-      return NextResponse.json(
-        { error: "unauthenticated", message: error.message },
-        { status: 401 },
-      );
-    }
-    if (!data.session || !data.user) {
-      return NextResponse.json(
-        {
-          error: "confirm_email",
-          message:
-            "Check your email to confirm the account, then sign in. (Sandbox: disable Confirm email in Supabase Auth settings.)",
-        },
-        { status: 401 },
-      );
-    }
-  } else {
-    const { error } = await supabase.auth.signInWithPassword({
-      email,
-      password,
-    });
-    if (error) {
-      return NextResponse.json(
-        { error: "unauthenticated", message: error.message },
-        { status: 401 },
-      );
-    }
-  }
-
-  const member = await ensureHomeMember(supabase);
-  if ("error" in member) {
-    return NextResponse.json(
-      {
-        error: "unauthenticated",
-        message: "Signed in, but household membership could not be linked.",
-      },
-      { status: 401 },
+  if (body.intent === "sign_up") {
+    const origin = requestOrigin(request);
+    return jsonResult(
+      await startSignUp(client, {
+        email,
+        password,
+        emailRedirectTo: `${origin}/home/auth/callback?next=/home/sign-in`,
+      }),
     );
   }
 
-  return NextResponse.json({ session: member, auth: authMeta() });
+  return jsonResult(await startPasswordSignIn(client, { email, password }));
 }
 
 export async function DELETE() {
   if (!homeDevBypassEnabled() && supabaseConfigured()) {
     try {
       const supabase = await createHomeServerClient();
-      await supabase.auth.signOut();
+      await endHouseholdAuth(householdAuthClient(supabase));
     } catch {
-      // still clear bypass cookie below
+      // still clear the demo cookie below
     }
   }
   await clearHomeSession();

@@ -1,6 +1,7 @@
 import "server-only";
 
 import { cookies } from "next/headers";
+import { cache } from "react";
 import { HOME_SESSION_COOKIE, homeDevBypassEnabled } from "./config";
 import { ensureHomeMember } from "./member";
 import { alignBypassSession } from "./store";
@@ -8,6 +9,11 @@ import { createHomeServerClient } from "./supabase/server";
 import type { HomeSession } from "./types";
 
 export type { HomeSession } from "./types";
+
+export type HomeAuthGate =
+  | { state: "anonymous" }
+  | { state: "member"; session: HomeSession }
+  | { state: "needs_email_code"; email: string; pending: boolean };
 
 async function readBypassCookieSession(): Promise<HomeSession | null> {
   const jar = await cookies();
@@ -29,16 +35,61 @@ async function readBypassCookieSession(): Promise<HomeSession | null> {
   }
 }
 
-async function readSupabaseHomeSession(): Promise<HomeSession | null> {
+type StatusRow = {
+  granted?: boolean;
+  pending?: boolean;
+  email?: string;
+  password?: boolean;
+};
+
+const readSupabaseGate = cache(async (): Promise<HomeAuthGate> => {
   try {
     const supabase = await createHomeServerClient();
     const {
       data: { user },
     } = await supabase.auth.getUser();
-    if (!user) return null;
-    const member = await ensureHomeMember(supabase);
-    if ("error" in member) return null;
-    return member;
+    if (!user) return { state: "anonymous" };
+
+    const { data, error } = await supabase.rpc("home_email_2fa_status");
+    const status = (error ? null : data) as StatusRow | null;
+    const email = status?.email || user.email || "";
+
+    if (status?.granted) {
+      const member = await ensureHomeMember(supabase);
+      if (!("error" in member)) return { state: "member", session: member };
+    }
+
+    if (status?.password) {
+      return {
+        state: "needs_email_code",
+        email,
+        pending: Boolean(status.pending),
+      };
+    }
+    return { state: "anonymous" };
+  } catch {
+    return { state: "anonymous" };
+  }
+});
+
+export async function readHomeAuthGate(): Promise<HomeAuthGate> {
+  if (homeDevBypassEnabled()) {
+    const session = await readHomeSession();
+    return session
+      ? { state: "member", session }
+      : { state: "anonymous" };
+  }
+  return readSupabaseGate();
+}
+
+export async function readSignedInEmail(): Promise<string | null> {
+  if (homeDevBypassEnabled()) return null;
+  try {
+    const supabase = await createHomeServerClient();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+    return user?.email ?? null;
   } catch {
     return null;
   }
@@ -60,7 +111,8 @@ export async function readHomeSession(): Promise<HomeSession | null> {
     }
     return aligned;
   }
-  return readSupabaseHomeSession();
+  const gate = await readSupabaseGate();
+  return gate.state === "member" ? gate.session : null;
 }
 
 export async function writeHomeSession(session: HomeSession): Promise<void> {

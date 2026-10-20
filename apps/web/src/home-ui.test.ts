@@ -203,6 +203,11 @@ describe("household /home UI hygiene", () => {
     const app = join(import.meta.dirname, "app/home");
     expect(statSync(join(app, "page.tsx")).isFile()).toBe(true);
     expect(statSync(join(app, "sign-in/page.tsx")).isFile()).toBe(true);
+    expect(statSync(join(app, "sign-up/page.tsx")).isFile()).toBe(true);
+    expect(statSync(join(app, "forgot-password/page.tsx")).isFile()).toBe(true);
+    expect(statSync(join(app, "reset-password/page.tsx")).isFile()).toBe(true);
+    expect(statSync(join(app, "verify/page.tsx")).isFile()).toBe(true);
+    expect(statSync(join(app, "auth/confirm/route.ts")).isFile()).toBe(true);
     expect(statSync(join(app, "list/page.tsx")).isFile()).toBe(true);
     expect(statSync(join(app, "orders/page.tsx")).isFile()).toBe(true);
     expect(statSync(join(app, "mandate/page.tsx")).isFile()).toBe(true);
@@ -215,18 +220,31 @@ describe("household /home UI hygiene", () => {
 
   it("home mutation clients send credentials so session cookies ride along", () => {
     const root = join(import.meta.dirname, "components/home");
+    const postJson = readFileSync(join(root, "auth/post-json.ts"), "utf8");
+    expect(postJson).toContain('credentials: "include"');
+    for (const name of [
+      "sign-in-form.tsx",
+      "auth/sign-up-form.tsx",
+      "auth/forgot-password-form.tsx",
+      "auth/reset-password-form.tsx",
+      "auth/verify-code-form.tsx",
+    ]) {
+      const src = readFileSync(join(root, name), "utf8");
+      expect(src, name).toContain("postAuth");
+    }
     for (const name of [
       "mandate-client.tsx",
       "address-autofill.tsx",
       "keys-client.tsx",
       "list-client.tsx",
       "receipt-actions.tsx",
-      "sign-in-form.tsx",
       "sign-out-button.tsx",
     ]) {
       const src = readFileSync(join(root, name), "utf8");
       expect(src, name).toContain('credentials: "include"');
     }
+    const verify = readFileSync(join(root, "auth/verify-code-form.tsx"), "utf8");
+    expect(verify).toContain('credentials: "include"');
   });
 
   it("mandate address uses Places typeahead and keeps address_id", () => {
@@ -286,5 +304,23 @@ describe("household /home UI hygiene", () => {
       "utf8",
     );
     expect(session).toContain("alignBypassSession");
+  });
+
+  it("auth screens name their fields and avoid decorative imagery", () => {
+    const root = join(import.meta.dirname, "components/home");
+    const signIn = readFileSync(join(root, "sign-in-form.tsx"), "utf8");
+    const ui = readFileSync(join(root, "auth/auth-ui.tsx"), "utf8");
+    expect(signIn).toContain('id="email"');
+    expect(signIn).toContain('id="password"');
+    expect(signIn).toContain("/home/forgot-password");
+    expect(signIn).toContain("/home/sign-up");
+    expect(ui).toContain('role="alert"');
+    expect(ui).toContain("aria-invalid");
+    expect(ui).toContain("aria-busy");
+    const verify = readFileSync(join(root, "auth/verify-code-form.tsx"), "utf8");
+    expect(verify).toContain('autoComplete="one-time-code"');
+    for (const file of [signIn, ui, verify]) {
+      expect(file.toLowerCase()).not.toContain("robot");
+    }
   });
 });
