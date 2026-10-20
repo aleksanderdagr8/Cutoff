@@ -120,6 +120,7 @@ describe("household /home UI hygiene", () => {
     const root = join(import.meta.dirname, "components/home");
     for (const name of [
       "mandate-client.tsx",
+      "address-autofill.tsx",
       "keys-client.tsx",
       "list-client.tsx",
       "receipt-actions.tsx",
@@ -129,6 +130,50 @@ describe("household /home UI hygiene", () => {
       const src = readFileSync(join(root, name), "utf8");
       expect(src, name).toContain('credentials: "include"');
     }
+  });
+
+  it("mandate address uses Places typeahead and keeps address_id", () => {
+    const autofill = readFileSync(
+      join(import.meta.dirname, "components/home/address-autofill.tsx"),
+      "utf8",
+    );
+    expect(autofill).toContain('role="combobox"');
+    expect(autofill).toContain('role="listbox"');
+    expect(autofill).toContain("/api/home/address/suggest");
+    expect(autofill).toContain("/api/home/address/resolve");
+    expect(autofill).toContain("GOOGLE_PLACES_API_KEY");
+    expect(autofill).toContain("onAddressIdChange");
+    expect(autofill).not.toContain("localStorage");
+
+    const mandate = readFileSync(
+      join(import.meta.dirname, "components/home/mandate-client.tsx"),
+      "utf8",
+    );
+    expect(mandate).toContain("AddressAutofill");
+    expect(mandate).toContain("address_id");
+
+    expect(
+      statSync(
+        join(import.meta.dirname, "app/api/home/address/suggest/route.ts"),
+      ).isFile(),
+    ).toBe(true);
+    expect(
+      statSync(
+        join(import.meta.dirname, "app/api/home/address/resolve/route.ts"),
+      ).isFile(),
+    ).toBe(true);
+    expect(
+      statSync(join(import.meta.dirname, "app/api/home/address/route.ts"))
+        .isFile(),
+    ).toBe(true);
+
+    const places = readFileSync(
+      join(import.meta.dirname, "lib/home/places.ts"),
+      "utf8",
+    );
+    expect(places).toContain("GOOGLE_PLACES_API_KEY");
+    expect(places).toContain("places.googleapis.com");
+    expect(places).not.toContain("NEXT_PUBLIC_GOOGLE");
   });
 
   it("bypass demo household uses stable ids and heals stale cookies", () => {

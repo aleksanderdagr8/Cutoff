@@ -31,6 +31,7 @@ Do **not** commit secrets. Set them on the Worker (and Build vars if using Worke
 | --- | --- | --- |
 | `NEXT_PUBLIC_SUPABASE_URL` | Worker secret **and** build var | Same Project URL as local |
 | `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Worker secret **and** build var | Anon / publishable only |
+| `GOOGLE_PLACES_API_KEY` | Worker secret (runtime) | Places API (New) for `/home/mandate` address typeahead. Server-only — never `NEXT_PUBLIC_`. Until set, UI shows a safe disabled placeholder. |
 | `CUTOFF_HOME_DEV_BYPASS` | Wrangler `vars` (`0`) | Off in prod when Supabase public env is set |
 | `CUTOFF_OPS_DEV_BYPASS` | Wrangler `vars` (`1`) | Stays on until operator TOTP |
 
@@ -40,9 +41,10 @@ CLI (from repo root, with `CLOUDFLARE_API_TOKEN` + account access):
 cd apps/web
 printf '%s' "$NEXT_PUBLIC_SUPABASE_URL" | pnpm exec wrangler secret put NEXT_PUBLIC_SUPABASE_URL
 printf '%s' "$NEXT_PUBLIC_SUPABASE_ANON_KEY" | pnpm exec wrangler secret put NEXT_PUBLIC_SUPABASE_ANON_KEY
+printf '%s' "$GOOGLE_PLACES_API_KEY" | pnpm exec wrangler secret put GOOGLE_PLACES_API_KEY
 ```
 
-**GitHub Actions** (`deploy-web.yml`): store `CLOUDFLARE_API_TOKEN`, `NEXT_PUBLIC_SUPABASE_URL`, and `NEXT_PUBLIC_SUPABASE_ANON_KEY` as repository **Secrets** (not Variables). Optional: `CLOUDFLARE_ACCOUNT_ID` (defaults in workflow).
+**GitHub Actions** (`deploy-web.yml`): store `CLOUDFLARE_API_TOKEN`, `NEXT_PUBLIC_SUPABASE_URL`, and `NEXT_PUBLIC_SUPABASE_ANON_KEY` as repository **Secrets** (not Variables). Optional: `CLOUDFLARE_ACCOUNT_ID` (defaults in workflow). `GOOGLE_PLACES_API_KEY` is a **Worker runtime** secret (set via Wrangler above) — not required as a GitHub build secret unless you add it to the deploy workflow for a first-time put.
 
 **Aleks — Supabase Dashboard → Authentication → URL configuration**
 

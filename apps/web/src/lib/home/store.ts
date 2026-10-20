@@ -20,7 +20,13 @@ import {
 import { canViewReceipt, receiptSkipAction, whyThisSeller } from "@cutoff/domain";
 import type { ReceiptResponse } from "@cutoff/contracts";
 import { homeDevBypassEnabled } from "./config";
+import { ulid } from "@cutoff/db";
+import {
+  formatStructuredAddress,
+  type StructuredAddress,
+} from "./places-parse";
 import type {
+  HomeAddressView,
   HomeKeyView,
   HomeListLineView,
   HomeMandateView,
@@ -30,6 +36,7 @@ import type {
 } from "./types";
 
 export type {
+  HomeAddressView,
   HomeKeyView,
   HomeListLineView,
   HomeMandateView,
@@ -37,6 +44,21 @@ export type {
   HomeOrderView,
   HomeSession,
 } from "./types";
+
+export type HomeAddressRecord = {
+  addressId: string;
+  householdId: string;
+  line1: string;
+  line2: string | null;
+  city: string;
+  region: string;
+  postal: string;
+  country: string;
+  formatted: string;
+  placeId: string | null;
+  createdAt: string;
+  updatedAt: string;
+};
 
 /** Stable across process restarts so the bypass cookie keeps working. */
 export const DEMO_HOUSEHOLD_ID = "01DEMOHOMEHOUSEHOLD00000001";
@@ -68,6 +90,8 @@ type HomeStoreState = {
   orders: MemoryOrderRepository;
   receipts: MemoryReceiptRepository;
   nudgeSettings: MemoryHouseholdNudgeSettingsRepository;
+  /** Household shipping addresses keyed by address_id. */
+  addresses: Map<string, HomeAddressRecord>;
   demoMember: MemberRow;
   demoHouseholdId: string;
   demoHouseholdName: string;
@@ -95,6 +119,7 @@ function emptyState(): HomeStoreState {
     orders: new MemoryOrderRepository(pay),
     receipts: new MemoryReceiptRepository(),
     nudgeSettings: new MemoryHouseholdNudgeSettingsRepository(),
+    addresses: new Map(),
     demoMember: {
       memberId: "",
       householdId: "",
@@ -146,6 +171,23 @@ async function runDemoSeed(state: HomeStoreState): Promise<HomeStoreState> {
     { householdId: DEMO_HOUSEHOLD_ID, memberId: DEMO_MEMBER_ID },
   );
 
+  const demoAddress: HomeAddressRecord = {
+    addressId: "addr_home",
+    householdId: household.householdId,
+    line1: "1600 Amphitheatre Parkway",
+    line2: null,
+    city: "Mountain View",
+    region: "CA",
+    postal: "94043",
+    country: "US",
+    formatted:
+      "1600 Amphitheatre Parkway, Mountain View, CA 94043, US",
+    placeId: null,
+    createdAt: nowUtc,
+    updatedAt: nowUtc,
+  };
+  state.addresses.set(demoAddress.addressId, demoAddress);
+
   const mandate = state.mandates.create({
     householdId: household.householdId,
     ceilingCents: 5000,
@@ -156,7 +198,7 @@ async function runDemoSeed(state: HomeStoreState): Promise<HomeStoreState> {
       "item_filter_1",
     ],
     neverSubstituteIds: ["item_towels_12"],
-    addressId: "addr_home",
+    addressId: demoAddress.addressId,
     allowCancel: true,
   });
 
@@ -564,6 +606,136 @@ function mandateView(row: MandateRow): HomeMandateView {
     canonical_item_ids: [...row.canonicalItemIds],
     allow_cancel: row.allowCancel,
   };
+}
+
+function addressView(row: HomeAddressRecord): HomeAddressView {
+  return {
+    address_id: row.addressId,
+    line1: row.line1,
+    line2: row.line2,
+    city: row.city,
+    region: row.region,
+    postal: row.postal,
+    country: row.country,
+    formatted: row.formatted,
+    place_id: row.placeId,
+  };
+}
+
+export async function getAddressForSession(
+  session: HomeSession,
+  addressId: string,
+): Promise<HomeAddressView | null> {
+  const state = await getHomeStore();
+  if (!sessionAllowed(state, session)) {
+    return null;
+  }
+  const row = state.addresses.get(addressId);
+  if (!row || row.householdId !== session.householdId) {
+    return null;
+  }
+  return addressView(row);
+}
+
+/**
+ * Persist a precise structured address for the household and return its
+ * address_id for mandate binding. Reuses an existing row when the same
+ * Places place_id is already stored for this household.
+ */
+export async function upsertStructuredAddressForSession(
+  session: HomeSession,
+  input: StructuredAddress & { line2?: string | null },
+): Promise<HomeAddressView | { error: string; status: number }> {
+  const state = await getHomeStore();
+  if (!sessionAllowed(state, session)) {
+    return { error: "unauthenticated", status: 401 };
+  }
+
+  const line1 = input.line1.trim();
+  const city = input.city.trim();
+  const region = input.region.trim();
+  const postal = input.postal.trim();
+  const country = input.country.trim().toUpperCase();
+  const line2 = input.line2?.trim() || null;
+  if (!line1 || !city || !region || !postal || !country) {
+    return { error: "incomplete_address", status: 422 };
+  }
+
+  const now = new Date().toISOString();
+  const placeId = input.place_id?.trim() || null;
+
+  if (placeId) {
+    for (const existing of state.addresses.values()) {
+      if (
+        existing.householdId === session.householdId &&
+        existing.placeId === placeId
+      ) {
+        existing.line1 = line1;
+        existing.line2 = line2;
+        existing.city = city;
+        existing.region = region;
+        existing.postal = postal;
+        existing.country = country;
+        existing.formatted =
+          input.formatted.trim() ||
+          formatStructuredAddress({
+            line1,
+            line2,
+            city,
+            region,
+            postal,
+            country,
+          });
+        existing.updatedAt = now;
+        return addressView(existing);
+      }
+    }
+  }
+
+  const row: HomeAddressRecord = {
+    addressId: `addr_${ulid()}`,
+    householdId: session.householdId,
+    line1,
+    line2,
+    city,
+    region,
+    postal,
+    country,
+    formatted:
+      input.formatted.trim() ||
+      formatStructuredAddress({
+        line1,
+        line2,
+        city,
+        region,
+        postal,
+        country,
+      }),
+    placeId,
+    createdAt: now,
+    updatedAt: now,
+  };
+  state.addresses.set(row.addressId, row);
+  return addressView(row);
+}
+
+export async function updateAddressUnitForSession(
+  session: HomeSession,
+  addressId: string,
+  line2: string | null,
+): Promise<HomeAddressView | { error: string; status: number }> {
+  const state = await getHomeStore();
+  if (!sessionAllowed(state, session)) {
+    return { error: "unauthenticated", status: 401 };
+  }
+  const row = state.addresses.get(addressId);
+  if (!row || row.householdId !== session.householdId) {
+    return { error: "not_found", status: 404 };
+  }
+  row.line2 = line2?.trim() || null;
+  row.formatted = formatStructuredAddress(row);
+  row.updatedAt = new Date().toISOString();
+  return addressView(row);
 }
 
 export async function getMandateForSession(

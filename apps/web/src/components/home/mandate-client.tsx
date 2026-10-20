@@ -2,14 +2,21 @@
 
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
+import { AddressAutofill } from "@/components/home/address-autofill";
 import { formatCents } from "@/lib/home/format";
-import type { HomeMandateView } from "@/lib/home/types";
+import type { HomeAddressView, HomeMandateView } from "@/lib/home/types";
 
 type Props = {
   initialMandate: HomeMandateView | null;
+  initialAddress: HomeAddressView | null;
+  placesConfigured: boolean;
 };
 
-export function MandateClient({ initialMandate }: Props) {
+export function MandateClient({
+  initialMandate,
+  initialAddress,
+  placesConfigured,
+}: Props) {
   const router = useRouter();
   const [mandate, setMandate] = useState(initialMandate);
   const [ceilingDollars, setCeilingDollars] = useState(
@@ -19,7 +26,7 @@ export function MandateClient({ initialMandate }: Props) {
     initialMandate?.expires_at?.slice(0, 10) ?? "2027-01-01",
   );
   const [addressId, setAddressId] = useState(
-    initialMandate?.address_id ?? "addr_home",
+    initialMandate?.address_id ?? initialAddress?.address_id ?? "addr_home",
   );
   const [neverSub, setNeverSub] = useState(
     (initialMandate?.never_substitute_ids ?? []).join(", "),
@@ -33,6 +40,10 @@ export function MandateClient({ initialMandate }: Props) {
     const cents = Math.round(Number.parseFloat(ceilingDollars) * 100);
     if (!Number.isFinite(cents) || cents < 0) {
       setError("Enter a valid ceiling.");
+      return;
+    }
+    if (!addressId.trim()) {
+      setError("Select a shipping address from the suggestions.");
       return;
     }
     startTransition(async () => {
@@ -83,14 +94,12 @@ export function MandateClient({ initialMandate }: Props) {
           className="mt-2 w-full border-b border-hairline bg-transparent py-2 font-mono text-[14px] text-ink outline-none focus:border-accent"
         />
       </label>
-      <label className="block">
-        <span className="text-[13px] text-secondary">Address</span>
-        <input
-          value={addressId}
-          onChange={(e) => setAddressId(e.target.value)}
-          className="mt-2 w-full border-b border-hairline bg-transparent py-2 font-mono text-[14px] text-ink outline-none focus:border-accent"
-        />
-      </label>
+      <AddressAutofill
+        addressId={addressId}
+        initialAddress={initialAddress}
+        placesConfigured={placesConfigured}
+        onAddressIdChange={setAddressId}
+      />
       <label className="block">
         <span className="text-[13px] text-secondary">Expires</span>
         <input
