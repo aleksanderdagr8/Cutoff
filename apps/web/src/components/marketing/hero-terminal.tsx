@@ -32,7 +32,7 @@ export function HeroTerminal() {
   }, [mode, exampleIdx]);
 
   return (
-    <div className="marketing-enter marketing-enter-delay w-full max-w-xl">
+    <div className="w-full max-w-xl">
       <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-[13px]">
         <button
           type="button"

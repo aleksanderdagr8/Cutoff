@@ -113,6 +113,8 @@ describe("marketing `/` hygiene", () => {
     const root = join(import.meta.dirname, "components/marketing");
     for (const name of [
       "marketing-page.tsx",
+      "marketing-header.tsx",
+      "marketing-reveal.tsx",
       "hero-terminal.tsx",
       "builders-panel.tsx",
       "proof-strip.tsx",
@@ -120,5 +122,51 @@ describe("marketing `/` hygiene", () => {
     ]) {
       expect(statSync(join(root, name)).isFile()).toBe(true);
     }
+  });
+
+  it("landing ships perceptible kinetic type + reduced-motion", () => {
+    const css = readFileSync(
+      join(import.meta.dirname, "app/globals.css"),
+      "utf8",
+    );
+    expect(css).toContain("marketing-brand-kinetic");
+    expect(css).toContain("marketing-headline-kinetic");
+    expect(css).toContain("marketing-cta-group");
+    expect(css).toContain("marketing-hero-panel");
+    expect(css).toContain("marketing-reveal-in");
+    expect(css).toContain("marketing-brand-settle");
+    expect(css).toContain("marketing-headline-settle");
+    expect(css).toMatch(
+      /prefers-reduced-motion: reduce[\s\S]*marketing-brand-kinetic/,
+    );
+
+    const page = readFileSync(
+      join(import.meta.dirname, "components/marketing/marketing-page.tsx"),
+      "utf8",
+    );
+    expect(page).toContain("marketing-brand-kinetic");
+    expect(page).toContain("marketing-headline-kinetic");
+    expect(page).toContain("marketing-cta-group");
+    expect(page).toContain("MarketingReveal");
+    // Hero brand is page-level, not only nav text
+    expect(page).toMatch(
+      /marketing-brand-kinetic[\s\S]*CUTOFF[\s\S]*marketing-headline-kinetic/,
+    );
+
+    const reveal = readFileSync(
+      join(import.meta.dirname, "components/marketing/marketing-reveal.tsx"),
+      "utf8",
+    );
+    expect(reveal).toContain("IntersectionObserver");
+    expect(reveal).toContain("prefers-reduced-motion");
+
+    const header = readFileSync(
+      join(import.meta.dirname, "components/marketing/marketing-header.tsx"),
+      "utf8",
+    );
+    // #37 mobile header chrome must stay
+    expect(header).toContain("lg:hidden");
+    expect(header).toContain("aria-expanded");
+    expect(header).toContain("marketing-waitlist-fab");
   });
 });
