@@ -3,14 +3,21 @@ import { redirect } from "next/navigation";
 import { HomeShell } from "@/components/home/shell";
 import { MandateClient } from "@/components/home/mandate-client";
 import { homeDevBypassEnabled } from "@/lib/home/config";
+import { placesApiConfigured } from "@/lib/home/places";
 import { readHomeSession } from "@/lib/home/session";
-import { getMandateForSession } from "@/lib/home/store";
+import {
+  getAddressForSession,
+  getMandateForSession,
+} from "@/lib/home/store";
 
 export default async function MandatePage() {
   const session = await readHomeSession();
   if (!session) redirect("/home/sign-in");
 
   const mandate = await getMandateForSession(session);
+  const address = mandate
+    ? await getAddressForSession(session, mandate.address_id)
+    : null;
 
   return (
     <HomeShell
@@ -33,7 +40,11 @@ export default async function MandatePage() {
         .
       </p>
       <div className="mt-10">
-        <MandateClient initialMandate={mandate} />
+        <MandateClient
+          initialMandate={mandate}
+          initialAddress={address}
+          placesConfigured={placesApiConfigured()}
+        />
       </div>
     </HomeShell>
   );

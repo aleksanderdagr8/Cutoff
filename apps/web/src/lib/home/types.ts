@@ -45,6 +45,19 @@ export type HomeMandateView = {
   allow_cancel: boolean;
 };
 
+/** Precise household shipping address bound to mandate.address_id. */
+export type HomeAddressView = {
+  address_id: string;
+  line1: string;
+  line2: string | null;
+  city: string;
+  region: string;
+  postal: string;
+  country: string;
+  formatted: string;
+  place_id: string | null;
+};
+
 export type HomeKeyView = {
   key_id: string;
   scopes: string[];
