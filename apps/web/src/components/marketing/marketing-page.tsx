@@ -264,6 +264,9 @@ export function MarketingPage() {
             </p>
           </div>
           <div className="flex flex-wrap gap-x-6 gap-y-2 text-[14px] text-secondary">
+            <Link href="/blog" className="hover:text-ink">
+              Blog
+            </Link>
             <Link href="/home" className="hover:text-ink">
               Household
             </Link>

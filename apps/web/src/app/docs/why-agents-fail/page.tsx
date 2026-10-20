@@ -240,6 +240,9 @@ export default function WhyAgentsFailPage() {
             <Link href="/#early-access" className="hover:text-ink">
               Early access
             </Link>
+            <Link href="/blog" className="hover:text-ink">
+              Blog
+            </Link>
             <Link href="/home" className="hover:text-ink">
               Household
             </Link>
@@ -353,9 +356,14 @@ export default function WhyAgentsFailPage() {
           <p className="font-display text-[16px] font-semibold tracking-[-0.02em] text-ink">
             CUTOFF
           </p>
-          <Link href="/" className="text-[14px] text-secondary hover:text-ink">
-            ← Back to home
-          </Link>
+          <div className="flex flex-wrap gap-x-5 gap-y-2">
+            <Link href="/blog" className="text-[14px] text-secondary hover:text-ink">
+              Blog
+            </Link>
+            <Link href="/" className="text-[14px] text-secondary hover:text-ink">
+              ← Back to home
+            </Link>
+          </div>
         </div>
       </footer>
     </div>
