@@ -3,6 +3,14 @@ import { initOpenNextCloudflareForDev } from "@opennextjs/cloudflare";
 
 const nextConfig: NextConfig = {
   reactStrictMode: true,
+  // Markdown lives outside `src/` and is read while blog routes render.
+  // Trace it into the server bundle so a Worker re-render can still see posts.
+  outputFileTracingIncludes: {
+    "/blog": ["./content/blog/**/*"],
+    "/blog/[slug]": ["./content/blog/**/*"],
+    "/blog/rss.xml": ["./content/blog/**/*"],
+    "/sitemap.xml": ["./content/blog/**/*"],
+  },
   transpilePackages: [
     "@cutoff/adapters",
     "@cutoff/contracts",

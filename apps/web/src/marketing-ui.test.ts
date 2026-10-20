@@ -109,6 +109,25 @@ describe("marketing `/` hygiene", () => {
     expect(src).not.toMatch(/api.?key.?generat/i);
   });
 
+  it("links the blog from the marketing nav and footer", () => {
+    const header = readFileSync(
+      join(import.meta.dirname, "components/marketing/marketing-header.tsx"),
+      "utf8",
+    );
+    const page = readFileSync(
+      join(import.meta.dirname, "components/marketing/marketing-page.tsx"),
+      "utf8",
+    );
+    const docs = readFileSync(
+      join(import.meta.dirname, "app/docs/why-agents-fail/page.tsx"),
+      "utf8",
+    );
+    expect(header).toContain('href: "/blog"');
+    expect(header).toContain('label: "Blog"');
+    expect(page).toContain('href="/blog"');
+    expect(docs).toContain('href="/blog"');
+  });
+
   it("marketing components exist", () => {
     const root = join(import.meta.dirname, "components/marketing");
     for (const name of [
